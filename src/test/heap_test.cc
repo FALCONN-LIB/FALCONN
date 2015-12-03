@@ -1,4 +1,4 @@
-#include "heap.h"
+#include "falconn/core/heap.h"
 
 #include <vector>
 

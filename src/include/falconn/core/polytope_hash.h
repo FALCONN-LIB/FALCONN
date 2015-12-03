@@ -11,7 +11,7 @@
 #include <vector>
 #include <Eigen/Dense>
 
-#include "../../fht/fht_header_only.h"
+#include "../ffht/fht_header_only.h"
 #include "data_storage.h"
 #include "heap.h"
 #include "incremental_sorter.h"

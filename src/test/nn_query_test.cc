@@ -1,16 +1,16 @@
-#include "nn_query.h"
+#include "falconn/core/nn_query.h"
 
 #include <utility>
 #include <vector>
 
 #include "gtest/gtest.h"
 
-#include "composite_hash_table.h"
-#include "cosine_distance.h"
-#include "data_storage.h"
-#include "hyperplane_hash.h"
-#include "lsh_table.h"
-#include "probing_hash_table.h"
+#include "falconn/core/composite_hash_table.h"
+#include "falconn/core/cosine_distance.h"
+#include "falconn/core/data_storage.h"
+#include "falconn/core/hyperplane_hash.h"
+#include "falconn/core/lsh_table.h"
+#include "falconn/core/probing_hash_table.h"
 #include "test_utils.h"
 
 namespace fc = falconn::core;

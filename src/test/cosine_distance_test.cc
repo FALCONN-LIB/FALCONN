@@ -1,4 +1,4 @@
-#include "cosine_distance.h"
+#include "falconn/core/cosine_distance.h"
 
 #include <utility>
 #include <vector>

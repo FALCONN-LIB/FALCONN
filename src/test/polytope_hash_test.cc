@@ -1,4 +1,4 @@
-#include "polytope_hash.h"
+#include "falconn/core/polytope_hash.h"
 
 #include <cmath>
 #include <random>
@@ -7,7 +7,7 @@
 
 #include "gtest/gtest.h"
 
-#include "data_storage.h"
+#include "falconn/core/data_storage.h"
 #include "test_utils.h"
 
 namespace fc = falconn::core;

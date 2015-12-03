@@ -1,13 +1,13 @@
-#include "lsh_table.h"
+#include "falconn/core/lsh_table.h"
 
 #include <utility>
 #include <vector>
 
 #include "gtest/gtest.h"
 
-#include "composite_hash_table.h"
-#include "hyperplane_hash.h"
-#include "probing_hash_table.h"
+#include "falconn/core/composite_hash_table.h"
+#include "falconn/core/hyperplane_hash.h"
+#include "falconn/core/probing_hash_table.h"
 #include "test_utils.h"
 
 namespace fc = falconn::core;

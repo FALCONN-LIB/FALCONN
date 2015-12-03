@@ -1,4 +1,4 @@
-#include "wrapper.h"
+#include "falconn/lsh_nn_table.h"
 
 #include <memory>
 #include <utility>

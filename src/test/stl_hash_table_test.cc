@@ -1,4 +1,4 @@
-#include "stl_hash_table.h"
+#include "falconn/core/stl_hash_table.h"
 
 #include <utility>
 #include <vector>

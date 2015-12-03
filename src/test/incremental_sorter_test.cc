@@ -1,4 +1,4 @@
-#include "incremental_sorter.h"
+#include "falconn/core/incremental_sorter.h"
 
 #include <algorithm>
 #include <random>

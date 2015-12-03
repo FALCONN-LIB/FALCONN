@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "heap.h"
-#include "falconn_global.h"
+#include "../falconn_global.h"
 
 namespace falconn {
 namespace core {

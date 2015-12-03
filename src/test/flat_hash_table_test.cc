@@ -1,4 +1,4 @@
-#include "flat_hash_table.h"
+#include "falconn/core/flat_hash_table.h"
 
 #include <utility>
 #include <vector>

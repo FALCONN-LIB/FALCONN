@@ -1,4 +1,4 @@
-#include "hyperplane_hash.h"
+#include "falconn/core/hyperplane_hash.h"
 
 #include <algorithm>
 #include <utility>
@@ -6,7 +6,7 @@
 
 #include "gtest/gtest.h"
 
-#include "data_storage.h"
+#include "falconn/core/data_storage.h"
 #include "test_utils.h"
 
 namespace fc = falconn::core;

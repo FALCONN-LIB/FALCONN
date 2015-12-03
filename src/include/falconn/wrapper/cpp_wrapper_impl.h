@@ -1,16 +1,14 @@
 #ifndef __CPP_WRAPPER_IMPL_H__
 #define __CPP_WRAPPER_IMPL_H__
 
-#include "wrapper.h"
-
-#include "composite_hash_table.h"
-#include "cosine_distance.h"
-#include "data_storage.h"
-#include "hyperplane_hash.h"
-#include "lsh_table.h"
-#include "nn_query.h"
-#include "polytope_hash.h"
-#include "probing_hash_table.h"
+#include "../core/composite_hash_table.h"
+#include "../core/cosine_distance.h"
+#include "../core/data_storage.h"
+#include "../core/hyperplane_hash.h"
+#include "../core/lsh_table.h"
+#include "../core/nn_query.h"
+#include "../core/polytope_hash.h"
+#include "../core/probing_hash_table.h"
 
 namespace falconn {
 namespace wrappers {

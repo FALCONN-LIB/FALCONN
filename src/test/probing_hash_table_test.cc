@@ -1,4 +1,4 @@
-#include "probing_hash_table.h"
+#include "falconn/core/probing_hash_table.h"
 
 #include <utility>
 #include <vector>
