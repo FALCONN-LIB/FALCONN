@@ -206,7 +206,7 @@ class NearestNeighborQuery {
   QueryStatistics get_query_statistics() {
     QueryStatistics res = table_query_->get_query_statistics();
     res.average_total_query_time = stats_.average_total_query_time;
-    res.average_distance_time /= stats_.average_distance_time;
+    res.average_distance_time = stats_.average_distance_time;
 
     if (stats_num_queries_ > 0) {
       res.average_total_query_time /= stats_num_queries_;

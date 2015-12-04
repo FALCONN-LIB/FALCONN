@@ -1,5 +1,6 @@
 INC_DIR=src/include/falconn
 TEST_DIR=src/test
+BENCH_DIR=src/benchmark
 GTEST_DIR=external/googletest/googletest
 TEST_BIN_DIR=test_bin
 
@@ -11,6 +12,9 @@ CXXFLAGS=-std=c++11 -DNDEBUG -Wall -Wextra -march=native -O3 -fPIC -I external/e
 clean:
 	rm -f obj/*.o
 	rm -f $(TEST_BIN_DIR)/*_test
+
+random_benchmark: $(BENCH_DIR)/random_benchmark.cc $(ALL_HEADERS)
+	$(CXX) $(CXXFLAGS) -o $@ $(BENCH_DIR)/random_benchmark.cc
 
 obj/gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
 	mkdir -p obj

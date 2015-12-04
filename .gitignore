@@ -3,3 +3,4 @@
 *.swn
 obj
 test_bin
+random_benchmark
