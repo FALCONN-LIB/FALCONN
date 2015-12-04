@@ -53,44 +53,56 @@ TEST(PolytopeHashTest, Log2CeilTest) {
 }
 
 TEST(PolytopeHashTest, FHTHelperTest1) {
-  int dim = 16;
-  FHTHelper<float> fht(dim);
-  DenseVector v(dim);
-  v.setZero();
-  v[0] = 1.0;
-  fht.apply(v.data());
+  // Repeating multiple times to make it more likely for potential alignment
+  // issues to occur.
+  for (int trial = 0; trial < 100; ++trial) {
+    int dim = 16;
+    FHTHelper<float> fht(dim);
+    DenseVector v(dim);
+    v.setZero();
+    v[0] = 1.0;
+    fht.apply(v.data());
 
-  float expected_coordinate = std::sqrt(1.0 / dim);
-  for (int ii = 0; ii < dim; ++ii) {
-    EXPECT_NEAR(expected_coordinate, v[ii], 0.00001);
+    float expected_coordinate = std::sqrt(1.0 / dim);
+    for (int ii = 0; ii < dim; ++ii) {
+      EXPECT_NEAR(expected_coordinate, v[ii], 0.00001);
+    }
   }
 }
 
 TEST(PolytopeHashTest, FHTHelperTest2) {
-  int dim = 128;
-  FHTHelper<float> fht(dim);
-  DenseVector v(dim);
-  v.setZero();
-  v[0] = 1.0;
-  fht.apply(v.data());
+  // Repeating multiple times to make it more likely for potential alignment
+  // issues to occur.
+  for (int trial = 0; trial < 100; ++trial) {
+    int dim = 128;
+    FHTHelper<float> fht(dim);
+    DenseVector v(dim);
+    v.setZero();
+    v[0] = 1.0;
+    fht.apply(v.data());
 
-  float expected_coordinate = std::sqrt(1.0 / dim);
-  for (int ii = 0; ii < dim; ++ii) {
-    EXPECT_NEAR(expected_coordinate, v[ii], 0.00001);
+    float expected_coordinate = std::sqrt(1.0 / dim);
+    for (int ii = 0; ii < dim; ++ii) {
+      EXPECT_NEAR(expected_coordinate, v[ii], 0.00001);
+    }
   }
 }
 
 TEST(PolytopeHashTest, FHTHelperTest3) {
-  int dim = 128;
-  FHTHelper<double> fht(dim);
-  Eigen::Matrix<double, Eigen::Dynamic, 1, Eigen::ColMajor> v(dim);
-  v.setZero();
-  v[0] = 1.0;
-  fht.apply(v.data());
+  // Repeating multiple times to make it more likely for potential alignment
+  // issues to occur.
+  for (int trial = 0; trial < 100; ++trial) {
+    int dim = 128;
+    FHTHelper<double> fht(dim);
+    Eigen::Matrix<double, Eigen::Dynamic, 1, Eigen::ColMajor> v(dim);
+    v.setZero();
+    v[0] = 1.0;
+    fht.apply(v.data());
 
-  double expected_coordinate = std::sqrt(1.0 / dim);
-  for (int ii = 0; ii < dim; ++ii) {
-    EXPECT_NEAR(expected_coordinate, v[ii], 0.00001);
+    double expected_coordinate = std::sqrt(1.0 / dim);
+    for (int ii = 0; ii < dim; ++ii) {
+      EXPECT_NEAR(expected_coordinate, v[ii], 0.00001);
+    }
   }
 }
 
