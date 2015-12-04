@@ -213,15 +213,15 @@ enum class LSHFamily {
   ///
   /// The cross polytope hash first proposed in
   ///
-  /// "Spherical LSH for Approximate Nearest Neighbor Search on Unit Hypersphere"
-  /// Kengo Terasawa, Yuzuru Tanaka
+  /// "Spherical LSH for Approximate Nearest Neighbor Search on Unit Hypersphere",
+  /// Kengo Terasawa, Yuzuru Tanaka,
   /// WADS 2007
   ///
   /// Our implementation utilizes the improvements described in
   ///
-  /// "Practical and Optimal LSH for Angular Distance"
+  /// "Practical and Optimal LSH for Angular Distance",
   /// Alexandr Andoni, Piotr Indyk, Thijs Laarhoven, Ilya Razenshteyn, Ludwig
-  /// Schmidt
+  /// Schmidt,
   /// NIPS 2015
   ///
   CrossPolytope = 2

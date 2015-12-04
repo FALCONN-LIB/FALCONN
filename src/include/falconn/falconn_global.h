@@ -5,20 +5,42 @@
 
 namespace falconn {
 
-// Common exception base class
+///
+/// Common exception base class
+///
 class FalconnError: public std::logic_error {
  public:
   FalconnError(const char* msg) : logic_error(msg) {}
 };
 
 
-// Data structure for point query statistics
+///
+/// Data structure for point query statistics
+///
 struct QueryStatistics {
-  double average_total_query_time = 0.0; // total query time
-  double average_lsh_time = 0.0;         // computing LSH functions
-  double average_hash_table_time = 0.0;  // retrieving from the hash tables
-  double average_distance_time = 0.0;    // computing the candidate distances
+  ///
+  /// Average total query time
+  ///
+  double average_total_query_time = 0.0; 
+  ///
+  /// Average hashing time
+  ///
+  double average_lsh_time = 0.0;
+  ///
+  /// Average hash table retrieval time
+  ///
+  double average_hash_table_time = 0.0;
+  ///
+  /// Average time for computing distances
+  ///
+  double average_distance_time = 0.0;
+  ///
+  /// Average number of candidates
+  ///
   double average_num_candidates = 0;
+  ///
+  /// Average number of *unique* candidates
+  ///
   double average_num_unique_candidates = 0;
 };
 
