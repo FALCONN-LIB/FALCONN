@@ -44,6 +44,8 @@ struct QueryStatistics {
   double average_num_unique_candidates = 0;
 };
 
+}  // namespace falconn
+
 
 // Workaround for the CYGWIN bug described in
 // http://stackoverflow.com/questions/28997206/cygwin-support-for-c11-in-g4-9-2
@@ -58,7 +60,5 @@ using ::round;
 };
 
 #endif
-
-}  // namespace falconn
 
 #endif

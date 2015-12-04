@@ -264,7 +264,7 @@ class HyperplaneHashBase {
       cur_probe_counter_ += 1;
 
       if (num_probes_ >= 0 && cur_probe_counter_ >= num_probes_) {
-        printf("out of probes\n");
+        //printf("out of probes\n");
         return false;
       }
 
