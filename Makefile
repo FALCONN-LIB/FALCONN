@@ -1,5 +1,6 @@
 INC_DIR=src/include/falconn
 TEST_DIR=src/test
+BENCH_DIR=src/benchmark
 GTEST_DIR=external/googletest/googletest
 TEST_BIN_DIR=test_bin
 DOC_DIR=doc
@@ -16,6 +17,9 @@ clean:
 
 docs: $(ALL_HEADERS) $(DOC_DIR)/Doxyfile
 	doxygen $(DOC_DIR)/Doxyfile
+
+random_benchmark: $(BENCH_DIR)/random_benchmark.cc $(ALL_HEADERS)
+	$(CXX) $(CXXFLAGS) -o $@ $(BENCH_DIR)/random_benchmark.cc
 
 obj/gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
 	mkdir -p obj
