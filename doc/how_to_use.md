@@ -2,6 +2,15 @@
 
 As of now, FALCONN supports static datasets. We plan to add the support for dynamic datasets shortly.
 
+## Installation and Usage
+
+FALCONN is a header-only library. It means that you simply need to add the folder `src/include`
+to the folders searched for the header files (`-I` switch for `gcc`).
+
+FALCONN uses [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) as a dependency.
+Eigen is header-only as well, so you just need to make your compiler search in `external/eigen`
+for the header files.
+
 ## The Main Class
 
 To use FALCONN, one should include the main header file `lsh_nn_table.h` and use the namespace `falconn`
