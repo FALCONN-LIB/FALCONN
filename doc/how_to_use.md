@@ -11,6 +11,11 @@ FALCONN uses [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) as a 
 Eigen is header-only as well, so you just need to make your compiler search in `external/eigen`
 for the header files.
 
+FALCONN (along with Eigen) uses vectorization to speed up the operations with vectors. You need to instruct
+your compiler to take the full advantage of your CPU. For instance, if you use `gcc`, add the `-march=native`
+flag. For some versions of `clang` for OS X, this does not work as intended, so you might need to use
+`-march=corei7-avx` instead.
+
 ## The Main Class
 
 To use FALCONN, one should include the main header file `lsh_nn_table.h` and use the namespace `falconn`
@@ -90,5 +95,3 @@ functions that filter this list.
   - `get_unique_candidates` the same as above, but now the duplicates are eliminated
   - `get_unique_sorted_candidates`: the same as above, but the candidates are sorted according
   to the key
-
-## Headers and Dependencies
