@@ -11,10 +11,11 @@ CXX=g++
 CXXFLAGS=-std=gnu++11 -DNDEBUG -Wall -Wextra -march=native -O3 -I external/eigen -I src/include
 
 clean:
-	rm -f obj/*.o
-	rm -f $(TEST_BIN_DIR)/*_test
+	rm -rf obj
+	rm -rf $(TEST_BIN_DIR)
 	rm -rf $(DOC_DIR)/html
 	rm -f random_benchmark
+	rm -f test-output.txt
 
 docs: $(ALL_HEADERS) $(DOC_DIR)/Doxyfile
 	doxygen $(DOC_DIR)/Doxyfile
