@@ -14,6 +14,15 @@ We say that a hash function (or more precisely, a family of hash functions) is l
 pairs of points that are close together are more likely to collide than pairs of points that are far apart.
 LSH data structures use locality-sensitive hash functions in order to partition the space in wich the dataset lives: every possible hash value essentially corresponds to its own cell.
 
+A good partition of our data space will allow us to answer nearest neighbor queries more efficiently: instead of comparing the
+query point with all points in the dataset, we first find the hash cell our query lies in.
+If we have a good partition that respects our desired similarity metric, the nearest neigbor will probably lie in the same
+hash cell as the query point.
+So we only need to compare the query point to  the candidates in the current hash cell, which can be significantly fewer points
+than the entire data set.
+This is how LSH enables us to answer nearest neighbor queries efficiently.
+
+
 ## An example: Hyperplane LSH
 
 We first consider a simple example hash function that is locality sensitive. Suppose the data points lie on a _unit sphere_
