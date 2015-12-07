@@ -1,3 +1,26 @@
+/*
+ * An example program that takes a GloVe
+ * (http://nlp.stanford.edu/projects/glove/) dataset and builds a cross polytope
+ * LSH table with the following property: for a random subset of NUM_QUERIES
+ * points, we would like to find a nearest neighbor (w.r.t. cosine similarity)
+ * with probability at least 0.9.
+ *
+ * You need to specify:
+ *   - NUM_HASH_TABLES, which affects the memory usage, that larger it is, the
+ *     better (unless it's too large)
+ *   - NUM_HASH_BITS, that controls the number of buckets per table,
+ *     usually it should be around the logarithm of the number of data points
+ *   - NUM_ROTATIONS, which controls the number of pseudo-random rotations for
+ *     the cross-polytope LSH, set it to 1 for the dense data, and 2 for the
+ *     sparse data
+ *
+ * The code sets the number of probes automatically. Also, it recenters the
+ * dataset for speeding-up hashing. In reality, if you would like to use the
+ * original vectors to compute distances, you should store a spare copy of the
+ * dataset and use it together with one of the get_candidates_* functions during
+ * the query.
+ */
+
 #include <falconn/lsh_nn_table.h>
 
 #include <algorithm>
@@ -42,6 +65,10 @@ const int NUM_HASH_TABLES = 70;
 const int NUM_HASH_BITS = 20;
 const int NUM_ROTATIONS = 1;
 
+/*
+ * An auxiliary function that reads a point from a binary file that is produced
+ * by a script 'prepare-dataset.sh'
+ */
 bool read_point(FILE *file, Point *point) {
   int d;
   if (fread(&d, sizeof(int), 1, file) != 1) {
@@ -59,6 +86,10 @@ bool read_point(FILE *file, Point *point) {
   return true;
 }
 
+/*
+ * An auxiliary function that reads a dataset from a binary file that is
+ * produced by a script 'prepare-dataset.sh'
+ */
 void read_dataset(string file_name, vector<Point> *dataset) {
   FILE *file = fopen(file_name.c_str(), "rb");
   if (!file) {
@@ -74,12 +105,19 @@ void read_dataset(string file_name, vector<Point> *dataset) {
   }
 }
 
+/*
+ * Normalizes the dataset.
+ */
 void normalize(vector<Point> *dataset) {
   for (auto &p: *dataset) {
     p.normalize();
   }
 }
 
+/*
+ * Chooses a random subset of the dataset to be the queries. The queries are
+ * taken out of the dataset.
+ */
 void gen_queries(vector<Point> *dataset, vector<Point> *queries) {
   mt19937_64 gen(SEED);
   queries->clear();
@@ -92,6 +130,9 @@ void gen_queries(vector<Point> *dataset, vector<Point> *queries) {
   }
 }
 
+/*
+ * Generates answers for the queries using the (optimized) linear scan.
+ */
 void gen_answers(const vector<Point> &dataset,
 		 const vector<Point> &queries,
 		 vector<int> *answers) {
@@ -112,6 +153,9 @@ void gen_answers(const vector<Point> &dataset,
   }
 }
 
+/*
+ * Computes the probability of success using a given number of probes.
+ */
 double evaluate_num_probes(LSHNearestNeighborTable<Point> *table,
 			   const vector<Point> &queries,
 			   const vector<int> &answers,
@@ -133,6 +177,11 @@ double evaluate_num_probes(LSHNearestNeighborTable<Point> *table,
   return (num_matches + 0.0) / (queries.size() + 0.0);
 }
 
+/*
+ * Queries the data structure using a given number of probes.
+ * It is much slower than 'evaluate_num_probes' and should be used to
+ * measure the time.
+ */
 double evaluate_query_time(LSHNearestNeighborTable<Point> *table,
 			   const vector<Point> &queries,
 			   const vector<int> &answers,
@@ -149,6 +198,10 @@ double evaluate_query_time(LSHNearestNeighborTable<Point> *table,
   return (num_matches + 0.0) / (queries.size() + 0.0);
 }
 
+/*
+ * Finds the smallest number of probes that gives the probability of success
+ * at least 0.9 using binary search.
+ */
 int find_num_probes(LSHNearestNeighborTable<Point> *table,
 		    const vector<Point> &queries,
 		    const vector<int> &answers,
