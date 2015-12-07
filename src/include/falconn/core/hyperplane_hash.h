@@ -72,9 +72,13 @@ class HyperplaneHashBase {
         res->resize(nn);
       }
 
+      typename BatchVectorType::FullSequenceIterator iter =
+          points.get_full_sequence();
       for (int_fast64_t ii = 0; ii < nn; ++ii) {
-        parent_.get_multiplied_vector_single_table(points[ii], l, &tmp_vector_);
+        parent_.get_multiplied_vector_single_table(iter.get_point(), l,
+            &tmp_vector_);
         (*res)[ii] = compute_hash_single_table(tmp_vector_);
+        ++iter;
       }
     }
 

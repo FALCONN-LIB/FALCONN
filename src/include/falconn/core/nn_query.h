@@ -52,8 +52,8 @@ class NearestNeighborQuery {
     LSHTableKeyType best_key = -1;
 
     if (candidates_.size() > 0) {
-      typename DataStorage::Iterator iter =
-          data_storage_.get_sequence(candidates_);
+      typename DataStorage::SubsequenceIterator iter =
+          data_storage_.get_subsequence(candidates_);
 
       best_key = candidates_[0];
       DistanceType best_distance = dst_(q_comp, iter.get_point());
@@ -110,8 +110,8 @@ class NearestNeighborQuery {
 
     auto distance_start_time = std::chrono::high_resolution_clock::now();
     
-    typename DataStorage::Iterator iter =
-        data_storage_.get_sequence(candidates_);
+    typename DataStorage::SubsequenceIterator iter =
+        data_storage_.get_subsequence(candidates_);
     
     int_fast64_t initially_inserted = 0;
     for (; initially_inserted < k; ++initially_inserted) {
@@ -172,8 +172,8 @@ class NearestNeighborQuery {
                                                &candidates_);
     auto distance_start_time = std::chrono::high_resolution_clock::now();
     
-    typename DataStorage::Iterator iter =
-        data_storage_.get_sequence(candidates_);
+    typename DataStorage::SubsequenceIterator iter =
+        data_storage_.get_subsequence(candidates_);
     while (iter.is_valid()) {
       DistanceType cur_distance = dst_(q_comp, iter.get_point());
       if (cur_distance < threshold) {

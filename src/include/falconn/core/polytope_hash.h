@@ -173,12 +173,14 @@ class CrossPolytopeHashBase {
         res->resize(nn);
       }
 
+      typename BatchVectorType::FullSequenceIterator iter =
+          points.get_full_sequence();
       for (int_fast64_t ii = 0; ii < nn; ++ii) {
         (*res)[ii] = 0;
         int_fast32_t pattern = l * parent_.k_ * parent_.num_rotations_;
 
         for (int_fast32_t jj = 0; jj < parent_.k_ - 1; ++jj) {
-          parent_.embed(points[ii], l, jj, &tmp_vector_);
+          parent_.embed(iter.get_point(), l, jj, &tmp_vector_);
 
           for (int_fast32_t rot = 0; rot < parent_.num_rotations_; ++rot) {
             tmp_vector_ = tmp_vector_.cwiseProduct(
@@ -192,7 +194,7 @@ class CrossPolytopeHashBase {
               | decodeCP(tmp_vector_, parent_.rotation_dim_);
         }
 
-        parent_.embed(points[ii], l, parent_.k_ - 1, &tmp_vector_);
+        parent_.embed(iter.get_point(), l, parent_.k_ - 1, &tmp_vector_);
         for (int_fast32_t rot = 0; rot < parent_.num_rotations_; ++rot) {
           tmp_vector_ = tmp_vector_.cwiseProduct(
               parent_.random_signs_[pattern]);
@@ -202,6 +204,8 @@ class CrossPolytopeHashBase {
 
         (*res)[ii] = (*res)[ii] << (parent_.last_cp_log_dim_ + 1);
         (*res)[ii] = (*res)[ii] | decodeCP(tmp_vector_, parent_.last_cp_dim_);
+        
+        ++iter;
       }
     }
 
