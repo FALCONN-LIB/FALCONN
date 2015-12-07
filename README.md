@@ -36,5 +36,5 @@ Many of the ideas used in FALCONN were proposed in research papers over the past
 
 ### License
 
-FALCONN is available under the MIT license (see License.md).
+FALCONN is available under the MIT license (see LICENSE.md).
 
