@@ -1,29 +1,36 @@
 # Locality-Sensitive Hashing: a Primer
 
-The similarity search problem is as follows: given a dataset of points in a
-_geometric space_, preprocess it, so that, given a query point, retrieve the
-nearest data point (or several closest ones).
+Locality-Sensitive Hashing (LSH) is a class of methods for the nearest neighbor search problem, which is defined as follows:
+given a dataset of points in a metric space (e.g., R<sup>d</sup> with the Euclidean distance),
+our goal is to preprocess the data set so that we can quickly answer _nearest neighbor queries_:
+given a previously unseen query point, we want to find one or several points in our dataset that
+are closest to the query point.
+LSH is one of the main techniques for nearest neighbor search in high dimensions (but there are also many others, e.g., see the
+corresponding [Wikipedia article](https://en.wikipedia.org/wiki/Nearest_neighbor_search)).
 
-Locality-Sensitive Hashing (LSH, in short) is a way to randomly partition the
-geometric space, where one's dataset lies, into cells so that the closer two
-points are the more likely they end up in the same cell. It is one of the main
-techniques for similarity search in high dimensions.
+In a nutshell, LSH is a way to randomly partition the ambient space into cells that respect the desired similarity metric.
+The core building block of LSH are _locality-sensitive hash functions_.
+We say that a hash function (or more precisely, a family of hash functions) is locality sensitive if the following property holds:
+pairs of points that are close together are more likely to collide than pairs of points that are far apart.
+LSH data structures use locality-sensitive hash functions in order to partition the space in wich the dataset lives: every possible hash value essentially corresponds to its own cell.
 
-Let us consider a simple example. Suppose the data points lie on a _unit sphere_
+## An example: Hyperplane LSH
+
+We first consider a simple example hash function that is locality sensitive. Suppose the data points lie on a _unit sphere_
 in a d-dimensional space (Euclidean distance on a sphere corresponds to the
-_cosine similarity_). Then, to partition the sphere, we sample a _random
-hyperplane_ through the center of the sphere and cut the sphere across it in two
-equal parts. Intuitively, it works, since any two close points will almost
-always be on the same side of a hyperplane, while any pair of the opposite
-points will always be separated.
+_cosine similarity_). In order to partition the sphere, we then sample a _random
+hyperplane_ through the center of the sphere and cut the sphere across it, which gives two
+equal cells. Intuitively, this approach gives a locality-sensitive hash function because any two close points will almost
+always be on the same side of a hyperplane, while pairs of points that are far apart tend to be separated by the random
+hyperplane (in the most extreme case of points that are opposite, any hyperplane will separate the points).
 
-Let us show how to use LSH for similarity search. A naive idea would be to
+Let us now show how to use LSH for similarity search. A naive idea would be to
 sample a partition, create a bucket for every cell, and group the data points
-into these buckets. Then, given a query, we would try all the data points that
+into these buckets. Given a query, we would then try all the data points that
 are in the same bucket as the query point. This procedure can be implemented
-efficiently using a hash table. But the example of Hyperplane LSH shows that
-this may not be good enough. Indeed, we merely have two buckets, so, we would
-need to try around half of the data points when answering a query!
+efficiently using a hash table. But the example of hyperplane hash function outlined above shows that
+this may not always be good enough. Indeed, with a single hyperplane we only have two cells, so, we would
+need to test roughly half of the data points when answering a single query!
 
 A better idea is to use many partitions at once. Instead of sampling one
 partition, we sample K of them. Now buckets correspond to size-K tuples of
