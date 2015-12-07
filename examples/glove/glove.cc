@@ -36,10 +36,11 @@ using falconn::LSHNearestNeighborTable;
 typedef DenseVector<float> Point;
 
 const string FILE_NAME = "dataset/glove.840B.300d.dat";
-const int NUM_QUERIES = 100;
+const int NUM_QUERIES = 1000;
 const int SEED = 4057218;
-const int NUM_HASH_TABLES = 10;
+const int NUM_HASH_TABLES = 70;
 const int NUM_HASH_BITS = 20;
+const int NUM_ROTATIONS = 1;
 
 bool read_point(FILE *file, Point *point) {
   int d;
@@ -118,6 +119,27 @@ double evaluate_num_probes(LSHNearestNeighborTable<Point> *table,
   table->set_num_probes(num_probes);
   int outer_counter = 0;
   int num_matches = 0;
+  vector<int32_t> candidates;
+  for (const auto &query: queries) {
+    table->get_candidates_with_duplicates(query, &candidates);
+    for (auto x: candidates) {
+      if (x == answers[outer_counter]) {
+	++num_matches;
+	break;
+      }
+    }
+    ++outer_counter;
+  }
+  return (num_matches + 0.0) / (queries.size() + 0.0);
+}
+
+double evaluate_query_time(LSHNearestNeighborTable<Point> *table,
+			   const vector<Point> &queries,
+			   const vector<int> &answers,
+			   int num_probes) {
+  table->set_num_probes(num_probes);
+  int outer_counter = 0;
+  int num_matches = 0;
   for (const auto &query: queries) {
     if (table->find_closest(query) == answers[outer_counter]) {
       ++num_matches;
@@ -133,16 +155,8 @@ int find_num_probes(LSHNearestNeighborTable<Point> *table,
 		    int start_num_probes) {
   int num_probes = start_num_probes;
   for (;;) {      
-    auto t1 = high_resolution_clock::now();
     double precision =
       evaluate_num_probes(table, queries, answers, num_probes);
-    auto t2 = high_resolution_clock::now();
-    double elapsed_time = duration_cast<duration<double>>(t2 - t1).count();
-    cout << num_probes
-	 << " probes; accuracy: "
-	 << precision
-	 << " time: "
-	 << (elapsed_time + 0.0) / (queries.size() + 0.0) << endl;
     if (precision >= 0.9) {
       break;
     }
@@ -154,16 +168,8 @@ int find_num_probes(LSHNearestNeighborTable<Point> *table,
 
   while (r - l > 1) {
     int num_probes = (l + r) / 2;
-    auto t1 = high_resolution_clock::now();
     double precision =
       evaluate_num_probes(table, queries, answers, num_probes);
-    auto t2 = high_resolution_clock::now();
-    double elapsed_time = duration_cast<duration<double>>(t2 - t1).count();
-    cout << num_probes
-	 << " probes; accuracy: "
-	 << precision
-	 << " time: "
-	 << (elapsed_time + 0.0) / (queries.size() + 0.0) << endl;
     if (precision >= 0.9) {
       r = num_probes;
     }
@@ -190,6 +196,14 @@ int main() {
     normalize(&dataset); 
     cout << "done" << endl;
 
+    Point center = dataset[0];
+    for (size_t i = 1; i < dataset.size(); ++i) {
+      center += dataset[i];
+    }
+    center /= dataset.size();
+
+    cout << center.norm() << endl;
+
     cout << "selecting " << NUM_QUERIES << " queries" << endl;
     gen_queries(&dataset, &queries);
     cout << "done" << endl;
@@ -202,13 +216,24 @@ int main() {
     cout << "done" << endl;
     cout << elapsed_time / queries.size() << " s per query" << endl;
 
+    cout << "re-centering" << endl;
+    for (auto &datapoint: dataset) {
+      datapoint -= center;
+      datapoint.normalize();
+    }
+    for (auto &query: queries) {
+      query -= center;
+      query.normalize();
+    }
+    cout << "done" << endl;
+
     LSHConstructionParameters params;
     params.dimension = dataset[0].size();
     params.lsh_family = LSHFamily::CrossPolytope;
     params.l = NUM_HASH_TABLES;
     params.distance_function = DistanceFunction::NegativeInnerProduct;
     compute_number_of_hash_functions<Point>(NUM_HASH_BITS, &params);
-    params.num_rotations = 1;
+    params.num_rotations = NUM_ROTATIONS;
     cout << "building the index based on the cross-polytope LSH" << endl;
     t1 = high_resolution_clock::now();
     auto table = construct_table<Point>(dataset, params);
@@ -219,7 +244,7 @@ int main() {
 
     int num_probes = find_num_probes(&*table, queries, answers, params.l);
     table->reset_query_statistics();
-    evaluate_num_probes(&*table, queries, answers, num_probes);
+    double score = evaluate_query_time(&*table, queries, answers, num_probes);
     auto statistics = table->get_query_statistics();
     cout << "average total query time: "
 	 << statistics.average_total_query_time << endl;
@@ -233,6 +258,7 @@ int main() {
 	 << statistics.average_num_candidates << endl;
     cout << "average number of unique candidates: "
 	 << statistics.average_num_unique_candidates << endl;
+    cout << "score: " << score << endl;
   }   
   catch (runtime_error &e) {
     cerr << "Runtime error: " << e.what() << endl;
