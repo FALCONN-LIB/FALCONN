@@ -7,7 +7,9 @@
  *
  * You need to specify:
  *   - NUM_HASH_TABLES, which affects the memory usage, that larger it is, the
- *     better (unless it's too large)
+ *     better (unless it's too large). Despite that, it's usually a good idea
+ *     to start with say 10 tables, and then increase it gradually, while
+ *     observing the effect it makes.
  *   - NUM_HASH_BITS, that controls the number of buckets per table,
  *     usually it should be around the logarithm of the number of data points
  *   - NUM_ROTATIONS, which controls the number of pseudo-random rotations for

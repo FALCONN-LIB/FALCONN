@@ -15,7 +15,6 @@
 ///
 namespace falconn {
 
-
 // An exception class for errors occuring in the wrapper classes. Errors from
 // the internal classes will throw other errors that also derive from
 // FalconError.
