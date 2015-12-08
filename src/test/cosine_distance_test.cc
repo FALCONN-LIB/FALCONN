@@ -31,6 +31,24 @@ TEST(CosineDistanceTest, SparseDistanceFunctionTest1) {
   ASSERT_NEAR(distance, -3.5, eps);
 }
 
+TEST(CosineDistanceTest, SparseDistanceFunctionTest2) {
+  SparseVector v1;
+  v1.push_back(make_pair(1, 2.0));
+  SparseVector v2;
+  CosineDistanceSparse<float> distance_function;
+  float distance = distance_function(v1, v2);
+  ASSERT_NEAR(distance, 0.0, eps);
+}
+
+TEST(CosineDistanceTest, SparseDistanceFunctionTest3) {
+  SparseVector v1;
+  SparseVector v2;
+  v2.push_back(make_pair(1, 2.0));
+  CosineDistanceSparse<float> distance_function;
+  float distance = distance_function(v1, v2);
+  ASSERT_NEAR(distance, 0.0, eps);
+}
+
 TEST(CosineDistanceTest, DenseDistanceFunctionTest1) {
   DenseVector v1(4);
   v1[0] = 0.0;
