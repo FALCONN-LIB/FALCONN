@@ -5,7 +5,7 @@ GTEST_DIR=external/googletest/googletest
 TEST_BIN_DIR=test_bin
 DOC_DIR=doc
 
-ALL_HEADERS = $(INC_DIR)/core/lsh_table.h $(INC_DIR)/core/cosine_distance.h $(INC_DIR)/core/composite_hash_table.h $(INC_DIR)/core/stl_hash_table.h $(INC_DIR)/core/polytope_hash.h $(INC_DIR)/core/flat_hash_table.h $(INC_DIR)/core/probing_hash_table.h $(INC_DIR)/core/hyperplane_hash.h $(INC_DIR)/core/heap.h $(INC_DIR)/core/prefetchers.h $(INC_DIR)/core/incremental_sorter.h $(INC_DIR)/core/lsh_function_helpers.h $(INC_DIR)/core/hash_table_helpers.h $(INC_DIR)/core/data_storage.h $(INC_DIR)/core/nn_query.h $(INC_DIR)/lsh_nn_table.h $(INC_DIR)/wrapper/cpp_wrapper_impl.h $(INC_DIR)/falconn_global.h $(TEST_DIR)/test_utils.h  $(INC_DIR)/core/data_transformation.h
+ALL_HEADERS = $(INC_DIR)/core/lsh_table.h $(INC_DIR)/core/cosine_distance.h $(INC_DIR)/core/euclidean_distance.h $(INC_DIR)/core/composite_hash_table.h $(INC_DIR)/core/stl_hash_table.h $(INC_DIR)/core/polytope_hash.h $(INC_DIR)/core/flat_hash_table.h $(INC_DIR)/core/probing_hash_table.h $(INC_DIR)/core/hyperplane_hash.h $(INC_DIR)/core/heap.h $(INC_DIR)/core/prefetchers.h $(INC_DIR)/core/incremental_sorter.h $(INC_DIR)/core/lsh_function_helpers.h $(INC_DIR)/core/hash_table_helpers.h $(INC_DIR)/core/data_storage.h $(INC_DIR)/core/nn_query.h $(INC_DIR)/lsh_nn_table.h $(INC_DIR)/wrapper/cpp_wrapper_impl.h $(INC_DIR)/falconn_global.h $(TEST_DIR)/test_utils.h  $(INC_DIR)/core/data_transformation.h
 
 CXX=g++
 CXXFLAGS=-std=gnu++11 -DNDEBUG -Wall -Wextra -march=native -O3 -I external/eigen -I src/include
@@ -35,6 +35,11 @@ $(TEST_BIN_DIR)/cosine_distance_test: $(TEST_DIR)/cosine_distance_test.cc $(ALL_
 	mkdir -p $(TEST_BIN_DIR)
 	$(CXX) $(CXXFLAGS) -I $(GTEST_DIR)/include -c -o obj/cosine_distance_test.o $(TEST_DIR)/cosine_distance_test.cc
 	$(CXX) $(CXXFLAGS) -o $(TEST_BIN_DIR)/cosine_distance_test obj/gtest_main.o obj/gtest-all.o obj/cosine_distance_test.o -pthread
+
+$(TEST_BIN_DIR)/euclidean_distance_test: $(TEST_DIR)/euclidean_distance_test.cc $(ALL_HEADERS) obj/gtest-all.o obj/gtest_main.o
+	mkdir -p $(TEST_BIN_DIR)
+	$(CXX) $(CXXFLAGS) -I $(GTEST_DIR)/include -c -o obj/euclidean_distance_test.o $(TEST_DIR)/euclidean_distance_test.cc
+	$(CXX) $(CXXFLAGS) -o $(TEST_BIN_DIR)/euclidean_distance_test obj/gtest_main.o obj/gtest-all.o obj/euclidean_distance_test.o -pthread
 
 $(TEST_BIN_DIR)/flat_hash_table_test: $(TEST_DIR)/flat_hash_table_test.cc $(ALL_HEADERS) obj/gtest-all.o obj/gtest_main.o
 	mkdir -p $(TEST_BIN_DIR)
@@ -96,8 +101,9 @@ $(TEST_BIN_DIR)/data_transformation_test: $(TEST_DIR)/data_transformation_test.c
 	$(CXX) $(CXXFLAGS) -I $(GTEST_DIR)/include -c -o obj/data_transformation_test.o $(TEST_DIR)/data_transformation_test.cc
 	$(CXX) $(CXXFLAGS) -o $(TEST_BIN_DIR)/data_transformation_test obj/gtest_main.o obj/gtest-all.o obj/data_transformation_test.o -pthread
 
-run_all_tests: $(TEST_BIN_DIR)/cosine_distance_test $(TEST_BIN_DIR)/flat_hash_table_test $(TEST_BIN_DIR)/probing_hash_table_test $(TEST_BIN_DIR)/stl_hash_table_test $(TEST_BIN_DIR)/composite_hash_table_test $(TEST_BIN_DIR)/polytope_hash_test $(TEST_BIN_DIR)/hyperplane_hash_test $(TEST_BIN_DIR)/lsh_table_test $(TEST_BIN_DIR)/heap_test $(TEST_BIN_DIR)/incremental_sorter_test $(TEST_BIN_DIR)/nn_query_test $(TEST_BIN_DIR)/cpp_wrapper_test
+run_all_tests: $(TEST_BIN_DIR)/cosine_distance_test $(TEST_BIN_DIR)/euclidean_distance_test $(TEST_BIN_DIR)/flat_hash_table_test $(TEST_BIN_DIR)/probing_hash_table_test $(TEST_BIN_DIR)/stl_hash_table_test $(TEST_BIN_DIR)/composite_hash_table_test $(TEST_BIN_DIR)/polytope_hash_test $(TEST_BIN_DIR)/hyperplane_hash_test $(TEST_BIN_DIR)/lsh_table_test $(TEST_BIN_DIR)/heap_test $(TEST_BIN_DIR)/incremental_sorter_test $(TEST_BIN_DIR)/nn_query_test $(TEST_BIN_DIR)/cpp_wrapper_test
 	./$(TEST_BIN_DIR)/cosine_distance_test
+	./$(TEST_BIN_DIR)/euclidean_distance_test
 	./$(TEST_BIN_DIR)/flat_hash_table_test
 	./$(TEST_BIN_DIR)/probing_hash_table_test
 	./$(TEST_BIN_DIR)/stl_hash_table_test
