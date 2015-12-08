@@ -26,7 +26,7 @@ neighbor accuracy (running on a reasonably modern desktop CPU). For more details
 
 ### Documentation
 
-See the [[wiki]], or the docs generated using [Doxygen](http://www.stack.nl/~dimitri/doxygen/).
+See the [wiki](https://github.com/ludwigschmidt/falconn/wiki), or the [docs](http://falconn-lib.org/docs/namespacefalconn.html) generated using [Doxygen](http://www.stack.nl/~dimitri/doxygen/).
 
 ### Questions
 
@@ -36,7 +36,7 @@ If you have questions about using FALCONN, we would be happy to help. Please sen
 
 FALCONN is mainly developed by [Ilya Razenshteyn](http://www.ilyaraz.org/) and [Ludwig Schmidt](http://people.csail.mit.edu/ludwigs/).
 FALCONN has grown out of a research project with our collaborators [Alexandr Andoni](http://www.mit.edu/~andoni/), [Piotr Indyk](https://people.csail.mit.edu/indyk/), and [Thijs Laarhoven](http://thijs.com/).
-Many of the ideas used in FALCONN were proposed in research papers over the past 20 years (see the [documentation](wiki)).
+Many of the ideas used in FALCONN were proposed in research papers over the past 20 years (see the [documentation](https://github.com/ludwigschmidt/falconn/wiki)).
 
 ### License
 
