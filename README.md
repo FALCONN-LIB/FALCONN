@@ -32,6 +32,8 @@ See the [wiki](https://github.com/ludwigschmidt/falconn/wiki), or the [docs](htt
 
 If you have questions about using FALCONN, we would be happy to help. Please send an email to _falconn.lib@gmail.com_.
 
+Besides that, see [Frequently Asked Questions](https://github.com/ludwigschmidt/falconn/wiki/FAQ).
+
 ### Authors
 
 FALCONN is mainly developed by [Ilya Razenshteyn](http://www.ilyaraz.org/) and [Ludwig Schmidt](http://people.csail.mit.edu/ludwigs/).
