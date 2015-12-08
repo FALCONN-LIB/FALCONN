@@ -54,6 +54,9 @@ struct PointTypeTraits<DenseVector<CoordinateType>> {
 /// or double (i.e., use SparseVector<float> or SparseVector<double>). In most
 /// cases, float (single precision) should be sufficient.
 ///
+/// The elements of the vector must be sorted by the index (the first
+/// component of the pair).
+///
 /// Optionally, you can also change the type of the coordinate indices. This
 /// might be useful if you have indices that fit into an int16_t and you want
 /// to save memory.
