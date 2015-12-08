@@ -7,8 +7,8 @@ The goal of FALCONN is to provide very efficient and well-tested implementations
 Currently, FALCONN supports two LSH families for the [cosine similarity](https://en.wikipedia.org/wiki/Cosine_similarity): hyperplane LSH and cross polytope LSH.
 Both hash families are implemented with multi-probe LSH in order to minimize memory usage.
 Moreover, FALCONN is optimized for both dense and sparse data.
-Despite being desinged for the cosine similarity, FALCONN often can be used to handle
-the general Euclidean distance.
+Despite being designed for the cosine similarity, FALCONN often can be used to handle
+the _general Euclidean distance_.
 
 FALCONN is written in C++ and consists of several modular core classes with a convenient wrapper around them.
 Many mathematical operations in FALCONN are vectorized through the [Eigen](http://eigen.tuxfamily.org/index.php?title=Main_Page) and [FFHT](https://github.com/FALCONN-LIB/FFHT) libraries.
