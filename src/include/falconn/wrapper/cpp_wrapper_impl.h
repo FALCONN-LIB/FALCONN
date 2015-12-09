@@ -336,7 +336,7 @@ template<typename PointType, typename KeyType = int32_t>
   }
   result.l = 10;
   int_fast32_t number_of_hash_bits = 1;
-  while (((KeyType)1 << (number_of_hash_bits + 2)) <= dataset_size) {
+  while ((static_cast<KeyType>(1) << (number_of_hash_bits + 2)) <= dataset_size) {
     ++number_of_hash_bits;
   }
   compute_number_of_hash_functions<PointType>(number_of_hash_bits, &result);
