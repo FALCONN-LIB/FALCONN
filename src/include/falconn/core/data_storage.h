@@ -193,6 +193,98 @@ class ArrayDataStorage {
   const std::vector<PointType>& data_;
 };
 
+
+template<
+typename PointType,
+typename Transformation,
+typename InnerDataStorage,
+typename KeyType = int32_t>
+class TransformedDataStorage {
+ public:
+  class FullSequenceIterator {
+   public:
+    FullSequenceIterator(const TransformedDataStorage& parent)
+        : parent_(&parent), iter_(parent.storage_.get_full_sequence()) {}
+    
+    FullSequenceIterator() {}
+
+    const PointType& get_point() {
+      tmp_point_ = iter_.get_point();
+      parent_->transformation_.apply(&tmp_point_);
+      return tmp_point_;
+    }
+
+    const KeyType& get_key() const {
+      return iter_.get_key();
+    }
+
+    bool is_valid() const {
+      return iter_.is_valid();
+    }
+    
+    void operator ++ () {
+      ++iter_;
+    }
+   
+   private:
+    const TransformedDataStorage* parent_ = nullptr;
+    typename InnerDataStorage::FullSequenceIterator iter_;
+    PointType tmp_point_;
+  };
+
+  class SubsequenceIterator {
+   public:
+    SubsequenceIterator(const TransformedDataStorage& parent,
+                        const std::vector<KeyType>& keys)
+        : parent_(&parent), iter_(parent.storage_.get_sub_sequence(keys)) {}
+    
+    SubsequenceIterator() {}
+    
+    const PointType& get_point() {
+      tmp_point_ = iter_.get_point();
+      parent_->transformation_->apply(&tmp_point_);
+      return tmp_point_;
+    }
+
+    const KeyType& get_key() const {
+      return iter_.get_key();
+    }
+
+    bool is_valid() const {
+      return iter_.is_valid();
+    }
+    
+    void operator ++ () {
+      ++iter_;
+    }
+
+   private:
+    const TransformedDataStorage* parent_ = nullptr;
+    typename InnerDataStorage::SubsequenceIterator iter_;
+    PointType tmp_point_;
+  };
+
+  TransformedDataStorage(const Transformation& transformation,
+                         const InnerDataStorage storage)
+      : transformation_(transformation), storage_(storage) {}
+  
+  int_fast64_t size() const {
+    return storage_.size();
+  }
+  
+  SubsequenceIterator get_subsequence(const std::vector<KeyType>& keys) const {
+    return SubsequenceIterator(keys, *this);
+  }
+
+  FullSequenceIterator get_full_sequence() const {
+    return FullSequenceIterator(*this);
+  }
+
+ private:
+  const Transformation& transformation_;
+  const InnerDataStorage& storage_;
+};
+
 }  // namespace core
 }  // namespace falconn
 

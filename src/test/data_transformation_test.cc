@@ -1,6 +1,7 @@
 #include "falconn/core/data_transformation.h"
 
 #include <memory>
+#include <vector>
 
 #include "gtest/gtest.h"
 
@@ -15,6 +16,7 @@ using fc::ComposedTransformation;
 using fc::IdentityTransformation;
 using fc::NormalizingTransformation;
 using std::vector;
+
 
 TEST(DataTransformationTest, IdentityTest1) {
   typedef DenseVector<float> Vec;

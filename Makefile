@@ -101,7 +101,12 @@ $(TEST_BIN_DIR)/data_transformation_test: $(TEST_DIR)/data_transformation_test.c
 	$(CXX) $(CXXFLAGS) -I $(GTEST_DIR)/include -c -o obj/data_transformation_test.o $(TEST_DIR)/data_transformation_test.cc
 	$(CXX) $(CXXFLAGS) -o $(TEST_BIN_DIR)/data_transformation_test obj/gtest_main.o obj/gtest-all.o obj/data_transformation_test.o -pthread
 
-run_all_tests: $(TEST_BIN_DIR)/cosine_distance_test $(TEST_BIN_DIR)/euclidean_distance_test $(TEST_BIN_DIR)/flat_hash_table_test $(TEST_BIN_DIR)/probing_hash_table_test $(TEST_BIN_DIR)/stl_hash_table_test $(TEST_BIN_DIR)/composite_hash_table_test $(TEST_BIN_DIR)/polytope_hash_test $(TEST_BIN_DIR)/hyperplane_hash_test $(TEST_BIN_DIR)/lsh_table_test $(TEST_BIN_DIR)/heap_test $(TEST_BIN_DIR)/incremental_sorter_test $(TEST_BIN_DIR)/nn_query_test $(TEST_BIN_DIR)/cpp_wrapper_test
+$(TEST_BIN_DIR)/data_storage_test: $(TEST_DIR)/data_storage_test.cc $(ALL_HEADERS) obj/gtest-all.o obj/gtest_main.o
+	mkdir -p $(TEST_BIN_DIR)
+	$(CXX) $(CXXFLAGS) -I $(GTEST_DIR)/include -c -o obj/data_storage_test.o $(TEST_DIR)/data_storage_test.cc
+	$(CXX) $(CXXFLAGS) -o $(TEST_BIN_DIR)/data_storage_test obj/gtest_main.o obj/gtest-all.o obj/data_storage_test.o -pthread
+
+run_all_tests: $(TEST_BIN_DIR)/cosine_distance_test $(TEST_BIN_DIR)/euclidean_distance_test $(TEST_BIN_DIR)/flat_hash_table_test $(TEST_BIN_DIR)/probing_hash_table_test $(TEST_BIN_DIR)/stl_hash_table_test $(TEST_BIN_DIR)/composite_hash_table_test $(TEST_BIN_DIR)/polytope_hash_test $(TEST_BIN_DIR)/hyperplane_hash_test $(TEST_BIN_DIR)/lsh_table_test $(TEST_BIN_DIR)/heap_test $(TEST_BIN_DIR)/incremental_sorter_test $(TEST_BIN_DIR)/nn_query_test $(TEST_BIN_DIR)/cpp_wrapper_test $(TEST_BIN_DIR)/data_transformation_test $(TEST_BIN_DIR)/data_storage_test
 	./$(TEST_BIN_DIR)/cosine_distance_test
 	./$(TEST_BIN_DIR)/euclidean_distance_test
 	./$(TEST_BIN_DIR)/flat_hash_table_test
@@ -115,3 +120,5 @@ run_all_tests: $(TEST_BIN_DIR)/cosine_distance_test $(TEST_BIN_DIR)/euclidean_di
 	./$(TEST_BIN_DIR)/incremental_sorter_test
 	./$(TEST_BIN_DIR)/nn_query_test
 	./$(TEST_BIN_DIR)/cpp_wrapper_test
+	./$(TEST_BIN_DIR)/data_transformation_test
+	./$(TEST_BIN_DIR)/data_storage_test
