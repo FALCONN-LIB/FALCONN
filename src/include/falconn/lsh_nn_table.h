@@ -187,7 +187,12 @@ enum class DistanceFunction {
   /// The distance between p and q is -<p, q>. For unit vectors p and q,
   /// this means that the nearest neighbor to q has the smallest angle with q.
   ///
-  NegativeInnerProduct = 1,  
+  NegativeInnerProduct = 1,
+
+  ///
+  /// The distance is **squared** Euclidean distance
+  ///
+  EuclideanSquared = 2
 };
 
 

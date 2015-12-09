@@ -4,6 +4,7 @@
 #include "../core/composite_hash_table.h"
 #include "../core/cosine_distance.h"
 #include "../core/data_storage.h"
+#include "../core/euclidean_distance.h"
 #include "../core/hyperplane_hash.h"
 #include "../core/lsh_table.h"
 #include "../core/nn_query.h"
@@ -23,6 +24,7 @@ template<typename CoordinateType>
 class PointTypeTraitsInternal<DenseVector<CoordinateType>> {
  public:
   typedef core::CosineDistanceDense<CoordinateType> CosineDistance;
+  typedef core::EuclideanDistanceDense<CoordinateType> EuclideanDistance;
   template<typename HashType> using
       HPHash = core::HyperplaneHashDense<CoordinateType, HashType>;
   template<typename HashType> using
@@ -42,6 +44,7 @@ template<typename CoordinateType, typename IndexType>
 class PointTypeTraitsInternal<SparseVector<CoordinateType, IndexType>> {
  public:
   typedef core::CosineDistanceSparse<CoordinateType, IndexType> CosineDistance;
+  typedef core::EuclideanDistanceSparse<CoordinateType, IndexType> EuclideanDistance;
   template<typename HashType> using
       HPHash = core::HyperplaneHashSparse<CoordinateType, HashType, IndexType>;
   template<typename HashType> using
@@ -337,24 +340,37 @@ std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> construct_table(
 
   // TODO: can we allow Unknown here, but then allow only to return all the
   // (unique) candidates?
-  if (params.distance_function != DistanceFunction::NegativeInnerProduct) {
+  if (params.distance_function != DistanceFunction::NegativeInnerProduct
+   && params.distance_function != DistanceFunction::EuclideanSquared) {
     throw LSHNNTableSetupError("Unknown distance function. Maybe you forgot to "
         "set the distance function in the parameter struct?");
   }
 
   // TODO: automatically adapt to 64 bit if necessary
   typedef uint32_t HashType;
-  typedef typename wrappers::PointTypeTraitsInternal<PointType>::CosineDistance
-      DistanceFunc;
 
   if (params.lsh_family == LSHFamily::Hyperplane) {
     typedef typename wrappers::PointTypeTraitsInternal<PointType>::template
         HPHash<HashType> LSH;
     std::unique_ptr<LSH> lsh(new LSH(params.dimension, params.k, params.l,
                                      params.seed ^ 93384688));
-    return std::move(wrappers::construction_helper<PointType, KeyType,
-        PointSet, DistanceFunc, LSH, HashType>(points, params,
-        std::move(lsh)));
+    if (params.distance_function == DistanceFunction::NegativeInnerProduct) {
+      typedef typename wrappers::PointTypeTraitsInternal<PointType>::CosineDistance
+	DistanceFunc;
+      return std::move(wrappers::construction_helper<PointType, KeyType,
+		       PointSet, DistanceFunc, LSH, HashType>(points, params,
+							      std::move(lsh)));
+    }
+    else if (params.distance_function == DistanceFunction::EuclideanSquared) {
+      typedef typename wrappers::PointTypeTraitsInternal<PointType>::EuclideanDistance
+	DistanceFunc;
+      return std::move(wrappers::construction_helper<PointType, KeyType,
+		       PointSet, DistanceFunc, LSH, HashType>(points, params,
+							      std::move(lsh)));
+    }
+    else {
+      throw LSHNNTableSetupError("should not have reached here");
+    }
   } else if (params.lsh_family == LSHFamily::CrossPolytope) {
     if (params.num_rotations < 0) {
       throw LSHNNTableSetupError("The number of pseudo-random rotations for "
@@ -375,8 +391,23 @@ std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> construct_table(
     std::unique_ptr<LSH> lsh(std::move(
         wrappers::PointTypeTraitsInternal<PointType>::template
             construct_cp_hash<HashType>(params)));
-    return std::move(wrappers::construction_helper<PointType, KeyType, PointSet,
-        DistanceFunc, LSH, HashType>(points, params, std::move(lsh)));
+    if (params.distance_function == DistanceFunction::NegativeInnerProduct) {
+      typedef typename wrappers::PointTypeTraitsInternal<PointType>::CosineDistance
+	DistanceFunc;
+      return std::move(wrappers::construction_helper<PointType, KeyType,
+		       PointSet, DistanceFunc, LSH, HashType>(points, params,
+							      std::move(lsh)));
+    }
+    else if (params.distance_function == DistanceFunction::EuclideanSquared) {
+      typedef typename wrappers::PointTypeTraitsInternal<PointType>::EuclideanDistance
+	DistanceFunc;
+      return std::move(wrappers::construction_helper<PointType, KeyType,
+		       PointSet, DistanceFunc, LSH, HashType>(points, params,
+							      std::move(lsh)));
+    }
+    else {
+      throw LSHNNTableSetupError("should not have reached here");
+    }
   } else {
     throw LSHNNTableSetupError("Unknown hash family. Maybe you forgot to set "
         "the hash family in the parameter struct?");
