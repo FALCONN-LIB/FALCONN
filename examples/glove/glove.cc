@@ -17,10 +17,8 @@
  *     sparse data
  *
  * The code sets the number of probes automatically. Also, it recenters the
- * dataset for speeding-up hashing. In reality, if you would like to use the
- * original vectors to compute distances, you should store a spare copy of the
- * dataset and use it together with one of the get_candidates_* functions during
- * the query.
+ * dataset for speeding-up hashing. Since after recentering vectors are not
+ * unit anymore we should use the Euclidean distance in the data structure.
  */
 
 #include <falconn/lsh_nn_table.h>
@@ -61,9 +59,9 @@ using falconn::LSHNearestNeighborTable;
 typedef DenseVector<float> Point;
 
 const string FILE_NAME = "dataset/glove.840B.300d.dat";
-const int NUM_QUERIES = 1000;
+const int NUM_QUERIES = 100;
 const int SEED = 4057218;
-const int NUM_HASH_TABLES = 70;
+const int NUM_HASH_TABLES = 10;
 const int NUM_HASH_BITS = 20;
 const int NUM_ROTATIONS = 1;
 
@@ -209,7 +207,8 @@ int find_num_probes(LSHNearestNeighborTable<Point> *table,
 		    const vector<int> &answers,
 		    int start_num_probes) {
   int num_probes = start_num_probes;
-  for (;;) {      
+  for (;;) {
+    cout << "trying " << num_probes << " probes" << endl;
     double precision =
       evaluate_num_probes(table, queries, answers, num_probes);
     if (precision >= 0.9) {
@@ -223,6 +222,7 @@ int find_num_probes(LSHNearestNeighborTable<Point> *table,
 
   while (r - l > 1) {
     int num_probes = (l + r) / 2;
+    cout << "trying " << num_probes << " probes" << endl;
     double precision =
       evaluate_num_probes(table, queries, answers, num_probes);
     if (precision >= 0.9) {
@@ -233,8 +233,6 @@ int find_num_probes(LSHNearestNeighborTable<Point> *table,
     }
   }
 
-  cout << r << " probes" << endl;
-
   return r;
 }
 
@@ -242,27 +240,30 @@ int main() {
   try {
     vector<Point> dataset, queries;
     vector<int> answers;
-    
+
+    // read the dataset
     cout << "reading points" << endl;
     read_dataset(FILE_NAME, &dataset);
     cout << dataset.size() << " points read" << endl;
-    
+
+    // normalize the data points
     cout << "normalizing points" << endl;
     normalize(&dataset); 
     cout << "done" << endl;
 
+    // find the center of mass
     Point center = dataset[0];
     for (size_t i = 1; i < dataset.size(); ++i) {
       center += dataset[i];
     }
     center /= dataset.size();
 
-    cout << center.norm() << endl;
-
+    // selecting NUM_QUERIES data points as queries
     cout << "selecting " << NUM_QUERIES << " queries" << endl;
     gen_queries(&dataset, &queries);
     cout << "done" << endl;
 
+    // running the linear scan
     cout << "running linear scan (to generate nearest neighbors)" << endl;
     auto t1 = high_resolution_clock::now();
     gen_answers(dataset, queries, &answers);
@@ -271,22 +272,22 @@ int main() {
     cout << "done" << endl;
     cout << elapsed_time / queries.size() << " s per query" << endl;
 
+    // re-centering the data to make it more isotropic
     cout << "re-centering" << endl;
     for (auto &datapoint: dataset) {
       datapoint -= center;
-      datapoint.normalize();
     }
     for (auto &query: queries) {
       query -= center;
-      query.normalize();
     }
     cout << "done" << endl;
 
+    // setting parameters and constructing the table
     LSHConstructionParameters params;
     params.dimension = dataset[0].size();
     params.lsh_family = LSHFamily::CrossPolytope;
     params.l = NUM_HASH_TABLES;
-    params.distance_function = DistanceFunction::NegativeInnerProduct;
+    params.distance_function = DistanceFunction::EuclideanSquared;
     compute_number_of_hash_functions<Point>(NUM_HASH_BITS, &params);
     params.num_rotations = NUM_ROTATIONS;
     cout << "building the index based on the cross-polytope LSH" << endl;
@@ -297,7 +298,14 @@ int main() {
     cout << "done" << endl;
     cout << "construction time: " << elapsed_time << endl;
 
+    // finding the number of probes via the binary search
+    cout << "finding the appropriate number of probes" << endl;
     int num_probes = find_num_probes(&*table, queries, answers, params.l);
+    cout << "done" << endl;
+    cout << num_probes << " probes" << endl;
+
+    // executing the queries using the found number of probes to gather
+    // statistics
     table->reset_query_statistics();
     double score = evaluate_query_time(&*table, queries, answers, num_probes);
     auto statistics = table->get_query_statistics();
