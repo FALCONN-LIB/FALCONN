@@ -317,6 +317,32 @@ void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
       number_of_hash_bits, params);
 }
 
+template<typename PointType, typename KeyType = int32_t>
+  LSHConstructionParameters tune_parameters(KeyType dataset_size,
+					    int_fast32_t dimension,
+					    DistanceFunction distance_function,
+					    bool is_sufficiently_dense = false) {
+  const int HIGH_DIMENSION = 1024;
+  LSHConstructionParameters result;
+  result.dimension = dimension;
+  result.distance_function = distance_function;
+  result.lsh_family = LSHFamily::CrossPolytope;
+  if (result.dimension >= HIGH_DIMENSION) {
+    result.feature_hashing_dimension = HIGH_DIMENSION;
+  }
+  result.num_rotations = 2;
+  if (is_sufficiently_dense) {
+    result.num_rotations = 1;
+  }
+  result.l = 10;
+  int_fast32_t number_of_hash_bits = 1;
+  while ((1 << (number_of_hash_bits + 2)) <= dataset_size) {
+    ++number_of_hash_bits;
+  }
+  compute_number_of_hash_functions<PointType>(number_of_hash_bits, &result);
+  return result;
+}
+
 
 template<
 typename PointType,

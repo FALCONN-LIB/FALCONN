@@ -4,6 +4,10 @@
  * LSH table with the following goal in mind: for a random subset of NUM_QUERIES
  * points, we would like to find a nearest neighbor (w.r.t. cosine similarity)
  * with probability at least 0.9.
+ * 
+ * There is a function tune_parameters, which you can use to set the parameters
+ * automatically. However, we recommend to set parameters manually to maximize
+ * the performance.
  *
  * You need to specify:
  *   - NUM_HASH_TABLES, which affects the memory usage: the larger it is, the
@@ -56,6 +60,7 @@ using falconn::DistanceFunction;
 using falconn::LSHConstructionParameters;
 using falconn::LSHFamily;
 using falconn::LSHNearestNeighborTable;
+using falconn::tune_parameters;
 
 typedef DenseVector<float> Point;
 
@@ -291,6 +296,14 @@ int main() {
     params.distance_function = DistanceFunction::EuclideanSquared;
     compute_number_of_hash_functions<Point>(NUM_HASH_BITS, &params);
     params.num_rotations = NUM_ROTATIONS;
+    /*
+     * If you want an easy way out use the following instead of the above.
+     * LSHConstructionParameters params
+     *   = tune_parameters<Point>(dataset.size(),
+     *			          dataset[0].size(),
+     *			          DistanceFunction::EuclideanSquared,
+     *			          true);
+     */
     cout << "building the index based on the cross-polytope LSH" << endl;
     t1 = high_resolution_clock::now();
     auto table = construct_table<Point>(dataset, params);
