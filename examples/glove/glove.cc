@@ -1,20 +1,21 @@
 /*
  * An example program that takes a GloVe
- * (http://nlp.stanford.edu/projects/glove/) dataset and builds a cross polytope
- * LSH table with the following property: for a random subset of NUM_QUERIES
+ * (http://nlp.stanford.edu/projects/glove/) dataset and builds a cross-polytope
+ * LSH table with the following goal in mind: for a random subset of NUM_QUERIES
  * points, we would like to find a nearest neighbor (w.r.t. cosine similarity)
  * with probability at least 0.9.
  *
  * You need to specify:
- *   - NUM_HASH_TABLES, which affects the memory usage, that larger it is, the
+ *   - NUM_HASH_TABLES, which affects the memory usage: the larger it is, the
  *     better (unless it's too large). Despite that, it's usually a good idea
  *     to start with say 10 tables, and then increase it gradually, while
  *     observing the effect it makes.
  *   - NUM_HASH_BITS, that controls the number of buckets per table,
- *     usually it should be around the logarithm of the number of data points
+ *     usually it should be around the binary logarithm of the number of data
+ *     points
  *   - NUM_ROTATIONS, which controls the number of pseudo-random rotations for
  *     the cross-polytope LSH, set it to 1 for the dense data, and 2 for the
- *     sparse data
+ *     sparse data (for GloVe we set it to 1)
  *
  * The code sets the number of probes automatically. Also, it recenters the
  * dataset for speeding-up hashing. Since after recentering vectors are not
