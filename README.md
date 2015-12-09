@@ -1,4 +1,4 @@
-## FALCONN - FAst Lookups of COsine Nearest Neighbors
+### FALCONN - FAst Lookups of Cosine and Other Nearest Neighbors
 
 FALCONN is a library with algorithms for the nearest neighbor search problem. The algorithms in FALCONN are based on
 [Locality-Sensitve Hashing](https://en.wikipedia.org/wiki/Locality-sensitive_hashing) (LSH), which is a popular class of methods for nearest neighbor search in high-dimensional spaces.
