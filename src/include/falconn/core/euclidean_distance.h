@@ -26,28 +26,28 @@ struct EuclideanDistanceSparse {
 
     while (ii1 < p1size || ii2 < p2size) {
       if (ii2 == p2size) {
-	x = p1[ii1].second;
-	res += x * x;
-	++ii1;
-	continue;
+        x = p1[ii1].second;
+        res += x * x;
+        ++ii1;
+        continue;
       }
       if (ii1 == p1size) {
-	x = p2[ii2].second;
-	res += x * x;
-	++ii2;
-	continue;
+        x = p2[ii2].second;
+        res += x * x;
+        ++ii2;
+        continue;
       }
       if (p1[ii1].first < p2[ii2].first) {
-	x = p1[ii1].second;
-	res += x * x;
-	++ii1;
-	continue;
+        x = p1[ii1].second;
+        res += x * x;
+        ++ii1;
+        continue;
       }
       if (p2[ii2].first < p1[ii1].first) {
-	x = p2[ii2].second;
-	res += x * x;
-	++ii2;
-	continue;
+        x = p2[ii2].second;
+        res += x * x;
+        ++ii2;
+        continue;
       }
       x = p1[ii1].second;
       x -= p2[ii2].second;
