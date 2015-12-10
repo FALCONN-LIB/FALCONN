@@ -1,3 +1,5 @@
+The MIT License (MIT)
+
 Copyright (c) 2015 Alexandr Andoni, Piotr Indyk, Thijs Laarhoven,
 Ilya Razenshteyn, Ludwig Schmidt
 
