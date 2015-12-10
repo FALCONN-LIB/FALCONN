@@ -267,6 +267,27 @@ template<typename PointType>
 void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
                                       LSHConstructionParameters* params);
 
+///
+/// A function that sets all the parameters for you! You just need to specify:
+/// - the size of your dataset
+/// - the dimension
+/// - if your dataset is sufficiently dense (if this is the case, one can save
+///   on pseudo-random rotations)
+///
+/// It should set _reasonable_ parameters for _nice enough_ datasets. If your
+/// dataset is tricky, or you want to maximize the performance, you need to
+/// set the parameters by hand. See the GloVe example to make sense of the
+/// FALCONN parameters.
+///
+/// In particular, the default setting should give very fast preprocessing
+/// time. If you are willing to spend more time building the index to improve
+/// the query time, you should increase l (the number of tables).
+///
+template<typename PointType, typename KeyType = int32_t>
+  LSHConstructionParameters tune_parameters(KeyType dataset_size,
+					    int_fast32_t dimension,
+					    DistanceFunction distance_function,
+					    bool is_sufficiently_dense = false);
 
 ///
 /// An exception class for errors occuring while setting up the LSH table
