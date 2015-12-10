@@ -64,9 +64,10 @@ Vector size | FFHT (float) | FFHT (double) | FFTW 3.3.4 (float) | FFTW 3.3.4 (do
 
 For some versions of OS X the native `clang` compiler (that mimicks `gcc`) may
 not recognize the availability of AVX. A solution for this problem is to use a
-genuine `gcc` (say from [Homebrew](http://brew.sh/)).
+genuine `gcc` (say from [Homebrew](http://brew.sh/)) or to use `-march=corei7-avx`
+instead of `-march=native` for compiler flags.
 
-A symptom of this happening is the undefined macros `__AVX__`.
+A symptom of the above happening is the undefined macros `__AVX__`.
 
 ## Related Work
 
@@ -92,7 +93,13 @@ Thanks to:
 * Dhiraj Holden
 * Justin Holmgren
 * Aleksandar Ivanovic
+* Vladislav Isenbaev
+* Jacob Kogler
+* Ilya Kornakov
+* Anton Lapshin
 * Rio LaVigne
+* Oleg Martynov
+* Linar Mikeev
 * Cameron Musco
 * Sam Park
 * Sunoo Park
