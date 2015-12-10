@@ -317,13 +317,12 @@ void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
       number_of_hash_bits, params);
 }
 
-template<
-typename PointType,
-typename KeyType>
-LSHConstructionParameters tune_parameters(int_fast64_t dataset_size,
-		                                      int_fast32_t dimension,
-		                                      DistanceFunction distance_function,
-		                                      bool is_sufficiently_dense) {
+template<typename PointType>
+  LSHConstructionParameters
+  set_up_parameters(int_fast64_t dataset_size,
+		    int_fast32_t dimension,
+		    DistanceFunction distance_function,
+		    bool is_sufficiently_dense) {
   const int HIGH_DIMENSION = 1024;
   LSHConstructionParameters result;
   result.dimension = dimension;

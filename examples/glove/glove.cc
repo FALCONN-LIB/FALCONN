@@ -5,9 +5,9 @@
  * points, we would like to find a nearest neighbor (w.r.t. cosine similarity)
  * with probability at least 0.9.
  * 
- * There is a function tune_parameters, which you can use to set the parameters
- * automatically. However, we recommend to set parameters manually to maximize
- * the performance.
+ * There is a function set_up_parameters, which you can use to set the
+ * parameters automatically (in the code, we show how it could have been used).
+ * However, we recommend to set parameters manually to maximize the performance.
  *
  * You need to specify:
  *   - NUM_HASH_TABLES, which affects the memory usage: the larger it is, the
@@ -22,7 +22,7 @@
  *     sparse data (for GloVe we set it to 1)
  *
  * The code sets the number of probes automatically. Also, it recenters the
- * dataset for speeding-up hashing. Since after recentering vectors are not
+ * dataset for improved partitioning. Since after recentering vectors are not
  * unit anymore we should use the Euclidean distance in the data structure.
  */
 
@@ -60,7 +60,7 @@ using falconn::DistanceFunction;
 using falconn::LSHConstructionParameters;
 using falconn::LSHFamily;
 using falconn::LSHNearestNeighborTable;
-using falconn::tune_parameters;
+using falconn::set_up_parameters;
 
 typedef DenseVector<float> Point;
 
@@ -297,13 +297,14 @@ int main() {
     compute_number_of_hash_functions<Point>(NUM_HASH_BITS, &params);
     params.num_rotations = NUM_ROTATIONS;
     /*
-     * If you want an easy way out use the following instead of the above.
-     * LSHConstructionParameters params
-     *   = tune_parameters<Point>(dataset.size(),
-     *			          dataset[0].size(),
-     *			          DistanceFunction::EuclideanSquared,
-     *			          true);
-     */
+      For an easy way out, you could have used the following.
+
+      LSHConstructionParameters params
+        = set_up_parameters<Point>(dataset.size(),
+				   dataset[0].size(),
+				   DistanceFunction::EuclideanSquared,
+				   true);
+    */
     cout << "building the index based on the cross-polytope LSH" << endl;
     t1 = high_resolution_clock::now();
     auto table = construct_table<Point>(dataset, params);
