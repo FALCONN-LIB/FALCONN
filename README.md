@@ -31,11 +31,12 @@ neighbor accuracy (running on a reasonably modern desktop CPU). For more details
 Maybe your question is already answered in our [Frequently Asked Questions](https://github.com/falconn-lib/falconn/wiki/FAQ).
 If you have additional questions about using FALCONN, we would be happy to help. Please send an email to falconn.lib@gmail.com.
 
-
 ### Authors
 
 FALCONN is mainly developed by [Ilya Razenshteyn](http://www.ilyaraz.org/) and [Ludwig Schmidt](http://people.csail.mit.edu/ludwigs/).
 FALCONN has grown out of a [research project](http://papers.nips.cc/paper/5893-practical-and-optimal-lsh-for-angular-distance) with our collaborators [Alexandr Andoni](http://www.mit.edu/~andoni/), [Piotr Indyk](https://people.csail.mit.edu/indyk/), and [Thijs Laarhoven](http://thijs.com/).
+
+Many of the ideas used in FALCONN were proposed in research papers over the past 20 years (see the [documentation](https://github.com/FALCONN-LIB/FALCONN/wiki/Bibliography)).
 
 ### License
 
