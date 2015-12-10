@@ -283,11 +283,15 @@ void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
 /// time. If you are willing to spend more time building the index to improve
 /// the query time, you should increase l (the number of tables).
 ///
-template<typename PointType, typename KeyType = int32_t>
-  LSHConstructionParameters tune_parameters(KeyType dataset_size,
-					    int_fast32_t dimension,
-					    DistanceFunction distance_function,
-					    bool is_sufficiently_dense = false);
+template<
+typename PointType,
+typename KeyType = int32_t>
+LSHConstructionParameters tune_parameters(
+    int_fast64_t dataset_size,
+	  int_fast32_t dimension,
+	  DistanceFunction distance_function,
+	  bool is_sufficiently_dense = false);
+
 
 ///
 /// An exception class for errors occuring while setting up the LSH table
