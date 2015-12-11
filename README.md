@@ -16,7 +16,7 @@ The core classes of FALCONN rely on [templates](https://en.wikipedia.org/wiki/An
 
 ### How to use FALCONN
 
-For now, we provide a C++ interface for FALCONN. In the future, we plan to support more programming languages such as [Python](https://www.python.org/)[(NumPy)](http://www.numpy.org/)
+For now, we provide a C++ interface for FALCONN. In the future, we plan to support more programming languages such as [Python](https://www.python.org/) [(NumPy)](http://www.numpy.org/)
 and [Julia](http://julialang.org/). For C++, FALCONN is a header-only library and has no dependencies besides Eigen (which is also header-only),
 so FALCONN is easy to set up. For further details, please see our [documentation](https://github.com/falconn-lib/falconn/wiki).
 
@@ -37,6 +37,12 @@ FALCONN is mainly developed by [Ilya Razenshteyn](http://www.ilyaraz.org/) and [
 FALCONN has grown out of a [research project](http://papers.nips.cc/paper/5893-practical-and-optimal-lsh-for-angular-distance) with our collaborators [Alexandr Andoni](http://www.mit.edu/~andoni/), [Piotr Indyk](https://people.csail.mit.edu/indyk/), and [Thijs Laarhoven](http://thijs.com/).
 
 Many of the ideas used in FALCONN were proposed in research papers over the past 20 years (see the [documentation](https://github.com/FALCONN-LIB/FALCONN/wiki/Bibliography)).
+
+If you want to cite FALCONN in a publication, here is the bibliographic information of  our research paper [(bibtex)](http://papers.nips.cc/paper/5893-practical-and-optimal-lsh-for-angular-distance/bibtex):
+
+> [Practical and Optimal LSH for Angular Distance](http://papers.nips.cc/paper/5893-practical-and-optimal-lsh-for-angular-distance)  
+> Alexandr Andoni, Piotr Indyk, Thijs Laarhoven, Ilya Razenshteyn, Ludwig Schmidt  
+> NIPS 2015
 
 ### License
 
