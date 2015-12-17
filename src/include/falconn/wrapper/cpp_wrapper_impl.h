@@ -12,7 +12,7 @@
 #include "../core/probing_hash_table.h"
 
 namespace falconn {
-namespace wrappers {
+namespace wrapper {
 
 template<typename PointType>
 struct PointTypeTraitsInternal {};
@@ -303,7 +303,7 @@ construction_helper(const PointSet& points,
 
 
 
-}  // namespace wrappers
+}  // namespace wrapper
 }  // namespace falconn
 
 
@@ -313,7 +313,7 @@ namespace falconn {
 template<typename PointType>
 void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
     LSHConstructionParameters* params) {
-  wrappers::ComputeNumberOfHashFunctions<PointType>::compute(
+  wrapper::ComputeNumberOfHashFunctions<PointType>::compute(
       number_of_hash_bits, params);
 }
 
@@ -377,21 +377,21 @@ std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> construct_table(
   typedef uint32_t HashType;
 
   if (params.lsh_family == LSHFamily::Hyperplane) {
-    typedef typename wrappers::PointTypeTraitsInternal<PointType>::template
+    typedef typename wrapper::PointTypeTraitsInternal<PointType>::template
         HPHash<HashType> LSH;
     std::unique_ptr<LSH> lsh(new LSH(params.dimension, params.k, params.l,
                                      params.seed ^ 93384688));
     if (params.distance_function == DistanceFunction::NegativeInnerProduct) {
-      typedef typename wrappers::PointTypeTraitsInternal<PointType>::CosineDistance
+      typedef typename wrapper::PointTypeTraitsInternal<PointType>::CosineDistance
 	DistanceFunc;
-      return std::move(wrappers::construction_helper<PointType, KeyType,
+      return std::move(wrapper::construction_helper<PointType, KeyType,
 		       PointSet, DistanceFunc, LSH, HashType>(points, params,
 							      std::move(lsh)));
     }
     else if (params.distance_function == DistanceFunction::EuclideanSquared) {
-      typedef typename wrappers::PointTypeTraitsInternal<PointType>::EuclideanDistance
+      typedef typename wrapper::PointTypeTraitsInternal<PointType>::EuclideanDistance
 	DistanceFunc;
-      return std::move(wrappers::construction_helper<PointType, KeyType,
+      return std::move(wrapper::construction_helper<PointType, KeyType,
 		       PointSet, DistanceFunc, LSH, HashType>(points, params,
 							      std::move(lsh)));
     }
@@ -413,22 +413,22 @@ std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> construct_table(
     // TODO: for sparse vectors, also check feature_hashing_dimension here (it
     // is checked in the CP hash class, but the error message is less verbose).
 
-    typedef typename wrappers::PointTypeTraitsInternal<PointType>::template
+    typedef typename wrapper::PointTypeTraitsInternal<PointType>::template
         CPHash<HashType> LSH;
     std::unique_ptr<LSH> lsh(std::move(
-        wrappers::PointTypeTraitsInternal<PointType>::template
+        wrapper::PointTypeTraitsInternal<PointType>::template
             construct_cp_hash<HashType>(params)));
     if (params.distance_function == DistanceFunction::NegativeInnerProduct) {
-      typedef typename wrappers::PointTypeTraitsInternal<PointType>::CosineDistance
+      typedef typename wrapper::PointTypeTraitsInternal<PointType>::CosineDistance
 	DistanceFunc;
-      return std::move(wrappers::construction_helper<PointType, KeyType,
+      return std::move(wrapper::construction_helper<PointType, KeyType,
 		       PointSet, DistanceFunc, LSH, HashType>(points, params,
 							      std::move(lsh)));
     }
     else if (params.distance_function == DistanceFunction::EuclideanSquared) {
-      typedef typename wrappers::PointTypeTraitsInternal<PointType>::EuclideanDistance
+      typedef typename wrapper::PointTypeTraitsInternal<PointType>::EuclideanDistance
 	DistanceFunc;
-      return std::move(wrappers::construction_helper<PointType, KeyType,
+      return std::move(wrapper::construction_helper<PointType, KeyType,
 		       PointSet, DistanceFunc, LSH, HashType>(points, params,
 							      std::move(lsh)));
     }
