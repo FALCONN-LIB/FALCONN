@@ -6,6 +6,7 @@
 #include "gtest/gtest.h"
 
 #include "falconn/core/composite_hash_table.h"
+#include "falconn/core/data_storage.h"
 #include "falconn/core/hyperplane_hash.h"
 #include "falconn/core/probing_hash_table.h"
 #include "test_utils.h"
@@ -18,6 +19,7 @@ using fc::DynamicLinearProbingHashTable;
 //using lsh::DynamicLSHTable;
 using fc::HyperplaneHashDense;
 using fc::HyperplaneHashSparse;
+using fc::PlainArrayDataStorage;
 using fc::StaticLSHTable;
 using fc::StaticLinearProbingHashTable;
 using fc::StaticCompositeHashTable;
@@ -415,4 +417,66 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest5) {
   query.get_candidates_with_duplicates(p1, l, -1, &res2);
   vector<int32_t> expected2 = {0, 0};
   check_result(make_pair(res2.begin(), res2.end()), expected2);
+}
+
+// Using a different DataStorage.
+TEST(LSHTableTest, LSHTableGetCandidatesTest6) {
+  typedef Eigen::Map<const DenseVector> ConstVectorMap;
+  const int dim = 4;
+  int k = 5;
+  int l = 2;
+  int seed = 65840120;
+  int table_size = 10;
+
+  float data[] = {1.0, 0.0, 0.0, 0.0,
+                  0.8, 0.2, 0.0, 0.0,
+                  0.0, 0.0, 1.0, 0.0};
+  int num_points = 3;
+
+  PlainArrayDataStorage<DenseVector, int32_t> ds(data, num_points, dim);
+
+  HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
+  StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
+  typedef StaticCompositeHashTable<uint32_t,
+                                   int32_t,
+                                   StaticLinearProbingHashTable<uint32_t>>
+          CompositeTableType;
+  CompositeTableType hash_table(l, &table_factory);
+  typedef StaticLSHTable<DenseVector,
+                         int32_t,
+                         HyperplaneHashDense<float>,
+                         uint32_t,
+                         CompositeTableType,
+                         PlainArrayDataStorage<DenseVector, int32_t>>
+          LSHTableType;
+  LSHTableType lsh_table(&lsh_object, &hash_table, ds);
+  LSHTableType::Query query(lsh_table);
+
+  vector<int32_t> res1;
+  ConstVectorMap p1(data, dim);
+  query.get_unique_candidates(p1, l, -1, &res1);
+  vector<int32_t> expected1 = {0, 1};
+  check_result(make_pair(res1.begin(), res1.end()), expected1);
+
+  vector<int32_t> res2;
+  ConstVectorMap p2(data + dim, dim);
+  query.get_unique_candidates(p2, l, -1, &res2);
+  vector<int32_t> expected2 = {0, 1};
+  check_result(make_pair(res2.begin(), res2.end()), expected2);
+
+  vector<int32_t> res3;
+  ConstVectorMap p3(data + 2 * dim, dim);
+  query.get_unique_candidates(p3, l, -1, &res3);
+  vector<int32_t> expected3 = {2};
+  check_result(make_pair(res3.begin(), res3.end()), expected3);
+
+  DenseVector p4(dim);
+  p4[0] = 0.0;
+  p4[1] = 0.0;
+  p4[2] = 0.0;
+  p4[3] = 1.0;
+  vector<int32_t> res4;
+  query.get_unique_candidates(p4, l, -1, &res4);
+  vector<int32_t> expected4 = {};
+  check_result(make_pair(res4.begin(), res4.end()), expected4);
 }

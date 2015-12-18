@@ -14,7 +14,7 @@ import_array();
 %}
 
 namespace std {
-  %template(ResultList) vector<int_fast64_t>;
+  %template(ResultList) vector<int32_t>;
 }
 
 %apply (double* IN_ARRAY1, int DIM1) {(const double* vec, int len)};
