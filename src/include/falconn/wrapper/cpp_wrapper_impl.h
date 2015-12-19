@@ -140,6 +140,76 @@ struct ComputeNumberOfHashFunctions<SparseVector<CoordinateType, IndexType>> {
   }
 };
 
+
+
+template<typename PointType>
+struct GetDefaultParameters {
+  static LSHConstructionParameters get(int_fast64_t, int_fast32_t,
+      DistanceFunction, bool) {
+    static_assert(FalseStruct<PointType>::value, "Point type not supported.");
+    LSHConstructionParameters tmp;
+    return tmp;
+  }
+  template<typename T> struct FalseStruct : std::false_type {};
+};
+
+template<typename CoordinateType>
+struct GetDefaultParameters<DenseVector<CoordinateType>> {
+  static LSHConstructionParameters get(int_fast64_t dataset_size,
+                                       int_fast32_t dimension,
+                                       DistanceFunction distance_function,
+                                       bool is_sufficiently_dense) {
+    LSHConstructionParameters result;
+    result.dimension = dimension;
+    result.distance_function = distance_function;
+    result.lsh_family = LSHFamily::CrossPolytope;
+    
+    result.num_rotations = 2;
+    if (is_sufficiently_dense) {
+      result.num_rotations = 1;
+    }
+
+    result.l = 10;
+    
+    int_fast32_t number_of_hash_bits = 1;
+    while ((1 << (number_of_hash_bits + 2)) <= dataset_size) {
+      ++number_of_hash_bits;
+    }
+    compute_number_of_hash_functions<DenseVector<CoordinateType>>(
+        number_of_hash_bits, &result);
+    
+    return result;
+  }
+};
+
+template<typename CoordinateType>
+struct GetDefaultParameters<SparseVector<CoordinateType>> {
+  static LSHConstructionParameters get(int_fast64_t dataset_size,
+                                       int_fast32_t dimension,
+                                       DistanceFunction distance_function,
+                                       bool) {
+    LSHConstructionParameters result;
+    result.dimension = dimension;
+    result.distance_function = distance_function;
+    result.lsh_family = LSHFamily::CrossPolytope;
+    result.feature_hashing_dimension = 1024;
+    result.num_rotations = 2;
+
+    result.l = 10;
+    
+    int_fast32_t number_of_hash_bits = 1;
+    while ((1 << (number_of_hash_bits + 2)) <= dataset_size) {
+      ++number_of_hash_bits;
+    }
+    compute_number_of_hash_functions<SparseVector<CoordinateType>>(
+        number_of_hash_bits, &result);
+    
+    return result;
+  }
+};
+
+
+
 template<
 typename PointType,
 typename KeyType,
@@ -318,30 +388,12 @@ void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
 }
 
 template<typename PointType>
-  LSHConstructionParameters
-  set_up_parameters(int_fast64_t dataset_size,
-		    int_fast32_t dimension,
-		    DistanceFunction distance_function,
-		    bool is_sufficiently_dense) {
-  const int HIGH_DIMENSION = 1024;
-  LSHConstructionParameters result;
-  result.dimension = dimension;
-  result.distance_function = distance_function;
-  result.lsh_family = LSHFamily::CrossPolytope;
-  if (result.dimension >= HIGH_DIMENSION) {
-    result.feature_hashing_dimension = HIGH_DIMENSION;
-  }
-  result.num_rotations = 2;
-  if (is_sufficiently_dense) {
-    result.num_rotations = 1;
-  }
-  result.l = 10;
-  int_fast32_t number_of_hash_bits = 1;
-  while ((1 << (number_of_hash_bits + 2)) <= dataset_size) {
-    ++number_of_hash_bits;
-  }
-  compute_number_of_hash_functions<PointType>(number_of_hash_bits, &result);
-  return result;
+LSHConstructionParameters set_up_parameters(int_fast64_t dataset_size,
+                                            int_fast32_t dimension,
+                                            DistanceFunction distance_function,
+                                            bool is_sufficiently_dense) {
+  return wrappers::GetDefaultParameters<PointType>::get(dataset_size, dimension,
+      distance_function, is_sufficiently_dense);
 }
 
 
@@ -382,20 +434,21 @@ std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> construct_table(
     std::unique_ptr<LSH> lsh(new LSH(params.dimension, params.k, params.l,
                                      params.seed ^ 93384688));
     if (params.distance_function == DistanceFunction::NegativeInnerProduct) {
-      typedef typename wrappers::PointTypeTraitsInternal<PointType>::CosineDistance
-	DistanceFunc;
+      typedef typename
+        wrappers::PointTypeTraitsInternal<PointType>::CosineDistance
+	      DistanceFunc;
       return std::move(wrappers::construction_helper<PointType, KeyType,
 		       PointSet, DistanceFunc, LSH, HashType>(points, params,
 							      std::move(lsh)));
     }
     else if (params.distance_function == DistanceFunction::EuclideanSquared) {
-      typedef typename wrappers::PointTypeTraitsInternal<PointType>::EuclideanDistance
-	DistanceFunc;
+      typedef typename
+          wrappers::PointTypeTraitsInternal<PointType>::EuclideanDistance
+	        DistanceFunc;
       return std::move(wrappers::construction_helper<PointType, KeyType,
 		       PointSet, DistanceFunc, LSH, HashType>(points, params,
 							      std::move(lsh)));
-    }
-    else {
+    } else {
       throw LSHNNTableSetupError("should not have reached here");
     }
   } else if (params.lsh_family == LSHFamily::CrossPolytope) {
@@ -419,20 +472,21 @@ std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> construct_table(
         wrappers::PointTypeTraitsInternal<PointType>::template
             construct_cp_hash<HashType>(params)));
     if (params.distance_function == DistanceFunction::NegativeInnerProduct) {
-      typedef typename wrappers::PointTypeTraitsInternal<PointType>::CosineDistance
-	DistanceFunc;
+      typedef typename
+          wrappers::PointTypeTraitsInternal<PointType>::CosineDistance
+	        DistanceFunc;
       return std::move(wrappers::construction_helper<PointType, KeyType,
 		       PointSet, DistanceFunc, LSH, HashType>(points, params,
 							      std::move(lsh)));
     }
     else if (params.distance_function == DistanceFunction::EuclideanSquared) {
-      typedef typename wrappers::PointTypeTraitsInternal<PointType>::EuclideanDistance
-	DistanceFunc;
+      typedef typename
+        wrappers::PointTypeTraitsInternal<PointType>::EuclideanDistance
+	      DistanceFunc;
       return std::move(wrappers::construction_helper<PointType, KeyType,
 		       PointSet, DistanceFunc, LSH, HashType>(points, params,
 							      std::move(lsh)));
-    }
-    else {
+    } else {
       throw LSHNNTableSetupError("should not have reached here");
     }
   } else {

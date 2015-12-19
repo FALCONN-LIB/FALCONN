@@ -13,6 +13,7 @@ using falconn::DistanceFunction;
 using falconn::LSHConstructionParameters;
 using falconn::LSHFamily;
 using falconn::LSHNearestNeighborTable;
+using falconn::set_up_parameters;
 using falconn::SparseVector;
 using std::make_pair;
 using std::unique_ptr;
@@ -226,4 +227,24 @@ TEST(WrapperTest, ComputeNumberOfHashFunctionsTest) {
   compute_number_of_hash_functions<VecSparse>(9, &params);
   EXPECT_EQ(2, params.k);
   EXPECT_EQ(4, params.last_cp_dimension);
+}
+
+TEST(WrapperTest, SetUpParametersTest1) {
+  typedef DenseVector<float> Vec;
+
+  LSHConstructionParameters params = set_up_parameters<Vec>(1000000, 128,
+      DistanceFunction::NegativeInnerProduct, true);
+
+  EXPECT_EQ(1, params.num_rotations);
+  EXPECT_EQ(-1, params.feature_hashing_dimension);
+}
+  
+TEST(WrapperTest, SetUpParametersTest2) {
+  typedef SparseVector<float> Vec;
+  
+  LSHConstructionParameters params = set_up_parameters<Vec>(1000000, 100000,
+      DistanceFunction::NegativeInnerProduct, true);
+  
+  EXPECT_EQ(2, params.num_rotations);
+  EXPECT_EQ(1024, params.feature_hashing_dimension);
 }
