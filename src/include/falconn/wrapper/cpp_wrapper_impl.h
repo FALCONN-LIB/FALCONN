@@ -83,8 +83,23 @@ class DataStorageAdapter<std::vector<PointType>> {
   template<typename KeyType>
   static std::unique_ptr<DataStorage<KeyType>> construct_data_storage(
       const std::vector<PointType>& points) {
-    std::unique_ptr<DataStorage<KeyType>> res(new core::ArrayDataStorage
-        <PointType, KeyType>(points));
+    std::unique_ptr<DataStorage<KeyType>> res(new DataStorage<KeyType>(points));
+    return std::move(res);
+  }
+};
+
+template<typename CoordinateType>
+class DataStorageAdapter<PlainArrayPointSet<CoordinateType>> {
+ public:
+  template<typename KeyType> using
+      DataStorage = core::PlainArrayDataStorage<DenseVector<CoordinateType>,
+          KeyType>;
+
+  template<typename KeyType>
+  static std::unique_ptr<DataStorage<KeyType>> construct_data_storage(
+      const PlainArrayPointSet<CoordinateType>& points) {
+    std::unique_ptr<DataStorage<KeyType>> res(new DataStorage<KeyType>(
+        points.data, points.num_points, points.dimension));
     return std::move(res);
   }
 };
@@ -272,7 +287,7 @@ construction_helper(const PointSet& points,
   typedef core::StaticLinearProbingHashTable<HashType, KeyType> HashTable;
   // TODO: should we go to the next prime here?
   std::unique_ptr<typename HashTable::Factory> factory(
-      new typename HashTable::Factory(2 * points.size()));
+      new typename HashTable::Factory(2 * data_storage->size()));
   
   typedef core::StaticCompositeHashTable<HashType, KeyType, HashTable>
       CompositeTable;

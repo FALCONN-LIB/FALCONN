@@ -303,11 +303,29 @@ class LSHNNTableSetupError : public FalconnError {
 
 
 ///
+/// A struct for wrapping point data stored in a single dense data array. The
+/// coordinate order is assumed to be point-by-point (row major), i.e., the
+/// first dimension coordinates belong to the first point and there are
+/// num_points points in total.
+///
+template<typename CoordinateType>
+struct PlainArrayPointSet {
+  const CoordinateType* data;
+  int_fast32_t num_points;
+  int_fast32_t dimension;
+};
+
+
+///
 /// Function for constructing an LSH table wrapper. The template parameters
 /// PointType and KeyType are as in LSHNearestNeighborTable above. The
 /// PointSet template parameter default is set so that a std::vector<PointType>
 /// can be passed as the set of points for which a LSH table should be
 /// constructed.
+/// 
+/// For dense data stored in a single large array, you can also use the
+/// PlainArrayPointSet struct as the PointSet template parameter in order to
+/// pass a densly stored data array.
 ///
 /// The points object *must* stay valid for the lifetime of the LSH table.
 ///

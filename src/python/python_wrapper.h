@@ -103,10 +103,21 @@ class PyLSHNearestNeighborTableDenseDouble {
 };
 
 
-/*PyLSHNearestNeighborTableDenseDouble* construct_dense_double_pytable(
+PyLSHNearestNeighborTableDenseDouble* construct_dense_double_pytable(
     double* matrix, int num_rows, int num_columns,
     const LSHConstructionParameters& params) {
-}*/
+
+  PlainArrayPointSet<double> points;
+  points.data = matrix;
+  points.num_points = num_rows;
+  points.dimension = num_columns;
+
+  std::unique_ptr<LSHNearestNeighborTable<DenseVector<double>, int32_t>>
+      table(std::move(construct_table<DenseVector<double>, int32_t,
+          PlainArrayPointSet<double>>(points, params)));
+
+  return new PyLSHNearestNeighborTableDenseDouble(table.release());
+}
 
 }  // namespace python
 }  // namespace falconn
