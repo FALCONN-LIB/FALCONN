@@ -1,7 +1,9 @@
 #ifndef __PYTHON_WRAPPER_H__
 #define __PYTHON_WRAPPER_H__
 
+#include <algorithm>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include <Eigen/Dense>
@@ -103,9 +105,67 @@ class PyLSHNearestNeighborTableDenseDouble {
 };
 
 
-PyLSHNearestNeighborTableDenseDouble* construct_dense_double_pytable(
-    double* matrix, int num_rows, int num_columns,
-    const LSHConstructionParameters& params) {
+struct ConstructionParameters {
+  int_fast32_t dimension = -1;
+  std::string lsh_family = "unknown";
+  std::string distance_function = "unknown";
+  int_fast32_t  k = -1;
+  int_fast32_t l = -1;
+  uint64_t seed = 409556018;
+  int_fast32_t last_cp_dimension = -1;
+  int_fast32_t num_rotations = -1;
+  int_fast32_t feature_hashing_dimension = -1;
+};
+
+
+// %ignore'd in the swig wrapper
+void python_to_cpp_construction_parameters(
+    const ConstructionParameters& py_params,
+    falconn::LSHConstructionParameters* cpp_params) {
+  cpp_params->dimension = py_params.dimension;
+
+  std::string tmp_lsh_family = py_params.lsh_family;
+  std::transform(tmp_lsh_family.begin(), tmp_lsh_family.end(),
+      tmp_lsh_family.begin(), tolower);
+  if (tmp_lsh_family == "unknown") {
+    cpp_params->lsh_family = LSHFamily::Unknown;
+  } else if (tmp_lsh_family == "hyperplane") {
+    cpp_params->lsh_family = LSHFamily::Hyperplane;
+  } else if (tmp_lsh_family == "crosspolytope") {
+    cpp_params->lsh_family = LSHFamily::CrossPolytope;
+  } else {
+    throw PyLSHNearestNeighborTableError("Unknown LSH family parameter.");
+  }
+ 
+  std::string tmp_distance_function = py_params.distance_function;
+  std::transform(tmp_distance_function.begin(), tmp_distance_function.end(),
+      tmp_distance_function.begin(), tolower);
+  if (tmp_distance_function == "unknown") {
+    cpp_params->distance_function = DistanceFunction::Unknown;
+  } else if (tmp_distance_function == "negativeinnerproduct") {
+    cpp_params->distance_function = DistanceFunction::NegativeInnerProduct;
+  } else if (tmp_distance_function == "euclideansquared") {
+    cpp_params->distance_function = DistanceFunction::EuclideanSquared;
+  } else {
+    throw PyLSHNearestNeighborTableError("Unknown distance_function "
+        "parameter.");
+  }
+
+  cpp_params->k = py_params.k;
+  cpp_params->l = py_params.l;
+  cpp_params->seed = py_params.seed;
+  cpp_params->last_cp_dimension = py_params.last_cp_dimension;
+  cpp_params->num_rotations = py_params.num_rotations;
+  cpp_params->feature_hashing_dimension = py_params.feature_hashing_dimension;
+}
+
+
+PyLSHNearestNeighborTableDenseDouble* construct_table_dense_double(
+    const double* matrix, int num_rows, int num_columns,
+    const ConstructionParameters& params) {
+
+  falconn::LSHConstructionParameters inner_params;
+  python_to_cpp_construction_parameters(params, &inner_params);
 
   PlainArrayPointSet<double> points;
   points.data = matrix;
@@ -114,7 +174,7 @@ PyLSHNearestNeighborTableDenseDouble* construct_dense_double_pytable(
 
   std::unique_ptr<LSHNearestNeighborTable<DenseVector<double>, int32_t>>
       table(std::move(construct_table<DenseVector<double>, int32_t,
-          PlainArrayPointSet<double>>(points, params)));
+          PlainArrayPointSet<double>>(points, inner_params)));
 
   return new PyLSHNearestNeighborTableDenseDouble(table.release());
 }
