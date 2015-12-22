@@ -158,15 +158,16 @@ enum class LSHFamily {
   ///
   /// The cross polytope hash first proposed in
   ///
-  /// "Spherical LSH for Approximate Nearest Neighbor Search on Unit Hypersphere",
-  /// Kengo Terasawa, Yuzuru Tanaka,
+  /// "Spherical LSH for Approximate Nearest Neighbor Search on Unit 
+  //   Hypersphere",
+  /// Kengo Terasawa, Yuzuru Tanaka
   /// WADS 2007
   ///
   /// Our implementation utilizes the improvements described in
   ///
   /// "Practical and Optimal LSH for Angular Distance",
   /// Alexandr Andoni, Piotr Indyk, Thijs Laarhoven, Ilya Razenshteyn, Ludwig
-  /// Schmidt,
+  ///   Schmidt
   /// NIPS 2015
   ///
   CrossPolytope = 2
@@ -190,7 +191,8 @@ enum class DistanceFunction {
   NegativeInnerProduct = 1,
 
   ///
-  /// The distance is **squared** Euclidean distance
+  /// The distance is the **squared** Euclidean distance (same order as the
+  /// actual Euclidean distance / l2-distance).
   ///
   EuclideanSquared = 2
 };
@@ -286,11 +288,10 @@ void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
 /// calling this function.
 ///
 template<typename PointType>
-  LSHConstructionParameters
-  set_up_parameters(int_fast64_t dataset_size,
-		    int_fast32_t dimension,
-		    DistanceFunction distance_function,
-		    bool is_sufficiently_dense = false);
+LSHConstructionParameters set_up_parameters(int_fast64_t dataset_size,
+                                            int_fast32_t dimension,
+                                            DistanceFunction distance_function,
+                                            bool is_sufficiently_dense = false);
 
 ///
 /// An exception class for errors occuring while setting up the LSH table
