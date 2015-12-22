@@ -7,7 +7,7 @@ TEST_BIN_DIR=test_bin
 PYTHON_OUT_DIR=python_lib
 DOC_DIR=doc
 
-ALL_HEADERS = $(INC_DIR)/core/lsh_table.h $(INC_DIR)/core/cosine_distance.h $(INC_DIR)/core/euclidean_distance.h $(INC_DIR)/core/composite_hash_table.h $(INC_DIR)/core/stl_hash_table.h $(INC_DIR)/core/polytope_hash.h $(INC_DIR)/core/flat_hash_table.h $(INC_DIR)/core/probing_hash_table.h $(INC_DIR)/core/hyperplane_hash.h $(INC_DIR)/core/heap.h $(INC_DIR)/core/prefetchers.h $(INC_DIR)/core/incremental_sorter.h $(INC_DIR)/core/lsh_function_helpers.h $(INC_DIR)/core/hash_table_helpers.h $(INC_DIR)/core/data_storage.h $(INC_DIR)/core/nn_query.h $(INC_DIR)/lsh_nn_table.h $(INC_DIR)/wrapper/cpp_wrapper_impl.h $(INC_DIR)/falconn_global.h $(TEST_DIR)/test_utils.h  $(INC_DIR)/core/data_transformation.h $(PYTHON_DIR)/python_wrapper.h
+ALL_HEADERS = $(INC_DIR)/core/lsh_table.h $(INC_DIR)/core/cosine_distance.h $(INC_DIR)/core/euclidean_distance.h $(INC_DIR)/core/composite_hash_table.h $(INC_DIR)/core/stl_hash_table.h $(INC_DIR)/core/polytope_hash.h $(INC_DIR)/core/flat_hash_table.h $(INC_DIR)/core/probing_hash_table.h $(INC_DIR)/core/hyperplane_hash.h $(INC_DIR)/core/heap.h $(INC_DIR)/core/prefetchers.h $(INC_DIR)/core/incremental_sorter.h $(INC_DIR)/core/lsh_function_helpers.h $(INC_DIR)/core/hash_table_helpers.h $(INC_DIR)/core/data_storage.h $(INC_DIR)/core/nn_query.h $(INC_DIR)/lsh_nn_table.h $(INC_DIR)/wrapper/cpp_wrapper_impl.h $(INC_DIR)/falconn_global.h $(TEST_DIR)/test_utils.h  $(INC_DIR)/core/data_transformation.h $(PYTHON_DIR)/module/python_wrapper.h
 
 CXX=g++
 CXXFLAGS=-std=gnu++11 -DNDEBUG -Wall -Wextra -march=native -O3 -I external/eigen -I src/include
@@ -25,9 +25,9 @@ clean:
 docs: $(ALL_HEADERS) $(DOC_DIR)/Doxyfile
 	doxygen $(DOC_DIR)/Doxyfile
 
-falconn_swig: $(ALL_HEADERS) $(PYTHON_DIR)/falconn.i
+falconn_swig: $(ALL_HEADERS) $(PYTHON_DIR)/module/falconn.i
 	mkdir -p $(PYTHON_OUT_DIR)
-	$(SWIG) -c++ -python -builtin -outdir $(PYTHON_OUT_DIR) -o $(PYTHON_OUT_DIR)/falconn_wrap.cc $(PYTHON_DIR)/falconn.i
+	$(SWIG) -c++ -python -builtin -outdir $(PYTHON_OUT_DIR) -o $(PYTHON_OUT_DIR)/falconn_wrap.cc $(PYTHON_DIR)/module/falconn.i
 	mkdir -p obj
 	$(CXX) $(CXXFLAGS) `python-config --includes` -I $(NUMPY_INCLUDE_DIR) -I $(INC_DIR) -c $(PYTHON_OUT_DIR)/falconn_wrap.cc -I src -o obj/falconn_wrap.o
 	$(CXX) -shared obj/falconn_wrap.o -o $(PYTHON_OUT_DIR)/_falconn.so `python-config --ldflags`

@@ -3,9 +3,9 @@
 #define SWIG_FILE_WITH_INIT
 #include <exception>
 #include <string>
-#include "../include/falconn/falconn_global.h"
-#include "../include/falconn/lsh_nn_table.h"
-#include "python/python_wrapper.h"
+#include "../../include/falconn/falconn_global.h"
+#include "../../include/falconn/lsh_nn_table.h"
+#include "python/module/python_wrapper.h"
 
 using falconn::LSHConstructionParameters;
 using falconn::FalconnError;
