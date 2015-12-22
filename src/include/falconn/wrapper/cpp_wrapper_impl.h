@@ -407,7 +407,7 @@ LSHConstructionParameters set_up_parameters(int_fast64_t dataset_size,
                                             int_fast32_t dimension,
                                             DistanceFunction distance_function,
                                             bool is_sufficiently_dense) {
-  return wrappers::GetDefaultParameters<PointType>::get(dataset_size, dimension,
+  return wrapper::GetDefaultParameters<PointType>::get(dataset_size, dimension,
       distance_function, is_sufficiently_dense);
 }
 
