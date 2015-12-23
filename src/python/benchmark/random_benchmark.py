@@ -3,7 +3,7 @@ from __future__ import division
 
 import math
 import sys
-import time
+import timeit
 
 import numpy as np
 
@@ -16,9 +16,9 @@ def run_experiment(table, queries, true_nns):
   num_correct = 0
 
   for query, true_nn in zip(queries, true_nns):
-    start = time.clock()
+    start = timeit.default_timer()
     res = table.find_closest(query)
-    end = time.clock()
+    end = timeit.default_timer()
     average_query_time_outside += (end - start)
     if res == true_nn:
       num_correct += 1
@@ -100,9 +100,9 @@ print('Computing true nearest neighbors via a linear scan ...')
 true_nns = []
 average_scan_time = 0.0
 for query in queries:
-  start = time.clock()
+  start = timeit.default_timer()
   best_index = np.argmax(np.dot(data, query))
-  stop = time.clock()
+  stop = timeit.default_timer()
   true_nns.append(best_index)
   average_scan_time += (stop - start)
 average_scan_time /= num_queries
@@ -120,10 +120,10 @@ params_hp.seed = seed ^ 833840234
 
 print('Hyperplane hash\n')
 
-start = time.clock()
+start = timeit.default_timer()
 hp_table = falconn.construct_table_dense_float(data, params_hp)
 hp_table.set_num_probes(2464)
-stop = time.clock()
+stop = timeit.default_timer()
 hp_construction_time = stop - start
 
 print('k = {}'.format(params_hp.k))
@@ -147,10 +147,10 @@ params_cp.seed = seed ^ 833840234
 
 print('Cross polytope hash\n')
 
-start = time.clock()
+start = timeit.default_timer()
 cp_table = falconn.construct_table_dense_float(data, params_cp)
 cp_table.set_num_probes(896)
-stop = time.clock()
+stop = timeit.default_timer()
 cp_construction_time = stop - start
 
 print('k = {}'.format(params_cp.k))
