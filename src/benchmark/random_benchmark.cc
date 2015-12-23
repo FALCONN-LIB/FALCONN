@@ -114,6 +114,7 @@ int main() {
     uint64_t seed = 119417657;
 
     cout << sepline << endl;
+    cout << "FALCONN C++ random data benchmark" << endl;
     cout << "Data set parameters: " << endl;
     cout << "n = " << n << endl;
     cout << "d = " << d << endl;
@@ -131,7 +132,7 @@ int main() {
     for (int ii = 0; ii < n; ++ii) {
       Vec v(d);
       for (int jj = 0; jj < d; ++jj) {
-	v[jj] = dist_normal(gen);
+        v[jj] = dist_normal(gen);
       }
       v.normalize();
       data.push_back(v);
@@ -146,7 +147,7 @@ int main() {
 
       Vec dir(d);
       for (int jj = 0; jj < d; ++jj) {
-	dir[jj] = dist_normal(gen);
+        dir[jj] = dist_normal(gen);
       }
       dir.normalize();
       dir = dir - dir.dot(q) * q;
@@ -170,11 +171,11 @@ int main() {
       int best_index = 0;
       float best_ip = q.dot(data[0]);
       for (int jj = 1; jj < n; ++jj) {
-	float cur_ip = q.dot(data[jj]);
-	if (cur_ip > best_ip) {
-	  best_index = jj;
-	  best_ip = cur_ip;
-	}
+        float cur_ip = q.dot(data[jj]);
+        if (cur_ip > best_ip) {
+          best_index = jj;
+          best_ip = cur_ip;
+        }
       }
       true_nn[ii] = best_index;
     
@@ -183,7 +184,7 @@ int main() {
     }
     average_scan_time /= num_queries;
     cout << "Average query time: " << average_scan_time << " seconds" << endl
-	 << sepline << endl;
+         << sepline << endl;
 
     // Hyperplane hashing
     LSHConstructionParameters params_hp;
@@ -199,7 +200,7 @@ int main() {
     Timer hp_construction;
   
     unique_ptr<LSHNearestNeighborTable<Vec>> hptable(std::move(
-							       construct_table<Vec>(data, params_hp)));
+        construct_table<Vec>(data, params_hp)));
     hptable->set_num_probes(2464);
 
     double hp_construction_time = hp_construction.elapsed_seconds();
@@ -208,13 +209,14 @@ int main() {
     cout << "l = " << params_hp.l << endl;
     cout << "Number of probes = " << hptable->get_num_probes() << endl;
     cout << "Construction time: " << hp_construction_time << " seconds" << endl
-	 << endl;
+         << endl;
 
     double hp_avg_time;
     double hp_success_prob;
     run_experiment(hptable.get(), queries, true_nn, &hp_avg_time,
-		   &hp_success_prob);
+        &hp_success_prob);
     cout << sepline << endl;
+    hptable.reset(nullptr);
 
     // Cross polytope hashing
     LSHConstructionParameters params_cp;
@@ -243,7 +245,7 @@ int main() {
     cout << "l = " << params_cp.l << endl;
     cout << "Number of probes = " << cptable->get_num_probes() << endl;
     cout << "Construction time: " << cp_construction_time << " seconds" << endl
-	 << endl;
+         << endl;
 
     double cp_avg_time;
     double cp_success_prob;

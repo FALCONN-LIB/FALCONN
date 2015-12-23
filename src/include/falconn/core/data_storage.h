@@ -2,8 +2,9 @@
 #define __DATA_STORAGE_H__
 
 #include <cstdint>
-#include <vector>
+#include <type_traits>
 #include <utility>
+#include <vector>
 
 #include "../falconn_global.h"
 #include "prefetchers.h"
@@ -192,6 +193,182 @@ class ArrayDataStorage {
  private:
   const std::vector<PointType>& data_;
 };
+
+
+
+template<
+typename PointType,
+typename KeyType = int32_t>
+class PlainArrayDataStorage {
+  PlainArrayDataStorage() {
+    static_assert(FalseStruct<PointType>::value, "Point type not supported.");
+  }
+  
+  template<typename PT>
+  struct FalseStruct : std::false_type {};
+};
+
+template<
+typename CoordinateType,
+typename KeyType>
+class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
+ public:
+  typedef Eigen::Map<const DenseVector<CoordinateType>> ConstVectorMap;
+  typedef Eigen::Map<DenseVector<CoordinateType>> VectorMap;
+  
+  class FullSequenceIterator {
+   public:
+    FullSequenceIterator(const PlainArrayDataStorage& parent)
+        : parent_(&parent), tmp_map_(nullptr, 0) {
+      if (parent_->size() == 0) {
+        parent_ = nullptr;
+        index_ = -1;
+      } else {
+        index_ = 0;
+        // TODO: try different prefetching steps
+        prefetcher_.prefetch(parent_->data_);
+        if (parent_->size() >= 2) {
+          prefetcher_.prefetch(parent_->data_ + parent_->dim_);
+
+          if (parent_->size() >= 3) {
+            prefetcher_.prefetch(parent_->data_ + 2 * parent_->dim_);
+          }
+        }
+      }
+    }
+
+    FullSequenceIterator() {}
+
+    const ConstVectorMap& get_point() {
+      new (&tmp_map_) ConstVectorMap(&(parent_->data_[index_ * parent_->dim_]),
+                                 static_cast<int>(parent_->dim_));
+      return tmp_map_;
+    }
+
+    const KeyType& get_key() const {
+      return index_;
+    }
+
+    bool is_valid() const {
+      return parent_ != nullptr;
+    }
+    
+    void operator ++ () {
+      if (index_ >= 0
+          && index_ + 1 < static_cast<int_fast64_t>(parent_->size())) {
+        index_ += 1;
+        if (index_ + 2 < static_cast<int_fast64_t>(parent_->size())) {
+          // TODO: try different prefetching steps
+          prefetcher_.prefetch(parent_->data_ + (index_ + 2) * parent_->dim_);
+        }
+      } else {
+        if (index_ == -1) {
+          throw DataStorageError("Advancing invalid FullSequenceIterator.");
+        } else {
+          parent_ = nullptr;
+          index_ = -1;
+        }
+      }
+    }
+
+   private:
+    int_fast64_t index_ = -1;
+    const PlainArrayDataStorage* parent_ = nullptr;
+    ConstVectorMap tmp_map_;
+    PlainArrayPrefetcher<CoordinateType> prefetcher_;
+  };
+  
+  
+  class SubsequenceIterator {
+   public:
+    SubsequenceIterator(const std::vector<KeyType>& keys,
+                        const PlainArrayDataStorage& parent)
+        : keys_(&keys), parent_(&parent), tmp_map_(nullptr, 0) {
+      if (keys_->size() == 0) {
+        keys_ = nullptr;
+        parent_ = nullptr;
+        index_ = -1;
+      } else {
+        index_ = 0;
+        // TODO: try different prefetching steps
+        prefetcher_.prefetch(parent_->data_ + (*keys_)[0] * parent_->dim_);
+        if (keys_->size() >= 2) {
+          prefetcher_.prefetch(parent_->data_ + (*keys_)[1] * parent_->dim_);
+
+          if (keys_->size() >= 3) {
+            prefetcher_.prefetch(parent_->data_ + (*keys_)[2] * parent_->dim_);
+          }
+        }
+      }
+    }
+
+    SubsequenceIterator() {}
+
+    const ConstVectorMap& get_point() {
+      new (&tmp_map_) ConstVectorMap(
+          &(parent_->data_[(*keys_)[index_] * parent_->dim_]),
+          static_cast<int>(parent_->dim_));
+      return tmp_map_;
+    }
+
+    const KeyType& get_key() const {
+      return (*keys_)[index_];
+    }
+
+    bool is_valid() const {
+      return parent_ != nullptr;
+    }
+
+    void operator ++ () {
+      if (index_ >= 0
+          && index_ + 1 < static_cast<int_fast64_t>(keys_->size())) {
+        index_ += 1;
+        if (index_ + 2 < static_cast<int_fast64_t>(keys_->size())) {
+          // TODO: try different prefetching steps
+          prefetcher_.prefetch(
+              parent_->data_ + (*keys_)[index_ + 2] * parent_->dim_);
+        }
+      } else {
+        if (index_ == -1) {
+          throw DataStorageError("Advancing invalid SubsequenceIterator.");
+        }
+        keys_ = nullptr;
+        parent_ = nullptr;
+        index_ = -1;
+      }
+    }
+
+   private:
+    int_fast64_t index_ = -1;
+    const std::vector<KeyType>* keys_ = nullptr;
+    const PlainArrayDataStorage* parent_ = nullptr;
+    ConstVectorMap tmp_map_;
+    PlainArrayPrefetcher<CoordinateType> prefetcher_;
+  };
+  
+  PlainArrayDataStorage(const CoordinateType* data,
+                        int_fast64_t num_points,
+                        int_fast64_t dim)
+      : data_(data), num_points_(num_points), dim_(dim) {}
+  
+  int_fast64_t size() const {
+    return num_points_; 
+  }
+
+  SubsequenceIterator get_subsequence(const std::vector<KeyType>& keys) const {
+    return SubsequenceIterator(keys, *this);
+  }
+
+  FullSequenceIterator get_full_sequence() const {
+    return FullSequenceIterator(*this);
+  }
+ 
+ private:
+  const CoordinateType* data_;
+  int_fast64_t num_points_;
+  int_fast64_t dim_;
+};
+
 
 
 template<
