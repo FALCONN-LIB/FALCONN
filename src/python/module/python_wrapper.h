@@ -105,6 +105,92 @@ class PyLSHNearestNeighborTableDenseDouble {
 };
 
 
+
+class PyLSHNearestNeighborTableDenseFloat {
+ public:
+  typedef LSHNearestNeighborTable<DenseVector<float>, int32_t> InnerTable;
+  typedef Eigen::Map<const DenseVector<float>> ConstVectorMap;
+
+  PyLSHNearestNeighborTableDenseFloat(InnerTable* table)
+      : table_(table) {}
+  
+  void set_num_probes(int num_probes) {
+    table_->set_num_probes(num_probes);
+  }
+
+  int32_t get_num_probes() {
+    return table_->get_num_probes();
+  }
+  
+  void set_max_num_candidates(int32_t max_num_candidates) {
+    table_->set_max_num_candidates(max_num_candidates);
+  }
+
+  int32_t get_max_num_candidates() {
+    return table_->get_max_num_candidates();
+  }
+  
+  int find_closest(const float* vec, int len) {
+    ConstVectorMap q(vec, len);
+    return table_->find_closest(q);
+  }
+  
+  std::vector<int32_t> find_k_nearest_neighbors(const float* vec, int len,
+      int32_t k) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    table_->find_k_nearest_neighbors(q, k, &result);
+    return result;
+  }
+
+  std::vector<int32_t> find_near_neighbors(const float* vec, int len,
+      float threshold) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    table_->find_near_neighbors(q, threshold, &result);
+    return result;
+  }
+  
+  std::vector<int32_t> get_candidates_with_duplicates(const float* vec,
+      int len) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    table_->get_candidates_with_duplicates(q, &result);
+    return result;
+  }
+
+  std::vector<int32_t> get_unique_candidates(const float* vec, int len) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    table_->get_unique_candidates(q, &result);
+    return result;
+  }
+
+  std::vector<int32_t> get_unique_sorted_candidates(const float* vec,
+      int len) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    table_->get_unique_sorted_candidates(q, &result);
+    return result;
+  }
+  
+  void reset_query_statistics() {
+    table_->reset_query_statistics();
+  }
+
+  falconn::QueryStatistics get_query_statistics() {
+    return table_->get_query_statistics();
+  }
+
+  ~PyLSHNearestNeighborTableDenseFloat() {
+    delete table_;
+  }
+
+ private:
+  InnerTable* table_ = nullptr;
+};
+
+
 struct ConstructionParameters {
   int_fast32_t dimension = -1;
   std::string lsh_family = "unknown";
@@ -177,6 +263,26 @@ PyLSHNearestNeighborTableDenseDouble* construct_table_dense_double(
           PlainArrayPointSet<double>>(points, inner_params)));
 
   return new PyLSHNearestNeighborTableDenseDouble(table.release());
+}
+
+
+PyLSHNearestNeighborTableDenseFloat* construct_table_dense_float(
+    const float* matrix, int num_rows, int num_columns,
+    const ConstructionParameters& params) {
+
+  falconn::LSHConstructionParameters inner_params;
+  python_to_cpp_construction_parameters(params, &inner_params);
+
+  PlainArrayPointSet<float> points;
+  points.data = matrix;
+  points.num_points = num_rows;
+  points.dimension = num_columns;
+
+  std::unique_ptr<LSHNearestNeighborTable<DenseVector<float>, int32_t>>
+      table(std::move(construct_table<DenseVector<float>, int32_t,
+          PlainArrayPointSet<float>>(points, inner_params)));
+
+  return new PyLSHNearestNeighborTableDenseFloat(table.release());
 }
 
 }  // namespace python

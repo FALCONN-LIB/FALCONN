@@ -57,6 +57,15 @@ class StdVectorPrefetcher<std::vector<std::pair<IndexType, CoordinateType>>> {
   }
 };
 
+
+template<typename T>
+class PlainArrayPrefetcher {
+ public:
+  void prefetch(const T* p) {
+    __builtin_prefetch(p, 0, 1);
+  }
+};
+
 }  // namespace core
 }  // namespace falconn
 

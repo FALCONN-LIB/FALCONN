@@ -49,4 +49,8 @@ namespace std {
 %apply (double* IN_ARRAY1, int DIM1) {(const double* vec, int len)};
 %apply (double* IN_ARRAY2, int DIM1, int DIM2) {(const double* matrix, int num_rows, int num_columns)};
 
+%apply (float* IN_ARRAY1, int DIM1) {(const float* vec, int len)};
+%apply (float* IN_ARRAY2, int DIM1, int DIM2) {(const float* matrix, int num_rows, int num_columns)};
+
+%include "../../include/falconn/falconn_global.h"
 %include "python_wrapper.h"

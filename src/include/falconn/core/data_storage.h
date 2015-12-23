@@ -225,6 +225,15 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
         index_ = -1;
       } else {
         index_ = 0;
+        // TODO: try different prefetching steps
+        prefetcher_.prefetch(parent_->data_);
+        if (parent_->size() >= 2) {
+          prefetcher_.prefetch(parent_->data_ + parent_->dim_);
+
+          if (parent_->size() >= 3) {
+            prefetcher_.prefetch(parent_->data_ + 2 * parent_->dim_);
+          }
+        }
       }
     }
 
@@ -248,6 +257,10 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
       if (index_ >= 0
           && index_ + 1 < static_cast<int_fast64_t>(parent_->size())) {
         index_ += 1;
+        if (index_ + 2 < static_cast<int_fast64_t>(parent_->size())) {
+          // TODO: try different prefetching steps
+          prefetcher_.prefetch(parent_->data_ + (index_ + 2) * parent_->dim_);
+        }
       } else {
         if (index_ == -1) {
           throw DataStorageError("Advancing invalid FullSequenceIterator.");
@@ -262,6 +275,7 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
     int_fast64_t index_ = -1;
     const PlainArrayDataStorage* parent_ = nullptr;
     ConstVectorMap tmp_map_;
+    PlainArrayPrefetcher<CoordinateType> prefetcher_;
   };
   
   
@@ -276,6 +290,15 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
         index_ = -1;
       } else {
         index_ = 0;
+        // TODO: try different prefetching steps
+        prefetcher_.prefetch(parent_->data_ + (*keys_)[0] * parent_->dim_);
+        if (keys_->size() >= 2) {
+          prefetcher_.prefetch(parent_->data_ + (*keys_)[1] * parent_->dim_);
+
+          if (keys_->size() >= 3) {
+            prefetcher_.prefetch(parent_->data_ + (*keys_)[2] * parent_->dim_);
+          }
+        }
       }
     }
 
@@ -300,6 +323,11 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
       if (index_ >= 0
           && index_ + 1 < static_cast<int_fast64_t>(keys_->size())) {
         index_ += 1;
+        if (index_ + 2 < static_cast<int_fast64_t>(keys_->size())) {
+          // TODO: try different prefetching steps
+          prefetcher_.prefetch(
+              parent_->data_ + (*keys_)[index_ + 2] * parent_->dim_);
+        }
       } else {
         if (index_ == -1) {
           throw DataStorageError("Advancing invalid SubsequenceIterator.");
@@ -315,6 +343,7 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
     const std::vector<KeyType>* keys_ = nullptr;
     const PlainArrayDataStorage* parent_ = nullptr;
     ConstVectorMap tmp_map_;
+    PlainArrayPrefetcher<CoordinateType> prefetcher_;
   };
   
   PlainArrayDataStorage(const CoordinateType* data,
