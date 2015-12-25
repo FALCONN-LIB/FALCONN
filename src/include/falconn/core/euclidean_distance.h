@@ -69,7 +69,9 @@ struct EuclideanDistanceDense {
   typedef Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>
       VectorType;
 
-  CoordinateType operator () (const VectorType& p1, const VectorType& p2) {
+  template <typename Derived1, typename Derived2>
+  CoordinateType operator () (const Eigen::MatrixBase<Derived1>& p1,
+                              const Eigen::MatrixBase<Derived2>& p2) {
     return (p1 - p2).squaredNorm();
   }
 };

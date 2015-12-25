@@ -64,3 +64,16 @@ TEST(CosineDistanceTest, DenseDistanceFunctionTest1) {
   float distance = distance_function(v1, v2);
   ASSERT_NEAR(distance, 3.0, eps);
 }
+
+TEST(CosineDistanceTest, DenseDistanceFunctionTest2) {
+  DenseVector v1(4);
+  v1[0] = 0.0;
+  v1[1] = 1.0;
+  v1[2] = 2.0;
+  v1[3] = 0.5;
+  float v2_raw[4] = {8.0, 1.0, -3.0, 4.0};
+  Eigen::Map<DenseVector> v2(v2_raw, 4);
+  CosineDistanceDense<float> distance_function;
+  float distance = distance_function(v1, v2);
+  ASSERT_NEAR(distance, 3.0, eps);
+}
