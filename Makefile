@@ -29,7 +29,7 @@ falconn_swig: $(ALL_HEADERS) $(PYTHON_DIR)/module/falconn.i
 	mkdir -p $(PYTHON_OUT_DIR)
 	$(SWIG) -c++ -python -builtin -outdir $(PYTHON_OUT_DIR) -o $(PYTHON_OUT_DIR)/falconn_wrap.cc $(PYTHON_DIR)/module/falconn.i
 	mkdir -p obj
-	$(CXX) $(CXXFLAGS) `python-config --includes` -I $(NUMPY_INCLUDE_DIR) -I $(INC_DIR) -c $(PYTHON_OUT_DIR)/falconn_wrap.cc -I src -o obj/falconn_wrap.o
+	$(CXX) $(CXXFLAGS) -fPIC `python-config --includes` -I $(NUMPY_INCLUDE_DIR) -I $(INC_DIR) -c $(PYTHON_OUT_DIR)/falconn_wrap.cc -I src -o obj/falconn_wrap.o
 	$(CXX) -shared obj/falconn_wrap.o -o $(PYTHON_OUT_DIR)/_falconn.so `python-config --ldflags`
 	rm -f $(PYTHON_OUT_DIR)/falconn_wrap.cxx
 
