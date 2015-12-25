@@ -62,6 +62,18 @@ def gen_near_neighbor(v, r):
   return alpha * v + beta * rp
 
 
+def aligned(a, alignment=32):
+  if (a.ctypes.data % alignment) == 0:
+    return a
+  extra = alignment / a.itemsize
+  buf = np.empty(a.size + extra, dtype=a.dtype)
+  ofs = (-buf.ctypes.data % alignment) / a.itemsize
+  aa = buf[ofs:ofs+a.size].reshape(a.shape)
+  np.copyto(aa, a)
+  assert (aa.ctypes.data % alignment) == 0
+  return aa
+
+
 
 
 sepline = \
@@ -89,11 +101,13 @@ data = np.random.randn(n, d)
 norms = np.linalg.norm(data, axis=1)
 data = data / np.reshape(norms, (n, 1))
 data = data.astype(np.float32)
+data = aligned(data)
 
 print('Generating queries ...\n')
 queries = []
 for ii in range(num_queries):
   q = gen_near_neighbor(data[np.random.randint(n)], r)
+  q = aligned(q)
   queries.append(q.astype(np.float32))
 
 print('Computing true nearest neighbors via a linear scan ...')
