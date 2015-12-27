@@ -146,6 +146,7 @@ print('Number of probes = {}'.format(hp_table.get_num_probes()))
 print('Construction time: {} seconds\n'.format(hp_construction_time))
 
 hp_avg_time, hp_success_prob = run_experiment(hp_table, queries, true_nns)
+del hp_table
 print(sepline)
 
 # Cross polytope hashing

@@ -96,12 +96,8 @@ class PyLSHNearestNeighborTableDenseDouble {
     return table_->get_query_statistics();
   }
 
-  ~PyLSHNearestNeighborTableDenseDouble() {
-    delete table_;
-  }
-
  private:
-  InnerTable* table_ = nullptr;
+  std::shared_ptr<InnerTable> table_ = nullptr;
 };
 
 
@@ -182,12 +178,8 @@ class PyLSHNearestNeighborTableDenseFloat {
     return table_->get_query_statistics();
   }
 
-  ~PyLSHNearestNeighborTableDenseFloat() {
-    delete table_;
-  }
-
  private:
-  InnerTable* table_ = nullptr;
+  std::shared_ptr<InnerTable> table_ = nullptr;
 };
 
 
@@ -246,7 +238,7 @@ void python_to_cpp_construction_parameters(
 }
 
 
-PyLSHNearestNeighborTableDenseDouble* construct_table_dense_double(
+PyLSHNearestNeighborTableDenseDouble construct_table_dense_double(
     const double* matrix, int num_rows, int num_columns,
     const ConstructionParameters& params) {
 
@@ -262,11 +254,11 @@ PyLSHNearestNeighborTableDenseDouble* construct_table_dense_double(
       table(std::move(construct_table<DenseVector<double>, int32_t,
           PlainArrayPointSet<double>>(points, inner_params)));
 
-  return new PyLSHNearestNeighborTableDenseDouble(table.release());
+  return PyLSHNearestNeighborTableDenseDouble(table.release());
 }
 
 
-PyLSHNearestNeighborTableDenseFloat* construct_table_dense_float(
+PyLSHNearestNeighborTableDenseFloat construct_table_dense_float(
     const float* matrix, int num_rows, int num_columns,
     const ConstructionParameters& params) {
 
@@ -282,7 +274,7 @@ PyLSHNearestNeighborTableDenseFloat* construct_table_dense_float(
       table(std::move(construct_table<DenseVector<float>, int32_t,
           PlainArrayPointSet<float>>(points, inner_params)));
 
-  return new PyLSHNearestNeighborTableDenseFloat(table.release());
+  return PyLSHNearestNeighborTableDenseFloat(table.release());
 }
 
 }  // namespace python
