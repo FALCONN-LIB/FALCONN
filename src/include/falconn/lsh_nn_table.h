@@ -234,19 +234,20 @@ struct LSHConstructionParameters {
   /// Dimension of the last of the k cross-polytopes. Required
   /// only for the cross-polytope hash.
   ///
-  int_fast32_t last_cp_dimension = -1;    // only necessary for CP hash.
+  int_fast32_t last_cp_dimension = -1;
   ///
   /// Number of pseudo-random rotations. Required only for the
   /// cross-polytope hash.
   /// 
-  /// For sparse data, it is recommended to set it to 2, for sufficiently
-  /// dense data, 1 is enough as well.
+  /// For sparse data, it is recommended to set num_rotations to 2.
+  /// For sufficiently dense data, 1 rotation usually suffices.
   ///
-  int_fast32_t num_rotations = -1;  // only necessary for CP hash.
+  int_fast32_t num_rotations = -1;
   ///
-  /// Intermediate dimension for the feature hashing. Ignored for the hyperplane
-  /// hash. The smaller it is, the faster hashing becomes, but the worse the hash
-  /// quality becomes. The value -1 means no feature hashing is being performed.
+  /// Intermediate dimension for feature hashing of sparse data. Ignored for
+  /// the hyperplane hash. A smaller feature hashing dimension leads to faster
+  /// hash computations, but the quality of the hash also degrades.
+  /// The value -1 indicates that no feature hashing is performed.
   ///
   int_fast32_t feature_hashing_dimension = -1;   
 };
@@ -254,9 +255,9 @@ struct LSHConstructionParameters {
 
 ///
 /// Computes the number of hash functions in order to get a hash with the given
-/// number of relevant bits. For the cross polytope hash, the last cross polytope
-/// dimension will also be determined. The input struct params must contain valid
-/// values for the following fields:
+/// number of relevant bits. For the cross polytope hash, the last cross
+/// polytope dimension will also be determined. The input struct params must
+/// contain valid values for the following fields:
 ///   - lsh_family
 ///   - dimension (for the cross polytope hash)
 ///   - feature_hashing_dimension (for the cross polytope hash with sparse
@@ -270,17 +271,19 @@ void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
                                       LSHConstructionParameters* params);
 
 ///
-/// A function that sets all the parameters for you! You just need to specify:
-/// - the size of your dataset
+/// A function that sets default parameters based on the following
+/// dataset properties:
+///
+/// - the size of the dataset (i.e., the number of points)
 /// - the dimension
 /// - the distance function
-/// - and if your dataset is sufficiently dense (if this is the case, one can
-/// save on pseudo-random rotations)
+/// - and a flag indicating whether the dataset is sufficiently dense
+///   (for dense data, fewer pseudo-random rotations suffice)
 ///
-/// It should set _reasonable_ parameters for _nice enough_ datasets. If your
-/// dataset is tricky, or you want to maximize the performance, you need to
-/// set the parameters by hand. See the GloVe example to make sense of the
-/// FALCONN parameters.
+/// The parameters should be reasonable for _sufficiently nice_ datasets.
+/// If the dataset has special structure, or you want to maximize the
+/// performance of FALCONN, you need to set the parameters by hand.
+/// See the documentation and the GloVe example to make sense of the parameters.
 ///
 /// In particular, the default setting should give very fast preprocessing
 /// time. If you are willing to spend more time building the data structure to
@@ -288,10 +291,11 @@ void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
 /// calling this function.
 ///
 template<typename PointType>
-LSHConstructionParameters set_up_parameters(int_fast64_t dataset_size,
-                                            int_fast32_t dimension,
-                                            DistanceFunction distance_function,
-                                            bool is_sufficiently_dense = false);
+LSHConstructionParameters get_default_parameters(
+    int_fast64_t dataset_size,
+    int_fast32_t dimension,
+    DistanceFunction distance_function,
+    bool is_sufficiently_dense);
 
 ///
 /// An exception class for errors occuring while setting up the LSH table

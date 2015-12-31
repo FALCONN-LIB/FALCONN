@@ -404,10 +404,11 @@ void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
 }
 
 template<typename PointType>
-LSHConstructionParameters set_up_parameters(int_fast64_t dataset_size,
-                                            int_fast32_t dimension,
-                                            DistanceFunction distance_function,
-                                            bool is_sufficiently_dense) {
+LSHConstructionParameters get_default_parameters(
+    int_fast64_t dataset_size,
+    int_fast32_t dimension,
+    DistanceFunction distance_function,
+    bool is_sufficiently_dense) {
   return wrapper::GetDefaultParameters<PointType>::get(dataset_size, dimension,
       distance_function, is_sufficiently_dense);
 }

@@ -5,7 +5,7 @@
  * points, we would like to find a nearest neighbor (w.r.t. cosine similarity)
  * with probability at least 0.9.
  * 
- * There is a function set_up_parameters, which you can use to set the
+ * There is a function get_default_parameters, which you can use to set the
  * parameters automatically (in the code, we show how it could have been used).
  * However, we recommend to set parameters manually to maximize the performance.
  *
@@ -60,7 +60,7 @@ using falconn::DistanceFunction;
 using falconn::LSHConstructionParameters;
 using falconn::LSHFamily;
 using falconn::LSHNearestNeighborTable;
-using falconn::set_up_parameters;
+using falconn::get_default_parameters;
 
 typedef DenseVector<float> Point;
 
@@ -300,7 +300,7 @@ int main() {
       For an easy way out, you could have used the following.
 
       LSHConstructionParameters params
-        = set_up_parameters<Point>(dataset.size(),
+        = get_default_parameters<Point>(dataset.size(),
 				   dataset[0].size(),
 				   DistanceFunction::EuclideanSquared,
 				   true);

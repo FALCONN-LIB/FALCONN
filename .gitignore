@@ -7,3 +7,4 @@ python_lib
 random_benchmark
 test-output.txt
 examples/glove/glove
+examples/glove/dataset
