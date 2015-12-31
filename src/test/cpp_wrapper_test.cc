@@ -52,11 +52,11 @@ TEST(WrapperTest, DenseHPTest1) {
   unique_ptr<LSHNearestNeighborTable<Point>> table(std::move(
       construct_table<Point>(points, params)));
 
-  int32_t res1 = table->find_closest(p1);
+  int32_t res1 = table->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
-  int32_t res2 = table->find_closest(p2);
+  int32_t res2 = table->find_nearest_neighbor(p2);
   EXPECT_EQ(1, res2);
-  int32_t res3 = table->find_closest(p3);
+  int32_t res3 = table->find_nearest_neighbor(p3);
   EXPECT_EQ(2, res3);
 
   Point p4(dim);
@@ -64,7 +64,7 @@ TEST(WrapperTest, DenseHPTest1) {
   p4[1] = 1.0;
   p4[2] = 0.0;
   p4[3] = 0.0;
-  int32_t res4 = table->find_closest(p4);
+  int32_t res4 = table->find_nearest_neighbor(p4);
   EXPECT_EQ(1, res4);
 }
 
@@ -104,11 +104,11 @@ TEST(WrapperTest, DenseCPTest1) {
   unique_ptr<LSHNearestNeighborTable<Point>> table(std::move(
       construct_table<Point>(points, params)));
 
-  int32_t res1 = table->find_closest(p1);
+  int32_t res1 = table->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
-  int32_t res2 = table->find_closest(p2);
+  int32_t res2 = table->find_nearest_neighbor(p2);
   EXPECT_EQ(1, res2);
-  int32_t res3 = table->find_closest(p3);
+  int32_t res3 = table->find_nearest_neighbor(p3);
   EXPECT_EQ(2, res3);
 
   Point p4(dim);
@@ -116,7 +116,7 @@ TEST(WrapperTest, DenseCPTest1) {
   p4[1] = 1.0;
   p4[2] = 0.0;
   p4[3] = 0.0;
-  int32_t res4 = table->find_closest(p4);
+  int32_t res4 = table->find_nearest_neighbor(p4);
   EXPECT_EQ(1, res4);
 }
 
@@ -146,16 +146,16 @@ TEST(WrapperTest, SparseHPTest1) {
   unique_ptr<LSHNearestNeighborTable<Point>> table(std::move(
       construct_table<Point>(points, params)));
 
-  int32_t res1 = table->find_closest(p1);
+  int32_t res1 = table->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
-  int32_t res2 = table->find_closest(p2);
+  int32_t res2 = table->find_nearest_neighbor(p2);
   EXPECT_EQ(1, res2);
-  int32_t res3 = table->find_closest(p3);
+  int32_t res3 = table->find_nearest_neighbor(p3);
   EXPECT_EQ(2, res3);
 
   Point p4;
   p4.push_back(make_pair(7, 1.0));
-  int32_t res4 = table->find_closest(p4);
+  int32_t res4 = table->find_nearest_neighbor(p4);
   EXPECT_EQ(1, res4);
 }
 
@@ -188,16 +188,16 @@ TEST(WrapperTest, SparseCPTest1) {
   unique_ptr<LSHNearestNeighborTable<Point>> table(std::move(
       construct_table<Point>(points, params)));
 
-  int32_t res1 = table->find_closest(p1);
+  int32_t res1 = table->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
-  int32_t res2 = table->find_closest(p2);
+  int32_t res2 = table->find_nearest_neighbor(p2);
   EXPECT_EQ(1, res2);
-  int32_t res3 = table->find_closest(p3);
+  int32_t res3 = table->find_nearest_neighbor(p3);
   EXPECT_EQ(2, res3);
 
   Point p4;
   p4.push_back(make_pair(7, 1.0));
-  int32_t res4 = table->find_closest(p4);
+  int32_t res4 = table->find_nearest_neighbor(p4);
   EXPECT_EQ(1, res4);
 }
 

@@ -92,11 +92,11 @@ TEST(NNQueryTest, DenseTest1) {
       nn_query(&query, data_storage);
                        
 
-  int res1 = nn_query.find_closest(p1, p1, l, -1);
+  int res1 = nn_query.find_nearest_neighbor(p1, p1, l, -1);
   EXPECT_EQ(0, res1);
-  int res2 = nn_query.find_closest(p2, p2, l, -1);
+  int res2 = nn_query.find_nearest_neighbor(p2, p2, l, -1);
   EXPECT_EQ(1, res2);
-  int res3 = nn_query.find_closest(p3, p3, l, -1);
+  int res3 = nn_query.find_nearest_neighbor(p3, p3, l, -1);
   EXPECT_EQ(2, res3);
 
   DenseVector p2query(dim);
@@ -106,7 +106,7 @@ TEST(NNQueryTest, DenseTest1) {
   p2query[3] = 0.0;
   p2query[4] = 3.0;
   p2query.normalize();
-  int res4 = nn_query.find_closest(p2query, p2query, l, -1);
+  int res4 = nn_query.find_nearest_neighbor(p2query, p2query, l, -1);
   EXPECT_EQ(1, res4);
 }
 
@@ -161,18 +161,18 @@ TEST(NNQueryTest, SparseTest1) {
                        float, CosineDistanceSparse<float>, ArrayDataStorageType>
       nn_query(&query, data_storage);
 
-  int res1 = nn_query.find_closest(p1, p1, l, -1);
+  int res1 = nn_query.find_nearest_neighbor(p1, p1, l, -1);
   EXPECT_EQ(0, res1);
-  int res2 = nn_query.find_closest(p2, p2, l, -1);
+  int res2 = nn_query.find_nearest_neighbor(p2, p2, l, -1);
   EXPECT_EQ(1, res2);
-  int res3 = nn_query.find_closest(p3, p3, l, -1);
+  int res3 = nn_query.find_nearest_neighbor(p3, p3, l, -1);
   EXPECT_EQ(2, res3);
 
   SparseVector p2query;
   p2query.push_back(make_pair(2, 4.0));
   p2query.push_back(make_pair(5, -5.5));
   p2query.push_back(make_pair(60, 3.0));
-  int res4 = nn_query.find_closest(p2query, p2query, l, -1);
+  int res4 = nn_query.find_nearest_neighbor(p2query, p2query, l, -1);
   EXPECT_EQ(1, res4);
 }
 
@@ -215,7 +215,7 @@ TEST(NNQueryTest, MultiprobeTest1) {
                        float, CosineDistanceDense<float>, ArrayDataStorageType>
       nn_query(&query, data_storage);
 
-  int res1 = nn_query.find_closest(p1, p1, 2 << k, -1);
+  int res1 = nn_query.find_nearest_neighbor(p1, p1, 2 << k, -1);
   EXPECT_EQ(0, res1);
 
   DenseVector pquery(dim);
@@ -223,7 +223,7 @@ TEST(NNQueryTest, MultiprobeTest1) {
   pquery[1] = 1.0;
   pquery[2] = 0.0;
   pquery[3] = 0.0;
-  int res2 = nn_query.find_closest(pquery, pquery, 2 << k, -1);
+  int res2 = nn_query.find_nearest_neighbor(pquery, pquery, 2 << k, -1);
   EXPECT_EQ(0, res2);
 }
 
@@ -422,12 +422,12 @@ TEST(LSHTableTest, DynamicLSHTableDenseTest1) {
   lsh_table.insert(2);
   //printf("after insert 2\n");
 
-  int res1 = lsh_table.find_closest(p1);
+  int res1 = lsh_table.find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
-  //printf("after find_closest p1\n");
-  int res2 = lsh_table.find_closest(p2);
+  //printf("after find_nearest_neighbor p1\n");
+  int res2 = lsh_table.find_nearest_neighbor(p2);
   EXPECT_EQ(1, res2);
-  int res3 = lsh_table.find_closest(p3);
+  int res3 = lsh_table.find_nearest_neighbor(p3);
   EXPECT_EQ(2, res3);
 
   DenseVector p2query(dim);
@@ -436,11 +436,11 @@ TEST(LSHTableTest, DynamicLSHTableDenseTest1) {
   p2query[2] = -5.5;
   p2query[3] = 0.0;
   p2query[4] = 3.0;
-  int res4 = lsh_table.find_closest(p2query);
+  int res4 = lsh_table.find_nearest_neighbor(p2query);
   EXPECT_EQ(1, res4);
 
   lsh_table.remove(0);
-  int res5 = lsh_table.find_closest(p1);
+  int res5 = lsh_table.find_nearest_neighbor(p1);
   EXPECT_EQ(1, res5);
 }
 

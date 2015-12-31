@@ -59,7 +59,7 @@ void run_experiment(LSHNearestNeighborTable<PointType>* table,
   for (int ii = 0; ii < static_cast<int>(queries.size()); ++ii) {
     Timer query_time;
     
-    int32_t res = table->find_closest(queries[ii]);
+    int32_t res = table->find_nearest_neighbor(queries[ii]);
     
     average_query_time_outside += query_time.elapsed_seconds();
     if (res == true_nns[ii]) {

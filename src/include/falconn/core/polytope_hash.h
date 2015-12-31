@@ -32,10 +32,11 @@ static int_fast32_t log2ceil(int_fast32_t x) {
   return res;
 }
 
-static void compute_k_parameters_for_bits(int_fast32_t rotation_dim,
-                                          int_fast32_t number_of_hash_bits,
-                                          int_fast32_t* k,
-                                          int_fast32_t* last_cp_dim) {
+static inline void compute_k_parameters_for_bits(
+    int_fast32_t rotation_dim,
+    int_fast32_t number_of_hash_bits,
+    int_fast32_t* k,
+    int_fast32_t* last_cp_dim) {
   int_fast32_t bits_per_cp = log2ceil(rotation_dim) + 1;
   *k = number_of_hash_bits / bits_per_cp;
   if (*k * bits_per_cp < number_of_hash_bits) {

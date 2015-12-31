@@ -44,9 +44,9 @@ class PyLSHNearestNeighborTableDenseDouble {
     return table_->get_max_num_candidates();
   }
   
-  int find_closest(const double* vec, int len) {
+  int find_nearest_neighbor(const double* vec, int len) {
     ConstVectorMap q(vec, len);
-    return table_->find_closest(q);
+    return table_->find_nearest_neighbor(q);
   }
   
   std::vector<int32_t> find_k_nearest_neighbors(const double* vec, int len,
@@ -126,9 +126,9 @@ class PyLSHNearestNeighborTableDenseFloat {
     return table_->get_max_num_candidates();
   }
   
-  int find_closest(const float* vec, int len) {
+  int find_nearest_neighbor(const float* vec, int len) {
     ConstVectorMap q(vec, len);
-    return table_->find_closest(q);
+    return table_->find_nearest_neighbor(q);
   }
   
   std::vector<int32_t> find_k_nearest_neighbors(const float* vec, int len,

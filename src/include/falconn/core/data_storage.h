@@ -442,7 +442,7 @@ class TransformedDataStorage {
   };
 
   TransformedDataStorage(const Transformation& transformation,
-                         const InnerDataStorage storage)
+                         const InnerDataStorage& storage)
       : transformation_(transformation), storage_(storage) {}
   
   int_fast64_t size() const {

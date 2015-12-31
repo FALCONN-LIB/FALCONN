@@ -35,10 +35,10 @@ class NearestNeighborQuery {
                        const DataStorage& data_storage)
     : table_query_(table_query), data_storage_(data_storage) {}
 
-  LSHTableKeyType find_closest(const LSHTablePointType& q,
-                               const ComparisonPointType& q_comp,
-                               int_fast64_t num_probes,
-                               int_fast64_t max_num_candidates) {
+  LSHTableKeyType find_nearest_neighbor(const LSHTablePointType& q,
+                                        const ComparisonPointType& q_comp,
+                                        int_fast64_t num_probes,
+                                        int_fast64_t max_num_candidates) {
     auto start_time = std::chrono::high_resolution_clock::now();
     stats_num_queries_ += 1; 
     

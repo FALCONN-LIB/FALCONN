@@ -196,7 +196,7 @@ double evaluate_query_time(LSHNearestNeighborTable<Point> *table,
   int outer_counter = 0;
   int num_matches = 0;
   for (const auto &query: queries) {
-    if (table->find_closest(query) == answers[outer_counter]) {
+    if (table->find_nearest_neighbor(query) == answers[outer_counter]) {
       ++num_matches;
     }
     ++outer_counter;

@@ -69,7 +69,7 @@ class LSHNearestNeighborTable {
   ///
   /// Finds the key of the closest candidate in the probing sequence for q.
   ///
-  virtual KeyType find_closest(const PointType& q) = 0;
+  virtual KeyType find_nearest_neighbor(const PointType& q) = 0;
 
   ///
   /// Find the keys of the k closest candidates in the probing sequence for q.
@@ -178,8 +178,8 @@ enum class LSHFamily {
 /// The supported distance functions.
 ///
 /// Note that we use distance functions only to filter the candidates in
-/// find_closest, find_k_nearest_neighbors and find_near_neighbors. For just
-/// returning all the candidates, the distance function is irrelevant.
+/// find_nearest_neighbor, find_k_nearest_neighbors, and find_near_neighbors.
+//  For only returning all the candidates, the distance function is irrelevant.
 ///
 enum class DistanceFunction {
   Unknown = 0,

@@ -6,7 +6,7 @@ namespace core {
 
 template<typename Point>
 struct NormalizationHelper {
-  static void normalize(Point* p) {
+  static void normalize(Point*) {
     static_assert(FalseStruct<Point>::value, "Point type not supported.");
   }
   template<typename T> struct FalseStruct : std::false_type {};

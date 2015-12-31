@@ -17,7 +17,7 @@ def run_experiment(table, queries, true_nns):
 
   for query, true_nn in zip(queries, true_nns):
     start = timeit.default_timer()
-    res = table.find_closest(query)
+    res = table.find_nearest_neighbor(query)
     end = timeit.default_timer()
     average_query_time_outside += (end - start)
     if res == true_nn:

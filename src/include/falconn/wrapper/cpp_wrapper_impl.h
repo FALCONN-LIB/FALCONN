@@ -276,8 +276,9 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
     return max_num_candidates_;
   }
 
-  KeyType find_closest(const PointType& q) {
-    return nn_query_->find_closest(q, q, num_probes_, max_num_candidates_);
+  KeyType find_nearest_neighbor(const PointType& q) {
+    return nn_query_->find_nearest_neighbor(q, q, num_probes_,
+        max_num_candidates_);
   }
   
   void find_k_nearest_neighbors(const PointType& q,
