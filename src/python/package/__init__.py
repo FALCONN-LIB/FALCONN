@@ -1,1 +1,1 @@
-from falconn import *
+from .falconn import *
