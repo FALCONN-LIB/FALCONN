@@ -1,0 +1,5 @@
+include README.md
+include falconn/swig/python_wrapper.h
+include benchmarks/random_benchmark.py
+recursive-include falconn/src *
+recursive-include falconn/external *
