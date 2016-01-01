@@ -3,9 +3,9 @@
 #define SWIG_FILE_WITH_INIT
 #include <exception>
 #include <string>
-#include "../../include/falconn/falconn_global.h"
-#include "../../include/falconn/lsh_nn_table.h"
-#include "python/module/python_wrapper.h"
+#include "falconn/falconn_global.h"
+#include "falconn/lsh_nn_table.h"
+#include "python_wrapper.h"
 
 using falconn::LSHConstructionParameters;
 using falconn::FalconnError;
@@ -56,5 +56,5 @@ namespace std {
 %apply (float* IN_ARRAY1, int DIM1) {(const float* vec, int len)};
 %apply (float* IN_ARRAY2, int DIM1, int DIM2) {(const float* matrix, int num_rows, int num_columns)};
 
-%include "../../include/falconn/falconn_global.h"
+%include "falconn/falconn_global.h"
 %include "python_wrapper.h"
