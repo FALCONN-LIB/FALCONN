@@ -1,6 +1,7 @@
 #ifndef __WRAPPER_H__
 #define __WRAPPER_H__
 
+#include <array>
 #include <cstdint>
 #include <memory>
 #include <type_traits>
