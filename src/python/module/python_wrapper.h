@@ -8,8 +8,8 @@
 
 #include <Eigen/Dense>
 
-#include "falconn_global.h"
-#include "lsh_nn_table.h"
+#include "falconn/falconn_global.h"
+#include "falconn/lsh_nn_table.h"
 
 namespace falconn {
 namespace python {

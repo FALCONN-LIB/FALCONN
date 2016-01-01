@@ -11,7 +11,7 @@ ALL_HEADERS = $(INC_DIR)/core/lsh_table.h $(INC_DIR)/core/cosine_distance.h $(IN
 
 CXX=g++
 CXXFLAGS=-std=gnu++11 -DNDEBUG -Wall -Wextra -march=native -O3 -I external/eigen -I src/include
-SWIG=swig
+SWIG=swig3.0
 NUMPY_INCLUDE_DIR=/usr/local/lib/python2.7/site-packages/numpy/core/include
 
 clean:
@@ -27,11 +27,22 @@ docs: $(ALL_HEADERS) $(DOC_DIR)/Doxyfile
 
 falconn_swig: $(ALL_HEADERS) $(PYTHON_DIR)/module/falconn.i
 	mkdir -p $(PYTHON_OUT_DIR)
-	$(SWIG) -c++ -python -builtin -outdir $(PYTHON_OUT_DIR) -o $(PYTHON_OUT_DIR)/falconn_wrap.cc $(PYTHON_DIR)/module/falconn.i
-	mkdir -p obj
-	$(CXX) $(CXXFLAGS) -fPIC `python-config --includes` -I $(NUMPY_INCLUDE_DIR) -I $(INC_DIR) -c $(PYTHON_OUT_DIR)/falconn_wrap.cc -I src -o obj/falconn_wrap.o
-	$(CXX) -shared obj/falconn_wrap.o -o $(PYTHON_OUT_DIR)/_falconn.so `python-config --ldflags`
-	rm -f $(PYTHON_OUT_DIR)/falconn_wrap.cxx
+	mkdir -p $(PYTHON_OUT_DIR)/falconn
+	mkdir -p $(PYTHON_OUT_DIR)/falconn/src
+	mkdir -p $(PYTHON_OUT_DIR)/falconn/external
+	mkdir -p $(PYTHON_OUT_DIR)/falconn/swig
+	mkdir -p $(PYTHON_OUT_DIR)/benchmarks
+	cp README.md $(PYTHON_OUT_DIR)
+	cp src/python/module/python_wrapper.h $(PYTHON_OUT_DIR)/falconn/swig
+	cp src/python/package/__init__.py $(PYTHON_OUT_DIR)/falconn
+	cp src/python/benchmark/random_benchmark.py $(PYTHON_OUT_DIR)/benchmarks
+	cp -r src/include $(PYTHON_OUT_DIR)/falconn/src
+	cp -r external/eigen $(PYTHON_OUT_DIR)/falconn/external
+	cp $(PYTHON_DIR)/package/setup.py $(PYTHON_OUT_DIR)
+	cp $(PYTHON_DIR)/package/MANIFEST.in $(PYTHON_OUT_DIR)
+	$(SWIG) -c++ -python -builtin -outdir $(PYTHON_OUT_DIR)/falconn -o $(PYTHON_OUT_DIR)/falconn/swig/falconn_wrap.cc -Iexternal/eigen -Isrc/include $(PYTHON_DIR)/module/falconn.i
+	cd $(PYTHON_OUT_DIR); python setup.py sdist
+	cd $(PYTHON_OUT_DIR)/dist; tar -xzf *.tar.gz; cd FALCONN-*; python setup.py build
 
 random_benchmark: $(BENCH_DIR)/random_benchmark.cc $(ALL_HEADERS)
 	$(CXX) $(CXXFLAGS) -o $@ $(BENCH_DIR)/random_benchmark.cc
