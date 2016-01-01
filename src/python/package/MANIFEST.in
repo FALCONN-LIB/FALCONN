@@ -1,4 +1,5 @@
 include README.md
+include LICENSE.txt
 include falconn/swig/python_wrapper.h
 include benchmarks/random_benchmark.py
 recursive-include falconn/src *

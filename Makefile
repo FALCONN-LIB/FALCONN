@@ -25,7 +25,8 @@ clean:
 docs: $(ALL_HEADERS) $(DOC_DIR)/Doxyfile
 	doxygen $(DOC_DIR)/Doxyfile
 
-falconn_swig: $(ALL_HEADERS) $(PYTHON_DIR)/module/falconn.i
+falconn_swig:
+	rm -rf $(PYTHON_OUT_DIR)
 	mkdir -p $(PYTHON_OUT_DIR)
 	mkdir -p $(PYTHON_OUT_DIR)/falconn
 	mkdir -p $(PYTHON_OUT_DIR)/falconn/src
@@ -33,6 +34,7 @@ falconn_swig: $(ALL_HEADERS) $(PYTHON_DIR)/module/falconn.i
 	mkdir -p $(PYTHON_OUT_DIR)/falconn/swig
 	mkdir -p $(PYTHON_OUT_DIR)/benchmarks
 	cp README.md $(PYTHON_OUT_DIR)
+	cp LICENSE.txt $(PYTHON_OUT_DIR)
 	cp src/python/module/python_wrapper.h $(PYTHON_OUT_DIR)/falconn/swig
 	cp src/python/package/__init__.py $(PYTHON_OUT_DIR)/falconn
 	cp src/python/benchmark/random_benchmark.py $(PYTHON_OUT_DIR)/benchmarks
