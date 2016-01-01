@@ -35,6 +35,7 @@ falconn_swig:
 	mkdir -p $(PYTHON_OUT_DIR)/benchmarks
 	cp README.md $(PYTHON_OUT_DIR)
 	cp LICENSE.txt $(PYTHON_OUT_DIR)
+	cp CONTRIBUTORS.md $(PYTHON_OUT_DIR)
 	cp src/python/module/python_wrapper.h $(PYTHON_OUT_DIR)/falconn/swig
 	cp src/python/package/__init__.py $(PYTHON_OUT_DIR)/falconn
 	cp src/python/benchmark/random_benchmark.py $(PYTHON_OUT_DIR)/benchmarks
