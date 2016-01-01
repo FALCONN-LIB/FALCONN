@@ -215,7 +215,7 @@ TEST(WrapperTest, ComputeNumberOfHashFunctionsTest) {
   params.lsh_family = LSHFamily::CrossPolytope;
   compute_number_of_hash_functions<VecDense>(5, &params);
   EXPECT_EQ(1, params.k);
-  EXPECT_EQ(10, params.last_cp_dimension);
+  EXPECT_EQ(16, params.last_cp_dimension);
   
   params.dimension = 100;
   params.lsh_family = LSHFamily::Hyperplane;
@@ -223,7 +223,7 @@ TEST(WrapperTest, ComputeNumberOfHashFunctionsTest) {
   EXPECT_EQ(8, params.k);
 
   params.lsh_family = LSHFamily::CrossPolytope;
-  params.feature_hashing_dimension = 30;
+  params.feature_hashing_dimension = 32;
   compute_number_of_hash_functions<VecSparse>(9, &params);
   EXPECT_EQ(2, params.k);
   EXPECT_EQ(4, params.last_cp_dimension);
@@ -237,6 +237,12 @@ TEST(WrapperTest, GetDefaultParametersTest1) {
 
   EXPECT_EQ(1, params.num_rotations);
   EXPECT_EQ(-1, params.feature_hashing_dimension);
+  EXPECT_EQ(10, params.l);
+  EXPECT_EQ(128, params.dimension);
+  EXPECT_EQ(DistanceFunction::NegativeInnerProduct, params.distance_function);
+  EXPECT_EQ(LSHFamily::CrossPolytope, params.lsh_family);
+  EXPECT_EQ(3, params.k);
+  EXPECT_EQ(2, params.last_cp_dimension);
 }
   
 TEST(WrapperTest, GetDefaultParametersTest2) {

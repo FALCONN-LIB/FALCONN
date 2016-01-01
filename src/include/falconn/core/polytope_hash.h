@@ -20,7 +20,16 @@
 namespace falconn {
 namespace core {
 
+// TODO: move this namespace to a separate file
 namespace cp_hash_helpers {
+
+static int_fast32_t find_next_power_of_two(int_fast32_t x) {
+  int_fast32_t res = 1;
+  while (res < x) {
+    res *= 2;
+  }
+  return res;
+}
 
 static int_fast32_t log2ceil(int_fast32_t x) {
   int_fast32_t res = 0;
@@ -728,8 +737,8 @@ class CrossPolytopeHashDense : public CrossPolytopeHashBase<
           CrossPolytopeHashDense<CoordinateType, HashType>,
           Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>,
           CoordinateType,
-          HashType>(find_next_power_of_two(vector_dim), k, l, num_rotations,
-                    last_cp_dim, seed),
+          HashType>(cp_hash_helpers::find_next_power_of_two(vector_dim), k, l,
+                    num_rotations, last_cp_dim, seed),
       vector_dim_(vector_dim) {
     if (vector_dim_ < 1) {
       throw LSHFunctionError("Vector dimension must be at least 1.");
@@ -748,14 +757,6 @@ class CrossPolytopeHashDense : public CrossPolytopeHashBase<
 
  private:
   const int_fast32_t vector_dim_;          // actual dimension of the vectors
-
-  static int_fast32_t find_next_power_of_two(int_fast32_t x) {
-    int_fast32_t res = 1;
-    while (res < x) {
-      res *= 2;
-    }
-    return res;
-  }
 };
 
 }  // namespace core

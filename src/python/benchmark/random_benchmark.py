@@ -124,10 +124,10 @@ print('Average query time: {} seconds'.format(average_scan_time))
 print(sepline)
 
 # Hyperplane hashing
-params_hp = falconn.ConstructionParameters()
+params_hp = falconn.LSHConstructionParameters()
 params_hp.dimension = d
 params_hp.lsh_family = 'hyperplane'
-params_hp.distance_function = 'NegativeInnerProduct'
+params_hp.distance_function = 'negative_inner_product'
 params_hp.k = 19
 params_hp.l = 10
 params_hp.seed = seed ^ 833840234
@@ -150,10 +150,10 @@ del hp_table
 print(sepline)
 
 # Cross polytope hashing
-params_cp = falconn.ConstructionParameters()
+params_cp = falconn.LSHConstructionParameters()
 params_cp.dimension = d
-params_cp.lsh_family = 'CrossPolytope'
-params_cp.distance_function = 'NegativeInnerProduct'
+params_cp.lsh_family = 'cross_polytope'
+params_cp.distance_function = 'negative_inner_product'
 params_cp.k = 3
 params_cp.l = 10
 params_cp.last_cp_dimension = 16

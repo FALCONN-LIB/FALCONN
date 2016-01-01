@@ -135,3 +135,6 @@ run_all_cpp_tests: $(TEST_BIN_DIR)/cosine_distance_test $(TEST_BIN_DIR)/euclidea
 	./$(TEST_BIN_DIR)/cpp_wrapper_test
 	./$(TEST_BIN_DIR)/data_transformation_test
 	./$(TEST_BIN_DIR)/data_storage_test
+
+run_all_python_tests: $(PYTHON_DIR)/test/wrapper_test.py
+	py.test src/python/test/wrapper_test.py

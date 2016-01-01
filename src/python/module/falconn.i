@@ -26,6 +26,10 @@ namespace std {
 }
 
 %ignore python_to_cpp_construction_parameters;
+%ignore cpp_to_python_construction_parameters;
+%ignore lsh_family_from_string;
+%ignore distance_function_from_string;
+%rename(CppLSHConstructionParameters) falconn::LSHConstructionParameters;
 
 %exception {
   try {

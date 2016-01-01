@@ -183,7 +183,7 @@ class PyLSHNearestNeighborTableDenseFloat {
 };
 
 
-struct ConstructionParameters {
+struct LSHConstructionParameters {
   int_fast32_t dimension = -1;
   std::string lsh_family = "unknown";
   std::string distance_function = "unknown";
@@ -197,38 +197,41 @@ struct ConstructionParameters {
 
 
 // %ignore'd in the swig wrapper
-void python_to_cpp_construction_parameters(
-    const ConstructionParameters& py_params,
-    falconn::LSHConstructionParameters* cpp_params) {
-  cpp_params->dimension = py_params.dimension;
-
-  std::string tmp_lsh_family = py_params.lsh_family;
-  std::transform(tmp_lsh_family.begin(), tmp_lsh_family.end(),
-      tmp_lsh_family.begin(), tolower);
-  if (tmp_lsh_family == "unknown") {
-    cpp_params->lsh_family = LSHFamily::Unknown;
-  } else if (tmp_lsh_family == "hyperplane") {
-    cpp_params->lsh_family = LSHFamily::Hyperplane;
-  } else if (tmp_lsh_family == "crosspolytope") {
-    cpp_params->lsh_family = LSHFamily::CrossPolytope;
-  } else {
-    throw PyLSHNearestNeighborTableError("Unknown LSH family parameter.");
-  }
- 
-  std::string tmp_distance_function = py_params.distance_function;
+DistanceFunction distance_function_from_string(const std::string& str) {
+  std::string tmp_distance_function = str;
   std::transform(tmp_distance_function.begin(), tmp_distance_function.end(),
       tmp_distance_function.begin(), tolower);
-  if (tmp_distance_function == "unknown") {
-    cpp_params->distance_function = DistanceFunction::Unknown;
-  } else if (tmp_distance_function == "negativeinnerproduct") {
-    cpp_params->distance_function = DistanceFunction::NegativeInnerProduct;
-  } else if (tmp_distance_function == "euclideansquared") {
-    cpp_params->distance_function = DistanceFunction::EuclideanSquared;
-  } else {
-    throw PyLSHNearestNeighborTableError("Unknown distance_function "
-        "parameter.");
+  for (int ii = 0; ii < static_cast<int>(kDistanceFunctionStrings.size());
+      ++ii) {
+    if (tmp_distance_function == kDistanceFunctionStrings[ii]) {
+      return DistanceFunction(ii);
+    }
   }
+  throw PyLSHNearestNeighborTableError("Unknown distance_function parameter.");
+}
 
+// %ignore'd in the swig wrapper
+LSHFamily lsh_family_from_string(const std::string& str) {
+  std::string tmp_lsh_family = str;
+  std::transform(tmp_lsh_family.begin(), tmp_lsh_family.end(),
+      tmp_lsh_family.begin(), tolower);
+  for (int ii = 0; ii < static_cast<int>(kLSHFamilyStrings.size()); ++ii) {
+    if (tmp_lsh_family == kLSHFamilyStrings[ii]) {
+      return LSHFamily(ii);
+    }
+  }
+  throw PyLSHNearestNeighborTableError("Unknown LSH family parameter.");
+}
+
+
+// %ignore'd in the swig wrapper
+void python_to_cpp_construction_parameters(
+    const LSHConstructionParameters& py_params,
+    falconn::LSHConstructionParameters* cpp_params) {
+  cpp_params->dimension = py_params.dimension;
+  cpp_params->lsh_family = lsh_family_from_string(py_params.lsh_family);
+  cpp_params->distance_function = distance_function_from_string(
+      py_params.distance_function);
   cpp_params->k = py_params.k;
   cpp_params->l = py_params.l;
   cpp_params->seed = py_params.seed;
@@ -238,9 +241,69 @@ void python_to_cpp_construction_parameters(
 }
 
 
+// %ignore'd in the swig wrapper
+void cpp_to_python_construction_parameters(
+    const falconn::LSHConstructionParameters& cpp_params,
+    LSHConstructionParameters* py_params) {
+  py_params->dimension = cpp_params.dimension;
+
+  int_fast32_t lsh_family_int = static_cast<int_fast32_t>(
+      cpp_params.lsh_family);
+  if (lsh_family_int < 0 || lsh_family_int >=
+      static_cast<int_fast32_t>(kLSHFamilyStrings.size())) {
+    throw PyLSHNearestNeighborTableError("Unknown LSH family value.");
+  }
+  py_params->lsh_family = kLSHFamilyStrings[lsh_family_int];
+
+  int_fast32_t distance_function_int = static_cast<int_fast32_t>(
+      cpp_params.distance_function);
+  if (distance_function_int < 0 || distance_function_int >=
+      static_cast<int_fast32_t>(kDistanceFunctionStrings.size())) {
+    throw PyLSHNearestNeighborTableError("Unknown distance function value.");
+  }
+  py_params->distance_function = kDistanceFunctionStrings[
+      distance_function_int];
+
+  py_params->k = cpp_params.k;
+  py_params->l = cpp_params.l;
+  py_params->seed = cpp_params.seed;
+  py_params->last_cp_dimension = cpp_params.last_cp_dimension;
+  py_params->num_rotations = cpp_params.num_rotations;
+  py_params->feature_hashing_dimension = cpp_params.feature_hashing_dimension;
+}
+
+
+void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
+                                      LSHConstructionParameters* params) {
+  falconn::LSHConstructionParameters inner_params;
+  python_to_cpp_construction_parameters(*params, &inner_params);
+
+  falconn::compute_number_of_hash_functions<DenseVector<float>>(
+      number_of_hash_bits, &inner_params);
+
+  cpp_to_python_construction_parameters(inner_params, params);
+}
+
+
+LSHConstructionParameters get_default_parameters(
+    int_fast64_t dataset_size,
+    int_fast32_t dimension,
+    const std::string& distance_function,
+    bool is_sufficiently_dense) {
+  falconn::LSHConstructionParameters inner_params =
+      falconn::get_default_parameters<DenseVector<float>>(
+          dataset_size, dimension, distance_function_from_string(
+              distance_function),
+          is_sufficiently_dense);
+  LSHConstructionParameters params;
+  cpp_to_python_construction_parameters(inner_params, &params);
+  return params;
+}
+
+
 PyLSHNearestNeighborTableDenseDouble construct_table_dense_double(
     const double* matrix, int num_rows, int num_columns,
-    const ConstructionParameters& params) {
+    const LSHConstructionParameters& params) {
 
   falconn::LSHConstructionParameters inner_params;
   python_to_cpp_construction_parameters(params, &inner_params);
@@ -260,7 +323,7 @@ PyLSHNearestNeighborTableDenseDouble construct_table_dense_double(
 
 PyLSHNearestNeighborTableDenseFloat construct_table_dense_float(
     const float* matrix, int num_rows, int num_columns,
-    const ConstructionParameters& params) {
+    const LSHConstructionParameters& params) {
 
   falconn::LSHConstructionParameters inner_params;
   python_to_cpp_construction_parameters(params, &inner_params);

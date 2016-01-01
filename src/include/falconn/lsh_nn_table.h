@@ -173,6 +173,12 @@ enum class LSHFamily {
   CrossPolytope = 2
 };
 
+static const std::array<const char*, 3> kLSHFamilyStrings = {
+    "unknown",
+    "hyperplane",
+    "cross_polytope"
+};
+
 
 ///
 /// The supported distance functions.
@@ -195,6 +201,12 @@ enum class DistanceFunction {
   /// actual Euclidean distance / l2-distance).
   ///
   EuclideanSquared = 2
+};
+
+static const std::array<const char*, 3> kDistanceFunctionStrings = {
+    "unknown",
+    "negative_inner_product",
+    "euclidean_squared"
 };
 
 

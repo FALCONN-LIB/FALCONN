@@ -125,7 +125,9 @@ struct ComputeNumberOfHashFunctions<DenseVector<CoordinateType>> {
         throw LSHNNTableSetupError("Vector dimension must be set to determine "
             "the number of dense cross polytope hash functions.");
       }
-      core::cp_hash_helpers::compute_k_parameters_for_bits(params->dimension,
+      int_fast32_t rotation_dim =
+          core::cp_hash_helpers::find_next_power_of_two(params->dimension);
+      core::cp_hash_helpers::compute_k_parameters_for_bits(rotation_dim,
           number_of_hash_bits, &(params->k), &(params->last_cp_dimension));
     } else {
       throw LSHNNTableSetupError("Cannot set paramters for unknown hash "
@@ -145,9 +147,12 @@ struct ComputeNumberOfHashFunctions<SparseVector<CoordinateType, IndexType>> {
         throw LSHNNTableSetupError("Feature hashing dimension must be set to "
             "determine  the number of sparse cross polytope hash functions.");
       }
-      core::cp_hash_helpers::compute_k_parameters_for_bits(
-          params->feature_hashing_dimension, number_of_hash_bits, &(params->k),
-          &(params->last_cp_dimension));
+      // TODO: add check here for power-of-two feature hashing dimension
+      // (or allow non-power-of-two feature hashing dimension in the CP hash)
+      int_fast32_t rotation_dim = core::cp_hash_helpers::find_next_power_of_two(
+          params->feature_hashing_dimension);
+      core::cp_hash_helpers::compute_k_parameters_for_bits(rotation_dim,
+          number_of_hash_bits, &(params->k), &(params->last_cp_dimension));
     } else {
       throw LSHNNTableSetupError("Cannot set paramters for unknown hash "
           "family.");

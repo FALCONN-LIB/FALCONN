@@ -8,3 +8,5 @@ random_benchmark
 test-output.txt
 examples/glove/glove
 examples/glove/dataset
+src/python/test/.cache
+src/python/test/__pycache__
