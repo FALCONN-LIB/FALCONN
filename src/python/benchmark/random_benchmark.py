@@ -7,7 +7,7 @@ import timeit
 
 import numpy as np
 
-sys.path.append('python_lib')
+sys.path.append('python_swig')
 
 import falconn
 

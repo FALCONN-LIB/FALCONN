@@ -3,7 +3,8 @@
 *.swn
 obj
 test_bin
-python_lib
+python_pkg
+python_swig
 random_benchmark
 test-output.txt
 examples/glove/glove
