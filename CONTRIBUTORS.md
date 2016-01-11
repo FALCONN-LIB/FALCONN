@@ -12,4 +12,5 @@ testing:
 * [Grey Ballard](http://www.sandia.gov/~gmballa/)
 * [Dhiraj Holden](http://toc.csail.mit.edu/user/237)
 * Ilya Kornakov
+* Weiwei Liu
 * [Andrew Sabisch](http://www.jamoozy.com/index.html)
