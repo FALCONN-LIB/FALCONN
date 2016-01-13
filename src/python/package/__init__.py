@@ -53,7 +53,6 @@ performance of our LSH families.
 """
 import numpy as _numpy
 from . import internal as _internal
-from .internal import LSHConstructionParameters
 
 def get_default_parameters(num_points, dimension, distance='euclidean_squared', is_sufficiently_random=False):
     """Get parameters for the LSH for _reasonable_ datasets.
@@ -107,6 +106,37 @@ def compute_number_of_hash_functions(num_bits, params):
     fields partially set as described above
     """
     _internal.compute_number_of_hash_functions(num_bits, params)
+
+class LSHConstructionParameters(_internal.LSHConstructionParameters):
+    """ Construction parameters for the LSH data structure.
+
+    Contains the parameters for constructing a LSH table wrapper. Not all fields
+    are necessary for all types of LSH tables.
+    
+    Required parameters:
+    * dimension -- dimension of the points. Required for all the hash families;
+    * lsh_family -- hash family. Required for all the hash families. Can be either
+    'hyperplane' or 'cross_polytope';
+    * distance_function -- distance function. Required for all the hash families.
+    Can be either 'euclidean_squared' or 'negative_inner_product';
+    * k -- number of hash functions per table. Required for all the hash families.
+    * l -- number of hash tables. Required for all the hash families;
+    * seed -- randomness seed (default 409556018).
+
+    Optional parameters:
+    * last_cp_dimension -- dimension of the last of the k
+    cross-polytopes. Required only for the cross-polytope hash;
+    * num_rotations -- number of pseudo-random rotations. Required
+    only for the cross-polytope hash. For data with lots of zeros,
+    it is recommended to set num_rotations to 2. For sufficiently
+    random data, 1 rotation usually suffices;
+    * feature_hashing_dimension -- intermediate dimension for feature
+    hashing of sparse data. Ignored for the hyperplane hash. A smaller
+    feature hashing dimension leads to faster hash computations, but the
+    quality of the hash also degrades. The value -1 indicates that no
+    feature hashing is performed (default -1).
+    """
+    pass
 
 class LSHIndex:
     """The main class that represents the LSH data structure.
