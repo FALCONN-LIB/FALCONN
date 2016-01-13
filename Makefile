@@ -49,6 +49,7 @@ python_package:
 	cp CONTRIBUTORS.md $(PYTHON_PKG_DIR)
 	cp src/python/wrapper/python_wrapper.h $(PYTHON_PKG_DIR)/falconn/swig
 	cp src/python/benchmark/random_benchmark.py $(PYTHON_PKG_DIR)/benchmarks
+	cp -r src/python/test $(PYTHON_PKG_DIR)
 	cp -r src/include $(PYTHON_PKG_DIR)/falconn/src
 	cp -r external/eigen $(PYTHON_PKG_DIR)/falconn/external
 	cp $(PYTHON_DIR)/package/__init__.py $(PYTHON_PKG_DIR)/falconn/__init__.py
