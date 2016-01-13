@@ -207,6 +207,12 @@ class LSHIndex:
             raise ValueError('query dimension mismatch: {} expected, but {} found'.format(self._params.dimension, query.shape[0]))
 
     def find_k_nearest_neighbors(self, query, k):
+        """Retrieve the closest k neighbors to query.
+
+        Find the keys of the k closest candidates in the probing
+        sequence for query. The keys are returned in order of
+        increasing distance to query.
+        """
         self._check_built()
         self._check_query(query)
         if k <= 0:
@@ -214,6 +220,11 @@ class LSHIndex:
         return self._table.find_k_nearest_neighbors(query, k)
         
     def find_near_neighbors(self, query, threshold):
+        """Find all the points within threshold from query.
+
+        Returns the keys corresponding to candidates in the probing
+        sequence for query that have distance at most threshold.
+        """
         self._check_built()
         self._check_query(query)
         if threshold < 0:
@@ -221,48 +232,91 @@ class LSHIndex:
         return self._table.find_near_neighbors(query, threshold)
         
     def find_nearest_neighbor(self, query):
+        """Find the key of the closest candidate.
+        
+        Finds the key of the closest candidate in the probing sequence
+        for a query.
+        """
         self._check_built()
         self._check_query(query)
         return self._table.find_nearest_neighbor(query)
         
     def get_candidates_with_duplicates(self, query):
+        """Retrieve all the candidates for a given query.
+
+        Returns the keys of all candidates in the probing sequence for
+        query. If a candidate key is found in multiple tables, it will
+        appear multiple times in the result. The candidates are
+        returned in the order in which they appear in the probing
+        sequence.
+        """
         self._check_built()
         self._check_query(query)
         return self._table.get_candidates_with_duplicates(query)
         
     def get_max_num_candidates(self):
+        """Get the max. number of candidates considered in each query."""
         self._check_built()
         return self._table.get_max_num_candidates()
         
     def get_num_probes(self):
+        """Get the number of probes used for each query."""
         self._check_built()
         return self._table.get_num_probes()
         
     def get_query_statistics(self):
+        """Return the query statistics."""
         self._check_built()
         return self._table.get_query_statistics()
         
     def get_unique_candidates(self, query):
+        """Retrieve all the candidates (each at most once) for a query.
+
+        Returns the keys of all candidates in the probing sequence for
+        query. If a candidate key is found in multiple tables, it will
+        appear once in the result.
+        """
         self._check_built()
         self._check_query(query)
         return self._table.get_unique_candidates(query)
         
     def get_unique_sorted_candidates(self, query):
+        """Retrieve the sorted list of unique candidates for a query.
+
+        Returns the keys of all candidates in the probing sequence for
+        query. Each candidate is returned once and the resulting list
+        is sorted according to the key.
+        """
         self._check_built()
         self._check_query(query)
         return self._table.get_unique_sorted_candidates(query)
         
     def reset_query_statistics(self):
+        """Reset the query statistics."""
         self._check_built()
         self._table.reset_query_statistics()
         
     def set_max_num_candidates(self, max_num_candidates):
+        """Set the max. number of candidates considered in each query.
+
+        The constant -1 indicates that all candidates retrieved
+        in the probing sequence should be considered. This is the
+        default and usually a good setting. A maximum number of
+        candidates is mainly useful to give worst case running time
+        guarantees for every query.
+        """
         self._check_built()
         if max_num_candidates < -1:
             raise ValueError('invalid max_num_candidates: {}'.format(max_num_candidates))
         self._table.set_max_num_candidates(max_num_candidates)
         
     def set_num_probes(self, num_probes):
+        """Set the number of probes used for each query.
+
+        The default setting is params.l (the number of tables), which
+        effectively disables multiprobing (the probing sequence only
+        contains a single candidate per table).
+        """
         self._check_built()
         if num_probes < self._params.l:
             raise ValueError('number of probes must be at least the number of tables ({})'.format(self._params.l))
