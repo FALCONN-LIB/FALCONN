@@ -48,15 +48,19 @@ python_package:
 	cp LICENSE.txt $(PYTHON_PKG_DIR)
 	cp CONTRIBUTORS.md $(PYTHON_PKG_DIR)
 	cp src/python/wrapper/python_wrapper.h $(PYTHON_PKG_DIR)/falconn/swig
-	cp src/python/package/__init__.py $(PYTHON_PKG_DIR)/falconn
 	cp src/python/benchmark/random_benchmark.py $(PYTHON_PKG_DIR)/benchmarks
 	cp -r src/include $(PYTHON_PKG_DIR)/falconn/src
 	cp -r external/eigen $(PYTHON_PKG_DIR)/falconn/external
+	cp $(PYTHON_DIR)/package/__init__.py $(PYTHON_PKG_DIR)/falconn/__init__.py
 	cp $(PYTHON_DIR)/package/setup.py $(PYTHON_PKG_DIR)
 	cp $(PYTHON_DIR)/package/MANIFEST.in $(PYTHON_PKG_DIR)
 	$(SWIG) -c++ -python -builtin -outdir $(PYTHON_PKG_DIR)/falconn -o $(PYTHON_PKG_DIR)/falconn/swig/falconn_wrap.cc -Iexternal/eigen -Isrc/include $(PYTHON_DIR)/wrapper/falconn.i
+	mv $(PYTHON_PKG_DIR)/falconn/falconn.py $(PYTHON_PKG_DIR)/falconn/internal.py
 	cd $(PYTHON_PKG_DIR); python setup.py sdist
 	cd $(PYTHON_PKG_DIR)/dist; tar -xzf *.tar.gz; cd FALCONN-*; python setup.py build
+
+python_package_install: python_package
+	cd $(PYTHON_PKG_DIR)/dist/FALCONN-*; python setup.py install
 
 random_benchmark: $(BENCH_DIR)/random_benchmark.cc $(ALL_HEADERS)
 	$(CXX) $(CXXFLAGS) -o $@ $(BENCH_DIR)/random_benchmark.cc
