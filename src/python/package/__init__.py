@@ -28,6 +28,10 @@ class LSHIndex:
         else:
             self._table = _internal.construct_table_dense_double(dataset, self._params)
 
+    def _check_built(self):
+        if self._dataset is None or self._table is None:
+            raise RuntimeError('LSH table is not built (use fit())')
+
     def _check_query(self, query):
         if not isinstance(query, _numpy.ndarray):
             raise TypeError('query must be an instance of numpy.ndarray')
@@ -39,45 +43,63 @@ class LSHIndex:
             raise ValueError('query dimension mismatch: {} expected, but {} found'.format(self._params.dimension, query.shape[0]))
 
     def find_k_nearest_neighbors(self, query, k):
+        self._check_built()
         self._check_query(query)
+        if k <= 0:
+            raise ValueError('k must be positive rather than {}'.format(k))
         return self._table.find_k_nearest_neighbors(query, k)
         
     def find_near_neighbors(self, query, threshold):
+        self._check_built()
         self._check_query(query)
+        if threshold < 0:
+            raise ValueError('threshold must be non-negative rather than {}'.format(threshold))
         return self._table.find_near_neighbors(query, threshold)
         
     def find_nearest_neighbor(self, query):
+        self._check_built()
         self._check_query(query)
         return self._table.find_nearest_neighbor(query)
         
     def get_candidates_with_duplicates(self, query):
+        self._check_built()
         self._check_query(query)
         return self._table.get_candidates_with_duplicates(query)
         
     def get_max_num_candidates(self):
+        self._check_built()
         return self._table.get_max_num_candidates()
         
     def get_num_probes(self):
+        self._check_built()
         return self._table.get_num_probes()
         
     def get_query_statistics(self):
+        self._check_built()
         return self._table.get_query_statistics()
         
     def get_unique_candidates(self, query):
+        self._check_built()
         self._check_query(query)
         return self._table.get_unique_candidates(query)
         
     def get_unique_sorted_candidates(self, query):
+        self._check_built()
         self._check_query(query)
         return self._table.get_unique_sorted_candidates(query)
         
     def reset_query_statistics(self):
+        self._check_built()
         self._table.reset_query_statistics()
         
     def set_max_num_candidates(self, max_num_candidates):
+        self._check_built()
+        if max_num_candidates < -1:
+            raise ValueError('invalid max_num_candidates: {}'.format(max_num_candidates))
         self._table.set_max_num_candidates(max_num_candidates)
         
     def set_num_probes(self, num_probes):
+        self._check_built()
         if num_probes < self._params.l:
             raise ValueError('number of probes must be at least the number of tables ({})'.format(self._params.l))
         self._table.set_num_probes(num_probes)
