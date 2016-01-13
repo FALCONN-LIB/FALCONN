@@ -1,5 +1,6 @@
 import numpy as _numpy
 from . import internal as _internal
+from .internal import LSHConstructionParameters
 
 def get_default_parameters(num_points, dimension, distance='euclidean_squared', is_sufficiently_random=False):
     return _internal.get_default_parameters(num_points, dimension, distance, is_sufficiently_random)
