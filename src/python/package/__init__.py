@@ -109,6 +109,45 @@ def compute_number_of_hash_functions(num_bits, params):
     _internal.compute_number_of_hash_functions(num_bits, params)
 
 class LSHIndex:
+    """The main class that represents the LSH data structure.
+
+    To construct an instance of LSHIndex one needs to pass an instance
+    of LSHConstructionParameters. During the construction, the
+    parameters are not (yet) checked for correctness.
+
+    After creating an instance of LSHIndex, one needs to call
+    fit() passing a dataset. A dataset must be a two-dimensional
+    NumPy array with dtype numpy.float32 or numpy.float64. Rows
+    of the array are interpreted as data points. Thus, the second
+    dimension of the array must match the dimension from parameters.
+
+    We recommend converting a dataset to numpy.float32 and centering
+    it: both tricks usually improve the performance a lot.
+
+    After building the LSH data structures, one needs to set the number
+    of probes via set_num_probes() to achieve the desired accuracy
+    (the more probes one does the better accuracy is). This can be done
+    empirically on a sample set of queries using binary search.
+
+    Then, one can use the member functions:
+    * find_k_nearest_neighbors()
+    * find_near_neighbors()
+    * find_nearest_neighbor()
+    * get_candidates_with_duplicates()
+    * get_unique_candidates()
+    * get_unique_sorted_candidates()
+    to execute queries.
+
+    In addition to this, the classes exposes the
+    following helper functions:
+    * get_max_num_candidates
+    * get_num_probes
+    * get_query_statistics
+    * reset_query_statistics
+    * set_max_num_candidates.
+    See their respective documentation for help.
+    """
+    
     def __init__(self, params):
         self._params = params
         self._dataset = None
