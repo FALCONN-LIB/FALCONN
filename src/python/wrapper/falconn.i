@@ -1,4 +1,5 @@
 %module falconn
+%feature("autodoc", "3");
 %{
 #define SWIG_FILE_WITH_INIT
 #include <exception>

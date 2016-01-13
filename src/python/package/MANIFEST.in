@@ -3,5 +3,6 @@ include LICENSE.txt
 include CONTRIBUTORS.md
 include falconn/swig/python_wrapper.h
 include benchmarks/random_benchmark.py
+recursive-include test *.py
 recursive-include falconn/src *
 recursive-include falconn/external *

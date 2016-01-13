@@ -21,9 +21,12 @@ module = Extension('_falconn',
 
 setup(name='FALCONN',
       version='1.1',
-      packages=find_packages(),
       author='Ilya Razenshteyn, Ludwig Schmidt',
       author_email='falconn.lib@gmail.com',
       url='http://falconn-lib.org/',
+      description='A library for similarity search over high-dimensional data based on Locality-Sensitive Hashing (LSH)',
+      license='MIT',
+      keywords='nearest neighbor search similarity lsh locality-sensitive hashing cosine distance euclidean',
+      packages=find_packages(),
       include_package_data=True,
       ext_modules=[module])
