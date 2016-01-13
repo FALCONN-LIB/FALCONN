@@ -1,11 +1,11 @@
 import numpy as _numpy
 from . import internal as _internal
 
+def get_default_parameters(num_points, dimension, distance='euclidean_squared', is_sufficiently_random=False):
+    return _internal.get_default_parameters(num_points, dimension, distance, is_sufficiently_random)
+
 def compute_number_of_hash_functions(num_bits, params):
     _internal.compute_number_of_hash_functions(num_bits, params)
-
-def get_default_parameters(num_points, dimension, distance='euclidean_squared', is_dense=False):
-    return _internal.get_default_parameters(num_points, dimension, distance, is_dense)
 
 class LSHIndex:
     def __init__(self, params):
