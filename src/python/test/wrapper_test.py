@@ -131,6 +131,11 @@ def test_lsh_index_negative():
     assert False
   except ValueError:
     pass
+  try:
+    t.set_num_probes(1000.1)
+    assert False
+  except TypeError:
+    pass
 
   def check_check_query(f):
     try:
