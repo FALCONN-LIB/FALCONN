@@ -67,7 +67,8 @@ class LSHIndex:
         self._check_query(query)
         return self._table.get_unique_candidates(query)
         
-    def get_unique_sorted_candidates(self):
+    def get_unique_sorted_candidates(self, query):
+        self._check_query(query)
         return self._table.get_unique_sorted_candidates(query)
         
     def reset_query_statistics(self):

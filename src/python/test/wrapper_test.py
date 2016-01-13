@@ -1,14 +1,8 @@
-from __future__ import print_function
-from __future__ import division
-
-import sys
-
-sys.path.append('python_swig')
-
 import falconn
+import numpy as np
 
 def test_number_of_hash_functions():
-  params = falconn.LSHConstructionParameters()
+  params = falconn._internal.LSHConstructionParameters()
   
   params.lsh_family = 'hyperplane'
   params.dimension = 10
@@ -47,3 +41,24 @@ def test_get_default_parameters():
   assert params.distance_function == dist_func
   assert params.num_rotations == 1
   assert params.last_cp_dimension == 64
+
+def test_lsh_index_positive():
+  n = 1000
+  d = 128
+  p = falconn.get_default_parameters(n, d)
+  t = falconn.LSHIndex(p)
+  dataset = np.random.randn(n, d).astype(np.float32)
+  t.fit(dataset)
+  u = np.random.randn(d).astype(np.float32)
+  t.find_k_nearest_neighbors(u, 10)
+  t.find_near_neighbors(u, 10.0)
+  t.find_nearest_neighbor(u)
+  t.get_candidates_with_duplicates(u)
+  t.get_max_num_candidates()
+  t.get_num_probes()
+  t.get_query_statistics()
+  t.get_unique_candidates(u)
+  t.get_unique_sorted_candidates(u)
+  t.reset_query_statistics()
+  t.set_max_num_candidates(100)
+  t.set_num_probes(10)
