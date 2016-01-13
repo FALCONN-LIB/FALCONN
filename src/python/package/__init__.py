@@ -11,7 +11,6 @@ class LSHIndex:
     def __init__(self, params):
         self._params = params
         self._dataset = None
-        self._number_of_tables = None
         self._table = None
 
     def fit(self, dataset):
@@ -24,7 +23,6 @@ class LSHIndex:
         if dataset.shape[1] != self._params.dimension:
             raise ValueError('dataset dimension mismatch: {} expected, but {} found'.format(self._params.dimension, dataset.shape[1]))
         self._dataset = dataset
-        self._number_of_tables = self._params.l
         if dataset.dtype == _numpy.float32:
             self._table = _internal.construct_table_dense_float(dataset, self._params)
         else:
@@ -79,6 +77,6 @@ class LSHIndex:
         self._table.set_max_num_candidates(max_num_candidates)
         
     def set_num_probes(self, num_probes):
-        if num_probes < self._number_of_tables:
-            raise ValueError('number of probes must be at least the number of tables ({})'.format(self._number_of_tables))
+        if num_probes < self._params.l:
+            raise ValueError('number of probes must be at least the number of tables ({})'.format(self._params.l))
         self._table.set_num_probes(num_probes)
