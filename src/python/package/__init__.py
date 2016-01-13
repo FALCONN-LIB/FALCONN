@@ -111,7 +111,7 @@ def compute_number_of_hash_functions(num_bits, params):
 class LSHIndex:
     """The main class that represents the LSH data structure.
 
-    To construct an instance of LSHIndex one needs to pass an instance
+    To construct an instance of LSHIndex, one needs to pass an instance
     of LSHConstructionParameters. During the construction, the
     parameters are not (yet) checked for correctness.
 
@@ -149,11 +149,35 @@ class LSHIndex:
     """
     
     def __init__(self, params):
+        """Initialize with an instance of LSHConstructionParameters.
+
+        Arguments:
+        * params -- an instance of LSHConstructionParameters
+        """
         self._params = params
         self._dataset = None
         self._table = None
 
     def fit(self, dataset):
+        """Build the LSH data structure from a given dataset.
+        
+        The method builds the LSH data structure using the parameters
+        passed during the construction and a given dataset.
+
+        A dataset must be a two-dimensional
+        NumPy array with dtype numpy.float32 or numpy.float64. Rows
+        of the array are interpreted as data points. Thus, the second
+        dimension of the array must match the dimension from parameters.
+
+        An important caveat: DON'T DELETE DATASET WHILE USING THE
+        DATASTRUCTURE. This can lead to silent crashes and can be very
+        confusing.
+
+        Arguments:
+        * dataset -- a two-dimensional NumPy array with dtype
+        numpy.float32 or numpy.float64; the second dimension must match
+        dimension from the LSH parameters
+        """
         if not isinstance(dataset, _numpy.ndarray):
             raise TypeError('dataset must be an instance of numpy.ndarray')
         if len(dataset.shape) != 2:
