@@ -1,7 +1,7 @@
 """Python wrapper for FALCONN.
 
-This is a Python wrapper for FALCONN (http://falconn-lib.org/) that is
-meant to be easy to use. It exports two classes (LSHIndex and
+This is a Python wrapper for [FALCONN](http://falconn-lib.org/) that is
+meant to be easy to use. It exposes two classes (LSHIndex and
 LSHConstructionParameters) together with two helper functions
 (get_default_parameters and compute_number_of_hash_functions).
 
