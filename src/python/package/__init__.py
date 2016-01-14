@@ -9,8 +9,8 @@ For now, the Python wrapper supports only static dense datasets,
 but more to come. Also, note that FALCONN is currently not thread-safe.
 
 FALCONN is based on Locality-Sensitive Hashing (LSH), which is briefly
-covered here: https://github.com/FALCONN-LIB/FALCONN/wiki/LSH-Primer
-and https://github.com/FALCONN-LIB/FALCONN/wiki/LSH-Families .
+covered [here](https://github.com/FALCONN-LIB/FALCONN/wiki/LSH-Primer)
+and [here](https://github.com/FALCONN-LIB/FALCONN/wiki/LSH-Families).
 
 The main class is LSHIndex, which takes a dataset and builds a Nearest
 Neighbor data structure. A dataset is represented as a two-dimensional
@@ -20,9 +20,8 @@ a fancy BLAS library: this has zero effect on the performance of FALCONN.
 
 To construct an instance of LSHIndex, one needs to prepare an instance
 of LSHConstructionParameters, which stores parameters used to build the
-LSH data structure. To get a sense about the parameters used, see the
-following page:
-https://github.com/FALCONN-LIB/FALCONN/wiki/How-to-Use-FALCONN .
+LSH data structure. To get a sense about the parameters used, see
+[here](https://github.com/FALCONN-LIB/FALCONN/wiki/How-to-Use-FALCONN).
 To get a reasonable setting of parameters, one can (and should!) use
 two helper functions we provide: get_default_parameters and
 compute_number_of_hash_functions.
@@ -30,9 +29,9 @@ compute_number_of_hash_functions.
 Besides the documentation, we provide two examples of usage of the
 wrapper:
 
-* in benchmark/random_benchmark.py the LSH data structure for a
-random dataset is built and used;
-* in https://github.com/FALCONN-LIB/FALCONN/tree/master/examples/glove
+* [here](https://github.com/FALCONN-LIB/FALCONN/tree/master/examples/glove)
+the LSH data structure for a random dataset is built and used;
+* [here](https://github.com/FALCONN-LIB/FALCONN/tree/master/examples/glove)
 we show how to use LSH to perform similarity search on a GloVe dataset.
 
 An intended workflow is as follows:
