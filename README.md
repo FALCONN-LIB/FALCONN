@@ -16,14 +16,13 @@ The core classes of FALCONN rely on [templates](https://en.wikipedia.org/wiki/An
 
 ### How to use FALCONN
 
-For now, we provide a C++ interface for FALCONN. In the future, we plan to support more programming languages such as [Python](https://www.python.org/) [(NumPy)](http://www.numpy.org/)
-and [Julia](http://julialang.org/). For C++, FALCONN is a header-only library and has no dependencies besides Eigen (which is also header-only),
+We provide a C++ interface for FALCONN as well as a [Python](https://www.python.org/) wrapper (that uses [NumPy](http://www.numpy.org/)). In the future, we plan to support more programming languages such as [Julia](http://julialang.org/). For C++, FALCONN is a header-only library and has no dependencies besides Eigen (which is also header-only),
 so FALCONN is easy to set up. For further details, please see our [documentation](https://github.com/falconn-lib/falconn/wiki).
 
 ### How fast is FALCONN?
 
-On data sets with about 1 million points in around 100 dimensions, FALCONN requires a few milliseconds per query with a top-10 nearest
-neighbor accuracy (running on a reasonably modern desktop CPU). For more details, please see our
+On data sets with about 1 million points in around 100 dimensions, FALCONN typically
+requires a few milliseconds per query (running on a reasonably modern desktop CPU). For more details, please see our
 [research paper](http://papers.nips.cc/paper/5893-practical-and-optimal-lsh-for-angular-distance).
 
 ### Questions
