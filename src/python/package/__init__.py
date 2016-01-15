@@ -1,7 +1,7 @@
 """Python wrapper for FALCONN.
 
-This is a Python wrapper for FALCONN (http://falconn-lib.org/) that is
-meant to be easy to use. It exports two classes (LSHIndex and
+This is a Python wrapper for [FALCONN](http://falconn-lib.org/) that is
+meant to be easy to use. It exposes two classes (LSHIndex and
 LSHConstructionParameters) together with two helper functions
 (get_default_parameters and compute_number_of_hash_functions).
 
@@ -9,8 +9,8 @@ For now, the Python wrapper supports only static dense datasets,
 but more to come. Also, note that FALCONN is currently not thread-safe.
 
 FALCONN is based on Locality-Sensitive Hashing (LSH), which is briefly
-covered here: https://github.com/FALCONN-LIB/FALCONN/wiki/LSH-Primer
-and https://github.com/FALCONN-LIB/FALCONN/wiki/LSH-Families .
+covered [here](https://github.com/FALCONN-LIB/FALCONN/wiki/LSH-Primer)
+and [here](https://github.com/FALCONN-LIB/FALCONN/wiki/LSH-Families).
 
 The main class is LSHIndex, which takes a dataset and builds a Nearest
 Neighbor data structure. A dataset is represented as a two-dimensional
@@ -20,21 +20,22 @@ a fancy BLAS library: this has zero effect on the performance of FALCONN.
 
 To construct an instance of LSHIndex, one needs to prepare an instance
 of LSHConstructionParameters, which stores parameters used to build the
-LSH data structure. To get a sense about the parameters used, see the
-following page:
-https://github.com/FALCONN-LIB/FALCONN/wiki/How-to-Use-FALCONN .
+LSH data structure. To get a sense about the parameters used, see
+[here](https://github.com/FALCONN-LIB/FALCONN/wiki/How-to-Use-FALCONN).
 To get a reasonable setting of parameters, one can (and should!) use
 two helper functions we provide: get_default_parameters and
 compute_number_of_hash_functions.
 
 Besides the documentation, we provide two examples of usage of the
 wrapper:
-* in benchmark/random_benchmark.py the LSH data structure for a
-random dataset is built and used;
-* in https://github.com/FALCONN-LIB/FALCONN/tree/master/examples/glove
+
+* [here](https://github.com/FALCONN-LIB/FALCONN/tree/master/examples/glove)
+the LSH data structure for a random dataset is built and used;
+* [here](https://github.com/FALCONN-LIB/FALCONN/tree/master/examples/glove)
 we show how to use LSH to perform similarity search on a GloVe dataset.
 
 An intended workflow is as follows:
+
 * first, use get_default_parameters to get a reasonable setting of
 parameters; tune if necessary;
 * second, create an instance of LSHIndex passing the
@@ -46,6 +47,7 @@ method until you get the desired accuracy on a sample set of queries;
 * finally, use the other methods of LSHIndex to execute queries.
 
 A couple of useful tricks:
+
 * Convert your dataset to numpy.float32;
 * Center your dataset (by doing a -= numpy.mean(a, axis=0)) and queries:
 this has no effect on the correctness, but greatly improves the
@@ -67,6 +69,7 @@ def get_default_parameters(num_points, dimension, distance='euclidean_squared', 
     datasets (when the mean is zero).
 
     Arguments:
+
     * num_points -- the number of points in a dataset
     * dimension -- the dimension of a dataset
     * distance -- the distance function used: can be either
@@ -92,14 +95,17 @@ def compute_number_of_hash_functions(num_bits, params):
     last cross polytope dimension will also be determined. The input
     object params of type LSHConstructionParameters must contain valid
     values for the following fields:
+
     * lsh_family;
     * dimension (for the cross polytope hash).
 
     The function will then set the following fields of params:
+
     * k;
     * last_cp_dimension (for the cross polytope hash).
 
     Arguments:
+
     * num_bits -- the desired number of bits (the number of bins will be
     2^{num_bits})
     * params -- an object of the type LSHConstructionParameters with
@@ -114,6 +120,7 @@ class LSHConstructionParameters(_internal.LSHConstructionParameters):
     are necessary for all types of LSH tables.
     
     Required parameters:
+
     * dimension -- dimension of the points. Required for all the hash families;
     * lsh_family -- hash family. Required for all the hash families. Can be either
     'hyperplane' or 'cross_polytope';
@@ -124,6 +131,7 @@ class LSHConstructionParameters(_internal.LSHConstructionParameters):
     * seed -- randomness seed (default 409556018).
 
     Optional parameters:
+
     * last_cp_dimension -- dimension of the last of the k
     cross-polytopes. Required only for the cross-polytope hash;
     * num_rotations -- number of pseudo-random rotations. Required
@@ -160,6 +168,7 @@ class LSHIndex:
     empirically on a sample set of queries using binary search.
 
     Then, one can use the member functions:
+
     * find_k_nearest_neighbors()
     * find_near_neighbors()
     * find_nearest_neighbor()
@@ -170,11 +179,13 @@ class LSHIndex:
 
     In addition to this, the classes exposes the
     following helper functions:
+
     * get_max_num_candidates
     * get_num_probes
     * get_query_statistics
     * reset_query_statistics
     * set_max_num_candidates.
+
     See their respective documentation for help.
     """
     
@@ -182,6 +193,7 @@ class LSHIndex:
         """Initialize with an instance of LSHConstructionParameters.
 
         Arguments:
+
         * params -- an instance of LSHConstructionParameters
         """
         self._params = params
@@ -204,6 +216,7 @@ class LSHIndex:
         confusing.
 
         Arguments:
+
         * dataset -- a two-dimensional NumPy array with dtype
         numpy.float32 or numpy.float64; the second dimension must match
         dimension from the LSH parameters
