@@ -1,6 +1,10 @@
 #ifndef __WRAPPER_H__
 #define __WRAPPER_H__
 
+#if defined(__CYGWIN__) || defined(__MINGW32__)
+#error "Not supported!"
+#endif
+
 #include <array>
 #include <cstdint>
 #include <memory>
