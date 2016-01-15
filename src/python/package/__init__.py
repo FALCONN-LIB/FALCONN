@@ -1,10 +1,10 @@
 """Python wrapper for FALCONN.
 
 This is a Python wrapper for [FALCONN](http://falconn-lib.org/) that is
-meant to be easy to use. It exposes two classes (`LSHIndex`,
-`LSHConstructionParameters` and `QueryStatistics`) together with two
-helper functions (`get_default_parameters()` and
-`compute_number_of_hash_functions()`).
+meant to be easy to use. It exposes classes `LSHIndex`,
+`LSHConstructionParameters` and `QueryStatistics` together with
+helper functions `get_default_parameters()` and
+`compute_number_of_hash_functions()`.
 
 For now, the Python wrapper supports only _static dense_ datasets,
 but more to come. Also, note that FALCONN is currently not thread-safe.
