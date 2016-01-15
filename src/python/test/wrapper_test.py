@@ -109,11 +109,7 @@ def test_lsh_index_negative():
   except ValueError:
     pass
   
-  try:
-    t.find_near_neighbors(u, -1)
-    assert False
-  except ValueError:
-    pass
+  t.find_near_neighbors(u, -1)
   
   try:
     t.set_max_num_candidates(0.5)
