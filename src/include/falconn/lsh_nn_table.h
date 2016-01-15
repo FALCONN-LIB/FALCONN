@@ -1,9 +1,6 @@
 #ifndef __WRAPPER_H__
 #define __WRAPPER_H__
 
-#if defined(__CYGWIN__) || defined(__MINGW32__)
-#error "Not supported!"
-#endif
 
 #include <array>
 #include <cstdint>
@@ -11,7 +8,7 @@
 #include <type_traits>
 #include <vector>
 
-#include <Eigen/Dense>
+#include "eigen_wrapper.h"
 
 #include "falconn_global.h"
 

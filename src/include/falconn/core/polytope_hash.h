@@ -9,7 +9,8 @@
 #include <memory>
 #include <random>
 #include <vector>
-#include <Eigen/Dense>
+
+#include "../eigen_wrapper.h"
 
 #include "../ffht/fht_header_only.h"
 #include "data_storage.h"

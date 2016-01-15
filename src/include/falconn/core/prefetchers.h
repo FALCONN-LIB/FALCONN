@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include <Eigen/Dense>
+#include "../eigen_wrapper.h"
 
 namespace falconn {
 namespace core {
