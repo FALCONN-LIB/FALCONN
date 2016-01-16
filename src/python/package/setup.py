@@ -1,6 +1,12 @@
 import sys
 
 try:
+    import pypandoc
+    long_description = pypandoc.convert('README.md', 'rst')
+except(IOError, ImportError):
+    long_description = open('README.md').read()
+
+try:
     from setuptools import setup, find_packages, Extension
 except ImportError:
     sys.stderr.write('Setuptools not found!\n')
@@ -25,6 +31,7 @@ setup(name='FALCONN',
       author_email='falconn.lib@gmail.com',
       url='http://falconn-lib.org/',
       description='A library for similarity search over high-dimensional data based on Locality-Sensitive Hashing (LSH)',
+      long_description=long_description,
       license='MIT',
       keywords='nearest neighbor search similarity lsh locality-sensitive hashing cosine distance euclidean',
       packages=find_packages(),
