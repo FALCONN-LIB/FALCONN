@@ -8,9 +8,9 @@ PYTHON_SWIG_DIR=python_swig
 PYTHON_PKG_DIR=python_pkg
 DOC_DIR=doc
 
-ALL_HEADERS = $(INC_DIR)/core/lsh_table.h $(INC_DIR)/core/cosine_distance.h $(INC_DIR)/core/euclidean_distance.h $(INC_DIR)/core/composite_hash_table.h $(INC_DIR)/core/stl_hash_table.h $(INC_DIR)/core/polytope_hash.h $(INC_DIR)/core/flat_hash_table.h $(INC_DIR)/core/probing_hash_table.h $(INC_DIR)/core/hyperplane_hash.h $(INC_DIR)/core/heap.h $(INC_DIR)/core/prefetchers.h $(INC_DIR)/core/incremental_sorter.h $(INC_DIR)/core/lsh_function_helpers.h $(INC_DIR)/core/hash_table_helpers.h $(INC_DIR)/core/data_storage.h $(INC_DIR)/core/nn_query.h $(INC_DIR)/lsh_nn_table.h $(INC_DIR)/wrapper/cpp_wrapper_impl.h $(INC_DIR)/falconn_global.h $(TEST_DIR)/test_utils.h  $(INC_DIR)/core/data_transformation.h $(PYTHON_DIR)/wrapper/python_wrapper.h
+ALL_HEADERS = $(INC_DIR)/core/lsh_table.h $(INC_DIR)/core/cosine_distance.h $(INC_DIR)/core/euclidean_distance.h $(INC_DIR)/core/composite_hash_table.h $(INC_DIR)/core/stl_hash_table.h $(INC_DIR)/core/polytope_hash.h $(INC_DIR)/core/flat_hash_table.h $(INC_DIR)/core/probing_hash_table.h $(INC_DIR)/core/hyperplane_hash.h $(INC_DIR)/core/heap.h $(INC_DIR)/core/prefetchers.h $(INC_DIR)/core/incremental_sorter.h $(INC_DIR)/core/lsh_function_helpers.h $(INC_DIR)/core/hash_table_helpers.h $(INC_DIR)/core/data_storage.h $(INC_DIR)/core/nn_query.h $(INC_DIR)/lsh_nn_table.h $(INC_DIR)/wrapper/cpp_wrapper_impl.h $(INC_DIR)/falconn_global.h $(TEST_DIR)/test_utils.h  $(INC_DIR)/core/data_transformation.h $(PYTHON_DIR)/wrapper/python_wrapper.h $(INC_DIR)/core/bit_packed_vector.h
 
-CXX=g++
+CXX=g++-5
 CXXFLAGS=-std=gnu++11 -DNDEBUG -Wall -Wextra -march=native -O3 -I external/eigen -I src/include
 SWIG=swig3.0
 NUMPY_INCLUDE_DIR=/usr/local/lib/python2.7/site-packages/numpy/core/include
@@ -149,7 +149,12 @@ $(TEST_BIN_DIR)/data_storage_test: $(TEST_DIR)/data_storage_test.cc $(ALL_HEADER
 	$(CXX) $(CXXFLAGS) -I $(GTEST_DIR)/include -c -o obj/data_storage_test.o $(TEST_DIR)/data_storage_test.cc
 	$(CXX) $(CXXFLAGS) -o $(TEST_BIN_DIR)/data_storage_test obj/gtest_main.o obj/gtest-all.o obj/data_storage_test.o -pthread
 
-run_all_cpp_tests: $(TEST_BIN_DIR)/cosine_distance_test $(TEST_BIN_DIR)/euclidean_distance_test $(TEST_BIN_DIR)/flat_hash_table_test $(TEST_BIN_DIR)/probing_hash_table_test $(TEST_BIN_DIR)/stl_hash_table_test $(TEST_BIN_DIR)/composite_hash_table_test $(TEST_BIN_DIR)/polytope_hash_test $(TEST_BIN_DIR)/hyperplane_hash_test $(TEST_BIN_DIR)/lsh_table_test $(TEST_BIN_DIR)/heap_test $(TEST_BIN_DIR)/incremental_sorter_test $(TEST_BIN_DIR)/nn_query_test $(TEST_BIN_DIR)/cpp_wrapper_test $(TEST_BIN_DIR)/data_transformation_test $(TEST_BIN_DIR)/data_storage_test
+$(TEST_BIN_DIR)/bit_packed_vector_test: $(TEST_DIR)/bit_packed_vector_test.cc $(ALL_HEADERS) obj/gtest-all.o obj/gtest_main.o
+	mkdir -p $(TEST_BIN_DIR)
+	$(CXX) $(CXXFLAGS) -I $(GTEST_DIR)/include -c -o obj/bit_packed_vector_test.o $(TEST_DIR)/bit_packed_vector_test.cc
+	$(CXX) $(CXXFLAGS) -o $(TEST_BIN_DIR)/bit_packed_vector_test obj/gtest_main.o obj/gtest-all.o obj/bit_packed_vector_test.o -pthread
+
+run_all_cpp_tests: $(TEST_BIN_DIR)/cosine_distance_test $(TEST_BIN_DIR)/euclidean_distance_test $(TEST_BIN_DIR)/flat_hash_table_test $(TEST_BIN_DIR)/probing_hash_table_test $(TEST_BIN_DIR)/stl_hash_table_test $(TEST_BIN_DIR)/composite_hash_table_test $(TEST_BIN_DIR)/polytope_hash_test $(TEST_BIN_DIR)/hyperplane_hash_test $(TEST_BIN_DIR)/lsh_table_test $(TEST_BIN_DIR)/heap_test $(TEST_BIN_DIR)/incremental_sorter_test $(TEST_BIN_DIR)/nn_query_test $(TEST_BIN_DIR)/cpp_wrapper_test $(TEST_BIN_DIR)/data_transformation_test $(TEST_BIN_DIR)/data_storage_test $(TEST_BIN_DIR)/bit_packed_vector_test
 	./$(TEST_BIN_DIR)/cosine_distance_test
 	./$(TEST_BIN_DIR)/euclidean_distance_test
 	./$(TEST_BIN_DIR)/flat_hash_table_test
@@ -165,6 +170,7 @@ run_all_cpp_tests: $(TEST_BIN_DIR)/cosine_distance_test $(TEST_BIN_DIR)/euclidea
 	./$(TEST_BIN_DIR)/cpp_wrapper_test
 	./$(TEST_BIN_DIR)/data_transformation_test
 	./$(TEST_BIN_DIR)/data_storage_test
+	./$(TEST_BIN_DIR)/bit_packed_vector_test
 
 run_all_python_tests: $(PYTHON_DIR)/test/wrapper_test.py
 	py.test src/python/test/wrapper_test.py
