@@ -46,7 +46,7 @@ class BitPackedVector {
   }
 
   // For (potential) performance reasons, get() does no bounds checking.
-  DataType get(IndexType index) {
+  DataType get(IndexType index) const {
     int_fast64_t first_bit = index * item_size_;
     int_fast64_t first_package = first_bit / num_bits_per_package_;
     int_fast64_t offset_in_package =
