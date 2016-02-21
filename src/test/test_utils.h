@@ -170,6 +170,57 @@ void run_retrieve_test_4(HashTable* table, uint64_t seed) {
   }
 }
 
+// Written to catch an earlier bug in the bit-packed flat hash table
+// num_buckets = 10
+// num_items = 3
+template<typename HashTable>
+void run_retrieve_test_5(HashTable* table) {
+  typedef std::pair<typename HashTable::Iterator, typename HashTable::Iterator>
+      IteratorPair;
+  std::vector<uint32_t> entries = {7, 5, 7};
+  table->add_entries(entries);
+  
+  std::vector<int32_t> expected_result1 = {};
+  IteratorPair result1 = table->retrieve(0);
+  check_result(result1, expected_result1);
+
+  std::vector<int32_t> expected_result2 = {};
+  IteratorPair result2 = table->retrieve(1);
+  check_result(result2, expected_result2);
+
+  std::vector<int32_t> expected_result3 = {};
+  IteratorPair result3 = table->retrieve(2);
+  check_result(result3, expected_result3);
+
+  std::vector<int32_t> expected_result4 = {};
+  IteratorPair result4 = table->retrieve(3);
+  check_result(result4, expected_result4);
+
+  std::vector<int32_t> expected_result5 = {};
+  IteratorPair result5 = table->retrieve(4);
+  check_result(result5, expected_result5);
+  
+  std::vector<int32_t> expected_result6 = {1};
+  IteratorPair result6 = table->retrieve(5);
+  check_result(result6, expected_result6);
+  
+  std::vector<int32_t> expected_result7 = {};
+  IteratorPair result7 = table->retrieve(6);
+  check_result(result7, expected_result7);
+  
+  std::vector<int32_t> expected_result8 = {0, 2};
+  IteratorPair result8 = table->retrieve(7);
+  check_result(result8, expected_result8);
+  
+  std::vector<int32_t> expected_result9 = {};
+  IteratorPair result9 = table->retrieve(8);
+  check_result(result9, expected_result9);
+  
+  std::vector<int32_t> expected_result10 = {};
+  IteratorPair result10 = table->retrieve(9);
+  check_result(result10, expected_result10);
+}
+
 
 
 template<typename HashTable>

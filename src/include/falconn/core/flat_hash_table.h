@@ -33,7 +33,7 @@ class FlatHashTable {
       }
     }
 
-    FlatHashTable<KeyType>* new_hash_table() {
+    FlatHashTable<KeyType, ValueType, IndexType>* new_hash_table() {
       return new FlatHashTable<KeyType, ValueType, IndexType>(num_buckets_);
     }
 
@@ -85,6 +85,8 @@ class FlatHashTable {
   std::pair<Iterator, Iterator> retrieve(const KeyType& key) {
     IndexType start = bucket_list_[key].first;
     IndexType len = bucket_list_[key].second;
+    //printf("retrieve for key %u\n", key);
+    //printf("  start: %lld  len %lld\n", start, len);
     return std::make_pair(&(indices_[start]), &(indices_[start + len]));
   }
  

@@ -42,3 +42,8 @@ TEST(STLHashTableTest, RetrieveTest4) {
     ft::run_retrieve_test_4(&table, cur_seed);
   }
 }
+
+TEST(STLHashTableTest, RetrieveTest5) {
+  STLHashTable<uint32_t> table;
+  ft::run_retrieve_test_5(&table);
+}

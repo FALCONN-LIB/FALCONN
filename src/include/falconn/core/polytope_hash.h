@@ -41,6 +41,15 @@ static inline void compute_k_parameters_for_bits(
   }
 }
 
+static inline int_fast32_t compute_number_of_hash_bits(
+    int_fast32_t rotation_dim,
+    int_fast32_t last_cp_dim,
+    int_fast32_t k) {
+  int_fast32_t log_rotation_dim = log2ceil(rotation_dim);
+  int_fast32_t last_cp_log_dim = log2ceil(last_cp_dim);
+  return (k - 1) * (log_rotation_dim + 1) + last_cp_log_dim + 1;
+}
+
 template <typename ScalarType>
 struct FHTFunction {
   static void apply(ScalarType*, int_fast32_t) {
@@ -212,7 +221,7 @@ class CrossPolytopeHashBase {
   int_fast32_t get_l() const {
     return l_;
   }
-
+  
   void reserve_transformed_vector_memory(TransformedVectorType* tv) const {
     tv->resize(k_ * l_);
     for (int_fast32_t ii = 0; ii < k_ * l_; ++ii) {

@@ -15,6 +15,7 @@ using falconn::LSHFamily;
 using falconn::LSHNearestNeighborTable;
 using falconn::get_default_parameters;
 using falconn::SparseVector;
+using falconn::StorageHashTable;
 using std::make_pair;
 using std::unique_ptr;
 using std::vector;
@@ -26,6 +27,7 @@ TEST(WrapperTest, DenseHPTest1) {
   params.dimension = dim;
   params.lsh_family = LSHFamily::Hyperplane;
   params.distance_function = DistanceFunction::NegativeInnerProduct;
+  params.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
   params.k = 2;
   params.l = 4;
 
@@ -76,6 +78,7 @@ TEST(WrapperTest, DenseCPTest1) {
   params.dimension = dim;
   params.lsh_family = LSHFamily::CrossPolytope;
   params.distance_function = DistanceFunction::NegativeInnerProduct;
+  params.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
   params.k = 2;
   params.l = 8;
   params.last_cp_dimension = dim;
@@ -128,6 +131,7 @@ TEST(WrapperTest, SparseHPTest1) {
   params.dimension = dim;
   params.lsh_family = LSHFamily::Hyperplane;
   params.distance_function = DistanceFunction::NegativeInnerProduct;
+  params.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
   params.k = 2;
   params.l = 4;
 
@@ -167,6 +171,7 @@ TEST(WrapperTest, SparseCPTest1) {
   params.dimension = dim;
   params.lsh_family = LSHFamily::CrossPolytope;
   params.distance_function = DistanceFunction::NegativeInnerProduct;
+  params.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
   params.k = 2;
   params.l = 4;
   params.feature_hashing_dimension = 8;
@@ -195,6 +200,8 @@ TEST(WrapperTest, SparseCPTest1) {
   int32_t res3 = table->find_nearest_neighbor(p3);
   EXPECT_EQ(2, res3);
 
+  //printf("LAST QUERY\n");
+   
   Point p4;
   p4.push_back(make_pair(7, 1.0));
   int32_t res4 = table->find_nearest_neighbor(p4);

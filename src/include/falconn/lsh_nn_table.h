@@ -213,6 +213,30 @@ static const std::array<const char*, 3> kDistanceFunctionStrings = {
 
 
 ///
+/// The supported low-level storage hash tables.
+///
+enum class StorageHashTable {
+  Unknown = 0,
+
+  FlatHashTable = 1,
+
+  BitPackedFlatHashTable = 2,
+
+  STLHashTable = 3,
+
+  LinearProbingHashTable = 4
+};
+
+static const std::array<const char*, 5> kStorageHashTableStrings = {
+    "unknown",
+    "flat_hash_table",
+    "bit_packed_flat_hash_table",
+    "stl_hash_table",
+    "linear_probing_hash_table"
+};
+
+
+///
 /// Contains the parameters for constructing a LSH table wrapper. Not all fields
 /// are necessary for all types of LSH tables.
 ///
@@ -238,6 +262,10 @@ struct LSHConstructionParameters {
   /// Number of hash tables. Required for all the hash families.
   ///
   int_fast32_t l = -1;
+  ///
+  /// Low-level storage hash table.
+  ///
+  StorageHashTable storage_hash_table = StorageHashTable::Unknown;
   ///
   /// Randomness seed.
   ///

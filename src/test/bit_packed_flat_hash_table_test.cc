@@ -43,3 +43,10 @@ TEST(BitPackedFlatHashTableTest, RetrieveTest3) {
     ft::run_retrieve_test_4(&table, cur_seed);
   }
 }
+
+TEST(BitPackedFlatHashTableTest, RetrieveTest4) {
+  int num_buckets = 10;
+  int num_items = 3;
+  BitPackedFlatHashTable<uint32_t> table(num_buckets, num_items);
+  ft::run_retrieve_test_5(&table);
+}

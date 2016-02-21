@@ -62,6 +62,12 @@ TEST(ProbingHashTableTest, StaticLinearProbingRetrieveTest6) {
   }
 }
 
+TEST(ProbingHashTableTest, StaticLinearProbingRetrieveTest7) {
+  int table_size = 4;
+  StaticLinearProbingHashTable<uint32_t> table(table_size);
+  ft::run_retrieve_test_5(&table);
+}
+
 TEST(ProbingHashTableTest, DynamicLinearProbingRetrieveTest1) {
   DynamicLinearProbingHashTable<uint32_t> table(0.5, 0.25, 3.0, 1);
   ft::run_dynamic_retrieve_test_1(&table);
