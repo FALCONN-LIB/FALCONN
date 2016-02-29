@@ -382,12 +382,6 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
     query_->get_unique_candidates(q, num_probes_, max_num_candidates_, result);
   }
 
-  void get_unique_sorted_candidates(const PointType& q,
-                                    std::vector<KeyType>* result) {
-    query_->get_unique_sorted_candidates(q, num_probes_, max_num_candidates_,
-                                         result);
-  }
-
   void reset_query_statistics() {
     nn_query_->reset_query_statistics();
   }

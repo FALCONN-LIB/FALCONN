@@ -151,7 +151,7 @@ class StaticLSHTable : public BasicLSHTable<LSH, HashTable, StaticLSHTable<
       stats_.average_total_query_time += elapsed_total.count();
     }
 
-    void get_unique_sorted_candidates(const PointType& p,
+    /*void get_unique_sorted_candidates(const PointType& p,
                                       int_fast64_t num_probes,
                                       int_fast64_t max_num_candidates,
                                       std::vector<KeyType>* result) {
@@ -165,7 +165,7 @@ class StaticLSHTable : public BasicLSHTable<LSH, HashTable, StaticLSHTable<
       auto elapsed_total = std::chrono::duration_cast<
           std::chrono::duration<double>>(end_time - start_time);
       stats_.average_total_query_time += elapsed_total.count();
-    }
+    }*/
 
     void reset_query_statistics() {
       stats_num_queries_ = 0;

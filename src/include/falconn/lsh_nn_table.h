@@ -112,17 +112,6 @@ class LSHNearestNeighborTable {
       std::vector<KeyType>* result) = 0;
   
   ///
-  /// Returns the keys of all candidates in the probing sequence for q.
-  /// Every candidate key occurs only once in the result,
-  /// and the candidate keys are also sorted by their key. This
-  /// can be good for memory locality when the next processing step is a linear
-  /// scan over the resulting candidates.
-  ///
-  virtual void get_unique_sorted_candidates(
-      const PointType& q,
-      std::vector<KeyType>* result) = 0;
- 
-  ///
   /// Resets the query statistics.
   ///
   virtual void reset_query_statistics() = 0;
