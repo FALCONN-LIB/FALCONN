@@ -87,7 +87,7 @@ class StaticLSHTable : public BasicLSHTable<LSH, HashTable, StaticLSHTable<
     }
     int l = this->lsh_->get_l();
 
-    num_setup_threads = std::min(l, num_setup_threads);
+    num_setup_threads = std::min<int_fast32_t>(l, num_setup_threads);
     int_fast32_t num_tables_per_thread = l / num_setup_threads;
     int_fast32_t num_leftover_tables = l % num_setup_threads;
 
