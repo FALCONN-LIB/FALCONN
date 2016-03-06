@@ -64,7 +64,7 @@ python_package_install: python_package
 	cd $(PYTHON_PKG_DIR)/dist/FALCONN-*; python setup.py install
 
 random_benchmark: $(BENCH_DIR)/random_benchmark.cc $(ALL_HEADERS)
-	$(CXX) $(CXXFLAGS) -o $@ $(BENCH_DIR)/random_benchmark.cc
+	$(CXX) $(CXXFLAGS) -o $@ $(BENCH_DIR)/random_benchmark.cc -pthread
 
 obj/gtest-all.o: $(GTEST_DIR)/src/gtest-all.cc
 	mkdir -p obj
