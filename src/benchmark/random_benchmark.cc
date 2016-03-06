@@ -27,6 +27,7 @@ using falconn::LSHConstructionParameters;
 using falconn::LSHFamily;
 using falconn::LSHNearestNeighborTable;
 using falconn::QueryStatistics;
+using falconn::StorageHashTable;
 
 typedef falconn::DenseVector<float> Vec;
 
@@ -113,6 +114,12 @@ int main() {
     double r = std::sqrt(2.0) / 2.0;    // distance to planted query
     uint64_t seed = 119417657;
 
+    // Common LSH parameters
+    int num_tables = 10;
+    int num_setup_threads = 0;
+    StorageHashTable storage_hash_table = StorageHashTable::FlatHashTable;
+    DistanceFunction distance_function = DistanceFunction::NegativeInnerProduct;
+
     cout << sepline << endl;
     cout << "FALCONN C++ random data benchmark" << endl;
     cout << "Data set parameters: " << endl;
@@ -190,9 +197,11 @@ int main() {
     LSHConstructionParameters params_hp;
     params_hp.dimension = d;
     params_hp.lsh_family = LSHFamily::Hyperplane;
-    params_hp.distance_function = DistanceFunction::NegativeInnerProduct;
+    params_hp.distance_function = distance_function;
+    params_hp.storage_hash_table = storage_hash_table;
     params_hp.k = 19;
-    params_hp.l = 10;
+    params_hp.l = num_tables;
+    params_hp.num_setup_threads = num_setup_threads;
     params_hp.seed = seed ^ 833840234;
   
     cout << "Hyperplane hash" << endl << endl;
@@ -222,11 +231,13 @@ int main() {
     LSHConstructionParameters params_cp;
     params_cp.dimension = d;
     params_cp.lsh_family = LSHFamily::CrossPolytope;
-    params_cp.distance_function = DistanceFunction::NegativeInnerProduct;
+    params_cp.distance_function = distance_function;
+    params_cp.storage_hash_table = storage_hash_table;
     params_cp.k = 3;
-    params_cp.l = 10;
+    params_cp.l = num_tables;
     params_cp.last_cp_dimension = 16;
     params_cp.num_rotations = 3;
+    params_cp.num_setup_threads = num_setup_threads;
     params_cp.seed = seed ^ 833840234;
   
     cout << "Cross polytope hash" << endl << endl;

@@ -85,7 +85,7 @@ TEST(NNQueryTest, DenseTest1) {
                          uint32_t,
                          CompositeTableType>
           LSHTableType;
-  LSHTableType lsh_table(&lsh_object, &hash_table, points);
+  LSHTableType lsh_table(&lsh_object, &hash_table, points, 1);
   LSHTableType::Query query(lsh_table);
   NearestNeighborQuery<LSHTableType::Query, DenseVector, int32_t, DenseVector,
                        float, CosineDistanceDense<float>, ArrayDataStorageType>
@@ -155,7 +155,7 @@ TEST(NNQueryTest, SparseTest1) {
                          uint32_t,
                          CompositeTableType>
           LSHTableType;
-  LSHTableType lsh_table(&lsh_object, &hash_table, points);
+  LSHTableType lsh_table(&lsh_object, &hash_table, points, 1);
   LSHTableType::Query query(lsh_table);
   NearestNeighborQuery<LSHTableType::Query, SparseVector, int32_t, SparseVector,
                        float, CosineDistanceSparse<float>, ArrayDataStorageType>
@@ -209,7 +209,7 @@ TEST(NNQueryTest, MultiprobeTest1) {
                          uint32_t,
                          CompositeTableType>
           LSHTableType;
-  LSHTableType lsh_table(&lsh_object, &hash_table, points);
+  LSHTableType lsh_table(&lsh_object, &hash_table, points, 1);
   LSHTableType::Query query(lsh_table);
   NearestNeighborQuery<LSHTableType::Query, DenseVector, int32_t, DenseVector,
                        float, CosineDistanceDense<float>, ArrayDataStorageType>
@@ -271,7 +271,7 @@ TEST(NNQueryTest, FindNearNeighborsTest1) {
                          uint32_t,
                          CompositeTableType>
           LSHTableType;
-  LSHTableType lsh_table(&lsh_object, &hash_table, points);
+  LSHTableType lsh_table(&lsh_object, &hash_table, points, 1);
   LSHTableType::Query query(lsh_table);
   NearestNeighborQuery<LSHTableType::Query, DenseVector, int32_t, DenseVector,
                        float, CosineDistanceDense<float>, ArrayDataStorageType>
@@ -355,7 +355,7 @@ TEST(NNQueryTest, KNNTest1) {
                          uint32_t,
                          CompositeTableType>
           LSHTableType;
-  LSHTableType lsh_table(&lsh_object, &hash_table, points);
+  LSHTableType lsh_table(&lsh_object, &hash_table, points, 1);
   LSHTableType::Query query(lsh_table);
   NearestNeighborQuery<LSHTableType::Query, DenseVector, int32_t, DenseVector,
                        float, CosineDistanceDense<float>, ArrayDataStorageType>

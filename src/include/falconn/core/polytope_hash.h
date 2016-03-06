@@ -17,30 +17,13 @@
 #include "heap.h"
 #include "incremental_sorter.h"
 #include "lsh_function_helpers.h"
+#include "math_helpers.h"
 
 namespace falconn {
 namespace core {
 
 // TODO: move this namespace to a separate file
 namespace cp_hash_helpers {
-
-static int_fast32_t find_next_power_of_two(int_fast32_t x) {
-  int_fast32_t res = 1;
-  while (res < x) {
-    res *= 2;
-  }
-  return res;
-}
-
-static int_fast32_t log2ceil(int_fast32_t x) {
-  int_fast32_t res = 0;
-  int_fast64_t cur = 1;
-  while (cur < x) {
-    cur *= 2;
-    res += 1;
-  }
-  return res;
-}
 
 static inline void compute_k_parameters_for_bits(
     int_fast32_t rotation_dim,
@@ -56,6 +39,15 @@ static inline void compute_k_parameters_for_bits(
   } else {
     *last_cp_dim = rotation_dim;
   }
+}
+
+static inline int_fast32_t compute_number_of_hash_bits(
+    int_fast32_t rotation_dim,
+    int_fast32_t last_cp_dim,
+    int_fast32_t k) {
+  int_fast32_t log_rotation_dim = log2ceil(rotation_dim);
+  int_fast32_t last_cp_log_dim = log2ceil(last_cp_dim);
+  return (k - 1) * (log_rotation_dim + 1) + last_cp_log_dim + 1;
 }
 
 template <typename ScalarType>
@@ -229,7 +221,7 @@ class CrossPolytopeHashBase {
   int_fast32_t get_l() const {
     return l_;
   }
-
+  
   void reserve_transformed_vector_memory(TransformedVectorType* tv) const {
     tv->resize(k_ * l_);
     for (int_fast32_t ii = 0; ii < k_ * l_; ++ii) {
@@ -300,12 +292,12 @@ class CrossPolytopeHashBase {
                         int_fast32_t last_cp_dim,
                         uint_fast64_t seed)
     : rotation_dim_(rotation_dim),
-      log_rotation_dim_(cp_hash_helpers::log2ceil(rotation_dim)),
+      log_rotation_dim_(log2ceil(rotation_dim)),
       k_(k),
       l_(l),
       num_rotations_(num_rotations),
       last_cp_dim_(last_cp_dim),
-      last_cp_log_dim_(cp_hash_helpers::log2ceil(last_cp_dim)),
+      last_cp_log_dim_(log2ceil(last_cp_dim)),
       seed_(seed) {
     if (rotation_dim_ < 1) {
       throw LSHFunctionError("Rotation dimension must be at least 1.");
@@ -738,8 +730,8 @@ class CrossPolytopeHashDense : public CrossPolytopeHashBase<
           CrossPolytopeHashDense<CoordinateType, HashType>,
           Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>,
           CoordinateType,
-          HashType>(cp_hash_helpers::find_next_power_of_two(vector_dim), k, l,
-                    num_rotations, last_cp_dim, seed),
+          HashType>(find_next_power_of_two(vector_dim), k, l, num_rotations,
+              last_cp_dim, seed),
       vector_dim_(vector_dim) {
     if (vector_dim_ < 1) {
       throw LSHFunctionError("Vector dimension must be at least 1.");

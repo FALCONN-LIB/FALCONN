@@ -16,7 +16,7 @@ namespace ft = falconn::test;
 using fc::ArrayDataStorage;
 using fc::cp_hash_helpers::compute_k_parameters_for_bits;
 using fc::cp_hash_helpers::FHTHelper;
-using fc::cp_hash_helpers::log2ceil;
+using fc::log2ceil;
 using fc::CrossPolytopeHashDense;
 using fc::CrossPolytopeHashSparse;
 using ft::count_bits;

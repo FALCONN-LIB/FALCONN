@@ -112,17 +112,6 @@ class LSHNearestNeighborTable {
       std::vector<KeyType>* result) = 0;
   
   ///
-  /// Returns the keys of all candidates in the probing sequence for q.
-  /// Every candidate key occurs only once in the result,
-  /// and the candidate keys are also sorted by their key. This
-  /// can be good for memory locality when the next processing step is a linear
-  /// scan over the resulting candidates.
-  ///
-  virtual void get_unique_sorted_candidates(
-      const PointType& q,
-      std::vector<KeyType>* result) = 0;
- 
-  ///
   /// Resets the query statistics.
   ///
   virtual void reset_query_statistics() = 0;
@@ -213,6 +202,30 @@ static const std::array<const char*, 3> kDistanceFunctionStrings = {
 
 
 ///
+/// The supported low-level storage hash tables.
+///
+enum class StorageHashTable {
+  Unknown = 0,
+
+  FlatHashTable = 1,
+
+  BitPackedFlatHashTable = 2,
+
+  STLHashTable = 3,
+
+  LinearProbingHashTable = 4
+};
+
+static const std::array<const char*, 5> kStorageHashTableStrings = {
+    "unknown",
+    "flat_hash_table",
+    "bit_packed_flat_hash_table",
+    "stl_hash_table",
+    "linear_probing_hash_table"
+};
+
+
+///
 /// Contains the parameters for constructing a LSH table wrapper. Not all fields
 /// are necessary for all types of LSH tables.
 ///
@@ -238,6 +251,17 @@ struct LSHConstructionParameters {
   /// Number of hash tables. Required for all the hash families.
   ///
   int_fast32_t l = -1;
+  ///
+  /// Low-level storage hash table.
+  ///
+  StorageHashTable storage_hash_table = StorageHashTable::Unknown;
+  ///
+  /// Number of threads used to set up the hash table.
+  /// Zero indicates that FALCONN should use the maximum number of available
+  /// hardware threads (or 1 if this number cannot be determined).
+  /// The number of threads used is always at most the number of tables l.
+  ///
+  int_fast32_t num_setup_threads = -1;
   ///
   /// Randomness seed.
   ///

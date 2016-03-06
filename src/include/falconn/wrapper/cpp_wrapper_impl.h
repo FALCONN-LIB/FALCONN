@@ -1,15 +1,20 @@
 #ifndef __CPP_WRAPPER_IMPL_H__
 #define __CPP_WRAPPER_IMPL_H__
 
+#include <type_traits>
+
+#include "../core/bit_packed_flat_hash_table.h"
 #include "../core/composite_hash_table.h"
 #include "../core/cosine_distance.h"
 #include "../core/data_storage.h"
 #include "../core/euclidean_distance.h"
+#include "../core/flat_hash_table.h"
 #include "../core/hyperplane_hash.h"
 #include "../core/lsh_table.h"
 #include "../core/nn_query.h"
 #include "../core/polytope_hash.h"
 #include "../core/probing_hash_table.h"
+#include "../core/stl_hash_table.h"
 
 namespace falconn {
 namespace wrapper {
@@ -125,8 +130,8 @@ struct ComputeNumberOfHashFunctions<DenseVector<CoordinateType>> {
         throw LSHNNTableSetupError("Vector dimension must be set to determine "
             "the number of dense cross polytope hash functions.");
       }
-      int_fast32_t rotation_dim =
-          core::cp_hash_helpers::find_next_power_of_two(params->dimension);
+      int_fast32_t rotation_dim = core::find_next_power_of_two(
+          params->dimension);
       core::cp_hash_helpers::compute_k_parameters_for_bits(rotation_dim,
           number_of_hash_bits, &(params->k), &(params->last_cp_dimension));
     } else {
@@ -149,13 +154,79 @@ struct ComputeNumberOfHashFunctions<SparseVector<CoordinateType, IndexType>> {
       }
       // TODO: add check here for power-of-two feature hashing dimension
       // (or allow non-power-of-two feature hashing dimension in the CP hash)
-      int_fast32_t rotation_dim = core::cp_hash_helpers::find_next_power_of_two(
+      int_fast32_t rotation_dim = core::find_next_power_of_two(
           params->feature_hashing_dimension);
       core::cp_hash_helpers::compute_k_parameters_for_bits(rotation_dim,
           number_of_hash_bits, &(params->k), &(params->last_cp_dimension));
     } else {
       throw LSHNNTableSetupError("Cannot set paramters for unknown hash "
           "family.");
+    }
+  }
+};
+
+
+
+template<typename PointType>
+struct ComputeNumberOfHashBits {
+  static int_fast32_t compute(const LSHConstructionParameters&) {
+    static_assert(FalseStruct<PointType>::value, "Point type not supported.");
+    return 0;
+  }
+  template<typename T> struct FalseStruct : std::false_type {};
+};
+
+template<typename CoordinateType>
+struct ComputeNumberOfHashBits<DenseVector<CoordinateType>> {
+  static int_fast32_t compute(const LSHConstructionParameters& params) {
+    if (params.k <= 0) {
+      throw LSHNNTableSetupError("Number of hash functions k must be at least "
+          "1 to determine the number of hash bits.");
+    }
+    if (params.lsh_family == LSHFamily::Hyperplane) {
+      return params.k;
+    } else if (params.lsh_family == LSHFamily::CrossPolytope) {
+      if (params.dimension <= 0) {
+        throw LSHNNTableSetupError("Vector dimension must be set to determine "
+            "the number of dense cross polytope hash bits.");
+      }
+      if (params.last_cp_dimension <= 0) {
+        throw LSHNNTableSetupError("Last cross-polytope dimension must be set "
+            "to determine the number of dense cross polytope hash bits.");
+      }
+      return core::cp_hash_helpers::compute_number_of_hash_bits(
+          params.dimension, params.last_cp_dimension, params.k);
+    } else {
+      throw LSHNNTableSetupError("Cannot compute number of hash bits for "
+          "unknown hash family.");
+    }
+  }
+};
+
+template<typename CoordinateType, typename IndexType>
+struct ComputeNumberOfHashBits<SparseVector<CoordinateType, IndexType>> {
+  static int_fast32_t compute(const LSHConstructionParameters& params) {
+    if (params.k <= 0) {
+      throw LSHNNTableSetupError("Number of hash functions k must be at least "
+          "1 to determine the number of hash bits.");
+    }
+    if (params.lsh_family == LSHFamily::Hyperplane) {
+      return params.k;
+    } else if (params.lsh_family == LSHFamily::CrossPolytope) {
+      if (params.feature_hashing_dimension <= 0) {
+        throw LSHNNTableSetupError("Feature hashing dimension must be set to "
+            "determine the number of dense cross polytope hash bits.");
+      }
+      if (params.last_cp_dimension <= 0) {
+        throw LSHNNTableSetupError("Last cross-polytope dimension must be set "
+            "to determine the number of dense cross polytope hash bits.");
+      }
+      return core::cp_hash_helpers::compute_number_of_hash_bits(
+          params.feature_hashing_dimension, params.last_cp_dimension,
+          params.k);
+    } else {
+      throw LSHNNTableSetupError("Cannot compute number of hash bits for "
+          "unknown hash family.");
     }
   }
 };
@@ -190,6 +261,8 @@ struct GetDefaultParameters<DenseVector<CoordinateType>> {
     }
 
     result.l = 10;
+    result.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
+    result.num_setup_threads = 0;
     
     int_fast32_t number_of_hash_bits = 1;
     while ((1 << (number_of_hash_bits + 2)) <= dataset_size) {
@@ -216,6 +289,8 @@ struct GetDefaultParameters<SparseVector<CoordinateType>> {
     result.num_rotations = 2;
 
     result.l = 10;
+    result.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
+    result.num_setup_threads = 0;
     
     int_fast32_t number_of_hash_bits = 1;
     while ((1 << (number_of_hash_bits + 2)) <= dataset_size) {
@@ -237,7 +312,7 @@ typename DistanceType,
 typename DistanceFunction,
 typename LSHTable,
 typename LSHFunction,
-typename HashTable,
+typename HashTableFactory,
 typename CompositeHashTable,
 typename NNQuery,
 typename DataStorage>
@@ -246,7 +321,7 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
   LSHNNTableWrapper(
       std::unique_ptr<LSHFunction> lsh,
       std::unique_ptr<LSHTable> lsh_table,
-      std::unique_ptr<typename HashTable::Factory> hash_table_factory,
+      std::unique_ptr<HashTableFactory> hash_table_factory,
       std::unique_ptr<CompositeHashTable> composite_hash_table,
       std::unique_ptr<typename LSHTable::Query> query,
       std::unique_ptr<NNQuery> nn_query,
@@ -311,12 +386,6 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
     query_->get_unique_candidates(q, num_probes_, max_num_candidates_, result);
   }
 
-  void get_unique_sorted_candidates(const PointType& q,
-                                    std::vector<KeyType>* result) {
-    query_->get_unique_sorted_candidates(q, num_probes_, max_num_candidates_,
-                                         result);
-  }
-
   void reset_query_statistics() {
     nn_query_->reset_query_statistics();
   }
@@ -330,7 +399,7 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
  protected:
   std::unique_ptr<LSHFunction> lsh_;
   std::unique_ptr<LSHTable> lsh_table_;
-  std::unique_ptr<typename HashTable::Factory> hash_table_factory_;
+  std::unique_ptr<HashTableFactory> hash_table_factory_;
   std::unique_ptr<CompositeHashTable> composite_hash_table_;
   std::unique_ptr<typename LSHTable::Query> query_;
   std::unique_ptr<NNQuery> nn_query_;
@@ -341,56 +410,256 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
 };
 
 
+
 template<
 typename PointType,
 typename KeyType,
-typename PointSet,
-typename DistanceFunc,
-typename LSH,
-typename HashType>
-std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>>
-construction_helper(const PointSet& points,
-                    const LSHConstructionParameters& params,
-                    std::unique_ptr<LSH> lsh) {
+typename PointSet>
+class StaticTableFactory {
+ public:
   typedef typename PointTypeTraits<PointType>::ScalarType ScalarType;
 
   typedef typename DataStorageAdapter<PointSet>::template DataStorage<KeyType>
-      DataStorage;
-  std::unique_ptr<DataStorage> data_storage(std::move(
-      DataStorageAdapter<PointSet>::template construct_data_storage<KeyType>(
-          points)));
-  
-  typedef core::StaticLinearProbingHashTable<HashType, KeyType> HashTable;
-  // TODO: should we go to the next prime here?
-  std::unique_ptr<typename HashTable::Factory> factory(
-      new typename HashTable::Factory(2 * data_storage->size()));
-  
-  typedef core::StaticCompositeHashTable<HashType, KeyType, HashTable>
-      CompositeTable;
-  std::unique_ptr<CompositeTable> composite_table(new CompositeTable(
-      params.l, factory.get()));
-  
-  typedef core::StaticLSHTable<PointType, KeyType, LSH, HashType,
-      CompositeTable, DataStorage> LSHTable;
-  std::unique_ptr<LSHTable> lsh_table(new LSHTable(lsh.get(),
-      composite_table.get(), *data_storage));
-  
-  std::unique_ptr<typename LSHTable::Query> query(
-      new typename LSHTable::Query(*lsh_table));
+      DataStorageType;
 
-  typedef core::NearestNeighborQuery<typename LSHTable::Query, PointType,
-      KeyType, PointType, ScalarType, DistanceFunc, DataStorage> NNQuery;
-  std::unique_ptr<NNQuery> nn_query(new NNQuery(query.get(), *data_storage));
 
-  std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> result(
-      new LSHNNTableWrapper<PointType, KeyType, ScalarType,
-          DistanceFunc, LSHTable, LSH, HashTable, CompositeTable,
-          NNQuery, DataStorage>(std::move(lsh), std::move(lsh_table),
-              std::move(factory), std::move(composite_table), std::move(query),
-              std::move(nn_query), std::move(data_storage)));
+  StaticTableFactory(const PointSet& points,
+                    const LSHConstructionParameters& params)
+      : points_(points), params_(params) {}
 
-  return std::move(result);
-}
+  std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> setup() {
+    if (params_.dimension < 1) {
+      throw LSHNNTableSetupError("Point dimension must be at least 1. Maybe "
+          "you forgot to set the point dimension in the parameter struct?");
+    }
+    if (params_.k < 1) {
+      throw LSHNNTableSetupError("The number of hash functions k must be at "
+          "least 1. Maybe you forgot to set k in the parameter struct?");
+    }
+    if (params_.l < 1) {
+      throw LSHNNTableSetupError("The number of hash tables l must be at "
+          "least 1. Maybe you forgot to set l in the parameter struct?");
+    }
+    if (params_.num_setup_threads < 0) {
+      throw LSHNNTableSetupError("The number of setup threads cannot be "
+          "negative. Maybe you forgot to set num_setup_threads in the "
+          "parameter struct? A value of 0 indicates that FALCONN should use "
+          "the maximum number of available hardware threads.");
+    }
+  
+    data_storage_ = std::move(DataStorageAdapter<PointSet>::template
+        construct_data_storage<KeyType>(points_));
+    
+    ComputeNumberOfHashBits<PointType> helper;
+    num_bits_ = helper.compute(params_);
+    
+    n_ = data_storage_->size();
+    
+    setup0();
+
+    return std::move(table_);
+  }
+
+ private:
+  void setup0() {
+    if (num_bits_ <= 32) {
+      typedef uint32_t HashType;
+      HashType tmp;
+      setup1(std::make_tuple(tmp));
+    } else if (num_bits_ <= 64) {
+      typedef uint64_t HashType;
+      HashType tmp;
+      setup1(std::make_tuple(tmp));
+    } else {
+      throw LSHNNTableSetupError("More than 64 hash bits are currently not "
+          "supported.");
+    }
+  }
+
+  template <typename V>
+  void setup1(V vals) {
+    typedef typename std::tuple_element<kHashTypeIndex, V>::type HashType;
+    
+    if (params_.lsh_family == LSHFamily::Hyperplane) {
+      typedef typename wrapper::PointTypeTraitsInternal<PointType>::template
+          HPHash<HashType> LSH;
+      std::unique_ptr<LSH> lsh(new LSH(params_.dimension, params_.k, params_.l,
+                                       params_.seed ^ 93384688));
+      setup2(std::tuple_cat(vals, std::make_tuple(std::move(lsh))));
+    } else if (params_.lsh_family == LSHFamily::CrossPolytope) {
+      if (params_.num_rotations < 0) {
+        throw LSHNNTableSetupError("The number of pseudo-random rotations for "
+            "the cross polytope hash must be non-negative. Maybe you forgot to "
+            "set num_rotations in the parameter struct?");
+      }
+      if (params_.last_cp_dimension <= 0) {
+        throw LSHNNTableSetupError("The last cross polytope dimension for "
+            "the cross polytope hash must be at least 1. Maybe you forgot to "
+            "set last_cp_dimension in the parameter struct?");
+      }
+
+      // TODO: for sparse vectors, also check feature_hashing_dimension here (it
+      // is checked in the CP hash class, but the error message is less
+      // verbose).
+
+      typedef typename wrapper::PointTypeTraitsInternal<PointType>::template
+          CPHash<HashType> LSH;
+      std::unique_ptr<LSH> lsh(std::move(
+          wrapper::PointTypeTraitsInternal<PointType>::template
+              construct_cp_hash<HashType>(params_)));
+      setup2(std::tuple_cat(vals, std::make_tuple(std::move(lsh))));
+    } else {
+      throw LSHNNTableSetupError("Unknown hash family. Maybe you forgot to set "
+          "the hash family in the parameter struct?");
+    }
+  }
+
+  template <typename V>
+  void setup2(V vals) {
+    if (params_.distance_function == DistanceFunction::NegativeInnerProduct) {
+      typedef typename wrapper::PointTypeTraitsInternal<PointType>::
+          CosineDistance DistanceFunc;
+      DistanceFunc tmp;
+      setup3(std::tuple_cat(std::move(vals), std::make_tuple(tmp)));
+    } else if (params_.distance_function
+        == DistanceFunction::EuclideanSquared) {
+      typedef typename wrapper::PointTypeTraitsInternal<PointType>::
+          EuclideanDistance DistanceFunc;
+      DistanceFunc tmp;
+      setup3(std::tuple_cat(std::move(vals), std::make_tuple(tmp)));
+    } else {
+      throw LSHNNTableSetupError("Unknown distance function. Maybe you forgot "
+          "to set the hash family in the parameter struct?");
+    }
+  }
+  
+  template <typename V>
+  void setup3(V vals) {
+    typedef typename std::tuple_element<kHashTypeIndex, V>::type HashType;
+
+    if (params_.storage_hash_table == StorageHashTable::FlatHashTable) {
+      typedef core::FlatHashTable<HashType> HashTable;
+      std::unique_ptr<typename HashTable::Factory> factory(
+          new typename HashTable::Factory(1 << num_bits_));
+      
+      typedef core::StaticCompositeHashTable<HashType, KeyType, HashTable>
+          CompositeTable;
+      std::unique_ptr<CompositeTable> composite_table(new CompositeTable(
+          params_.l, factory.get()));
+      setup4(std::tuple_cat(std::move(vals),
+             std::make_tuple(std::move(factory)),
+             std::make_tuple(std::move(composite_table))));
+    } else if (params_.storage_hash_table
+        == StorageHashTable::BitPackedFlatHashTable) {
+      typedef core::BitPackedFlatHashTable<HashType> HashTable;
+      std::unique_ptr<typename HashTable::Factory> factory(
+          new typename HashTable::Factory(1 << num_bits_, n_));
+
+      typedef core::StaticCompositeHashTable<HashType, KeyType, HashTable>
+          CompositeTable;
+      std::unique_ptr<CompositeTable> composite_table(new CompositeTable(
+          params_.l, factory.get()));
+      setup4(std::tuple_cat(std::move(vals),
+             std::make_tuple(std::move(factory)),
+             std::make_tuple(std::move(composite_table))));
+    } else if (params_.storage_hash_table == StorageHashTable::STLHashTable) {
+      typedef core::STLHashTable<HashType> HashTable;
+      std::unique_ptr<typename HashTable::Factory> factory(
+          new typename HashTable::Factory());
+      
+      typedef core::StaticCompositeHashTable<HashType, KeyType, HashTable>
+          CompositeTable;
+      std::unique_ptr<CompositeTable> composite_table(new CompositeTable(
+          params_.l, factory.get()));
+      setup4(std::tuple_cat(std::move(vals),
+             std::make_tuple(std::move(factory)),
+             std::make_tuple(std::move(composite_table))));
+    } else if (params_.storage_hash_table
+        == StorageHashTable::LinearProbingHashTable) {
+      typedef core::StaticLinearProbingHashTable<HashType, KeyType> HashTable;
+      std::unique_ptr<typename HashTable::Factory> factory(
+          new typename HashTable::Factory(2 * n_));
+      
+      typedef core::StaticCompositeHashTable<HashType, KeyType, HashTable>
+          CompositeTable;
+      std::unique_ptr<CompositeTable> composite_table(new CompositeTable(
+          params_.l, factory.get()));
+      setup4(std::tuple_cat(std::move(vals),
+             std::make_tuple(std::move(factory)),
+             std::make_tuple(std::move(composite_table))));
+    } else {
+      throw LSHNNTableSetupError("Unknown storage hash table type. Maybe you "
+          "forgot to set the hash table type in the parameter struct?");
+    }
+  }
+
+  template <typename V>
+  void setup4(V vals) {
+    setup_final(std::move(vals));
+  }
+  
+  template <typename V>
+  void setup_final(V vals) {
+    typedef typename std::tuple_element<kHashTypeIndex, V>::type HashType;
+    
+    typedef typename std::tuple_element<kLSHFamilyIndex, V>::type
+        LSHPointerType;
+    typedef typename LSHPointerType::element_type LSHType;
+   
+    typedef typename std::tuple_element<kDistanceFunctionIndex, V>::type
+        DistanceFunctionType;
+    
+    typedef typename std::tuple_element<kHashTableFactoryIndex, V>::type
+        HashTableFactoryPointerType;
+    typedef typename HashTableFactoryPointerType::element_type
+        HashTableFactoryType;
+    
+    typedef typename std::tuple_element<kCompositeHashTableIndex, V>::type
+        CompositeHashTablePointerType;
+    typedef typename CompositeHashTablePointerType::element_type
+        CompositeHashTableType;
+
+    std::unique_ptr<LSHType>& lsh = std::get<kLSHFamilyIndex>(vals);
+    std::unique_ptr<HashTableFactoryType>& factory
+        = std::get<kHashTableFactoryIndex>(vals);
+    std::unique_ptr<CompositeHashTableType>& composite_table
+        = std::get<kCompositeHashTableIndex>(vals);
+    
+    typedef core::StaticLSHTable<PointType, KeyType, LSHType, HashType,
+        CompositeHashTableType, DataStorageType> LSHTableType;
+    std::unique_ptr<LSHTableType> lsh_table(new LSHTableType(lsh.get(),
+        composite_table.get(), *data_storage_, params_.num_setup_threads));
+    
+    std::unique_ptr<typename LSHTableType::Query> query(
+        new typename LSHTableType::Query(*lsh_table));
+
+    typedef core::NearestNeighborQuery<typename LSHTableType::Query, PointType,
+        KeyType, PointType, ScalarType, DistanceFunctionType,
+        DataStorageType> NNQueryType;
+    std::unique_ptr<NNQueryType> nn_query(new NNQueryType(query.get(),
+                                                          *data_storage_));
+
+    table_.reset(new LSHNNTableWrapper<PointType, KeyType, ScalarType,
+        DistanceFunctionType, LSHTableType, LSHType, HashTableFactoryType,
+        CompositeHashTableType, NNQueryType, DataStorageType>(
+            std::move(lsh), std::move(lsh_table), std::move(factory),
+            std::move(composite_table), std::move(query),
+            std::move(nn_query), std::move(data_storage_)));
+  }
+
+  const static int_fast32_t kHashTypeIndex = 0;
+  const static int_fast32_t kLSHFamilyIndex = 1;
+  const static int_fast32_t kDistanceFunctionIndex = 2;
+  const static int_fast32_t kHashTableFactoryIndex = 3;
+  const static int_fast32_t kCompositeHashTableIndex = 4;
+
+  const PointSet& points_;
+  const LSHConstructionParameters& params_;
+  std::unique_ptr<DataStorageType> data_storage_;
+  int_fast32_t num_bits_;
+  int_fast64_t n_;
+  std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> table_ = nullptr;
+};
 
 
 
@@ -407,6 +676,7 @@ void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
   wrapper::ComputeNumberOfHashFunctions<PointType>::compute(
       number_of_hash_bits, params);
 }
+
 
 template<typename PointType>
 LSHConstructionParameters get_default_parameters(
@@ -426,93 +696,9 @@ typename PointSet>
 std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> construct_table(
     const PointSet& points,
     const LSHConstructionParameters& params) {
-  if (params.dimension < 1) {
-    throw LSHNNTableSetupError("Point dimension must be at least 1. Maybe you "
-        "forgot to set the point dimension in the parameter struct?");
-  }
-  if (params.k < 1) {
-    throw LSHNNTableSetupError("The number of hash functions k must be at "
-        "least 1. Maybe you forgot to set k in the parameter struct?");
-  }
-  if (params.l < 1) {
-    throw LSHNNTableSetupError("The number of hash tables l must be at "
-        "least 1. Maybe you forgot to set l in the parameter struct?");
-  }
-
-  // TODO: can we allow Unknown here, but then allow only to return all the
-  // (unique) candidates?
-  if (params.distance_function != DistanceFunction::NegativeInnerProduct
-   && params.distance_function != DistanceFunction::EuclideanSquared) {
-    throw LSHNNTableSetupError("Unknown distance function. Maybe you forgot to "
-        "set the distance function in the parameter struct?");
-  }
-
-  // TODO: automatically adapt to 64 bit if necessary
-  typedef uint32_t HashType;
-
-  if (params.lsh_family == LSHFamily::Hyperplane) {
-    typedef typename wrapper::PointTypeTraitsInternal<PointType>::template
-        HPHash<HashType> LSH;
-    std::unique_ptr<LSH> lsh(new LSH(params.dimension, params.k, params.l,
-                                     params.seed ^ 93384688));
-    if (params.distance_function == DistanceFunction::NegativeInnerProduct) {
-      typedef typename wrapper::PointTypeTraitsInternal<PointType>::CosineDistance
-	DistanceFunc;
-      return std::move(wrapper::construction_helper<PointType, KeyType,
-		       PointSet, DistanceFunc, LSH, HashType>(points, params,
-							      std::move(lsh)));
-    }
-    else if (params.distance_function == DistanceFunction::EuclideanSquared) {
-      typedef typename wrapper::PointTypeTraitsInternal<PointType>::EuclideanDistance
-	DistanceFunc;
-      return std::move(wrapper::construction_helper<PointType, KeyType,
-		       PointSet, DistanceFunc, LSH, HashType>(points, params,
-							      std::move(lsh)));
-    } else {
-      throw LSHNNTableSetupError("should not have reached here");
-    }
-  } else if (params.lsh_family == LSHFamily::CrossPolytope) {
-    if (params.num_rotations < 0) {
-      throw LSHNNTableSetupError("The number of pseudo-random rotations for "
-          "the cross polytope hash must be non-negative. Maybe you forgot to "
-          "set num_rotations in the parameter struct?");
-    }
-    if (params.last_cp_dimension <= 0) {
-      throw LSHNNTableSetupError("The last cross polytope dimension for "
-          "the cross polytope hash must be at least 1. Maybe you forgot to "
-          "set last_cp_dimension in the parameter struct?");
-    }
-
-    // TODO: for sparse vectors, also check feature_hashing_dimension here (it
-    // is checked in the CP hash class, but the error message is less verbose).
-
-    typedef typename wrapper::PointTypeTraitsInternal<PointType>::template
-        CPHash<HashType> LSH;
-    std::unique_ptr<LSH> lsh(std::move(
-        wrapper::PointTypeTraitsInternal<PointType>::template
-            construct_cp_hash<HashType>(params)));
-    if (params.distance_function == DistanceFunction::NegativeInnerProduct) {
-      typedef typename wrapper::PointTypeTraitsInternal<PointType>::CosineDistance
-	DistanceFunc;
-      return std::move(wrapper::construction_helper<PointType, KeyType,
-		       PointSet, DistanceFunc, LSH, HashType>(points, params,
-							      std::move(lsh)));
-    }
-    else if (params.distance_function == DistanceFunction::EuclideanSquared) {
-      typedef typename wrapper::PointTypeTraitsInternal<PointType>::EuclideanDistance
-	DistanceFunc;
-      return std::move(wrapper::construction_helper<PointType, KeyType,
-		       PointSet, DistanceFunc, LSH, HashType>(points, params,
-							      std::move(lsh)));
-    } else {
-      throw LSHNNTableSetupError("should not have reached here");
-    }
-  } else {
-    throw LSHNNTableSetupError("Unknown hash family. Maybe you forgot to set "
-        "the hash family in the parameter struct?");
-  }
-
-  throw LSHNNTableSetupError("Reached unexpected control flow point.");
+  wrapper::StaticTableFactory<PointType, KeyType, PointSet> factory(points,
+                                                                    params);
+  return std::move(factory.setup());
 }
 
 }  // namespace falconn

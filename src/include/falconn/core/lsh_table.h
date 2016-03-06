@@ -4,9 +4,11 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <future>
 #include <limits>
 #include <stdexcept>
 #include <string>
+#include <thread>
 #include <vector>
 
 #include "data_storage.h"
@@ -72,16 +74,44 @@ class StaticLSHTable : public BasicLSHTable<LSH, HashTable, StaticLSHTable<
  public:
   StaticLSHTable(LSH* lsh,
                  HashTable* hash_table,
-                 const DataStorageType& points)
+                 const DataStorageType& points,
+                 int_fast32_t num_setup_threads)
       : BasicLSHTable<LSH, HashTable, StaticLSHTable<PointType, KeyType, LSH,
             HashType, HashTable, DataStorageType>>(lsh, hash_table),
         n_(points.size()) {
-    typename LSH::template BatchHash<DataStorageType> bh(*(this->lsh_));
-    std::vector<HashType> table_hashes;
+    if (num_setup_threads < 0) {
+      throw LSHTableError("Number of setup threads cannot be negative.");
+    }
+    if (num_setup_threads == 0) {
+      num_setup_threads = std::max(1u, std::thread::hardware_concurrency());
+    }
+    int l = this->lsh_->get_l();
 
-    for (int_fast32_t ii = 0; ii < this->lsh_->get_l(); ++ii) {
-      bh.batch_hash_single_table(points, ii, &table_hashes);
-      this->hash_table_->add_entries_for_table(table_hashes, ii);
+    num_setup_threads = std::min(l, num_setup_threads);
+    int_fast32_t num_tables_per_thread = l / num_setup_threads;
+    int_fast32_t num_leftover_tables = l % num_setup_threads;
+
+    std::vector<std::future<void>> thread_results;
+    int_fast32_t next_table_range_start = 0;
+
+    for (int_fast32_t ii = 0; ii < num_setup_threads; ++ii) {
+      int_fast32_t next_table_range_end = next_table_range_start
+          + num_tables_per_thread - 1;
+      if (ii < num_leftover_tables) {
+        next_table_range_end += 1;
+      }
+      thread_results.push_back(
+          std::async(std::launch::async,
+                     &StaticLSHTable::setup_table_range,
+                     this,
+                     next_table_range_start,
+                     next_table_range_end,
+                     points));
+      next_table_range_start = next_table_range_end + 1;
+    }
+    
+    for (int_fast32_t ii = 0; ii < num_setup_threads; ++ii) {
+      thread_results[ii].get();
     }
   }
   
@@ -151,7 +181,7 @@ class StaticLSHTable : public BasicLSHTable<LSH, HashTable, StaticLSHTable<
       stats_.average_total_query_time += elapsed_total.count();
     }
 
-    void get_unique_sorted_candidates(const PointType& p,
+    /*void get_unique_sorted_candidates(const PointType& p,
                                       int_fast64_t num_probes,
                                       int_fast64_t max_num_candidates,
                                       std::vector<KeyType>* result) {
@@ -165,7 +195,7 @@ class StaticLSHTable : public BasicLSHTable<LSH, HashTable, StaticLSHTable<
       auto elapsed_total = std::chrono::duration_cast<
           std::chrono::duration<double>>(end_time - start_time);
       stats_.average_total_query_time += elapsed_total.count();
-    }
+    }*/
 
     void reset_query_statistics() {
       stats_num_queries_ = 0;
@@ -252,6 +282,17 @@ class StaticLSHTable : public BasicLSHTable<LSH, HashTable, StaticLSHTable<
  
  private:
   int_fast64_t n_;
+
+  void setup_table_range(int_fast32_t from,
+                         int_fast32_t to,
+                         const DataStorageType& points) {
+    typename LSH::template BatchHash<DataStorageType> bh(*(this->lsh_));
+    std::vector<HashType> table_hashes;
+    for (int_fast32_t ii = from; ii <= to; ++ii) {
+      bh.batch_hash_single_table(points, ii, &table_hashes);
+      this->hash_table_->add_entries_for_table(table_hashes, ii);
+    }
+  }
 };
 
 

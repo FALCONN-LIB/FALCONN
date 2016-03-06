@@ -42,10 +42,10 @@ class NearestNeighborQuery {
     auto start_time = std::chrono::high_resolution_clock::now();
     stats_num_queries_ += 1; 
     
-    table_query_->get_unique_sorted_candidates(q,
-                                               num_probes,
-                                               max_num_candidates,
-                                               &candidates_);
+    table_query_->get_unique_candidates(q,
+                                        num_probes,
+                                        max_num_candidates,
+                                        &candidates_);
     auto distance_start_time = std::chrono::high_resolution_clock::now();
     
     // TODO: use nullptr for pointer types
@@ -100,10 +100,10 @@ class NearestNeighborQuery {
     std::vector<LSHTableKeyType>& res = *result;
     res.clear();
 
-    table_query_->get_unique_sorted_candidates(q,
-                                               num_probes,
-                                               max_num_candidates,
-                                               &candidates_);
+    table_query_->get_unique_candidates(q,
+                                        num_probes,
+                                        max_num_candidates,
+                                        &candidates_);
 
     heap_.reset();
     heap_.resize(k);
@@ -166,10 +166,10 @@ class NearestNeighborQuery {
     std::vector<LSHTableKeyType>& res = *result;
     res.clear();
 
-    table_query_->get_unique_sorted_candidates(q,
-                                               num_probes,
-                                               max_num_candidates,
-                                               &candidates_);
+    table_query_->get_unique_candidates(q,
+                                        num_probes,
+                                        max_num_candidates,
+                                        &candidates_);
     auto distance_start_time = std::chrono::high_resolution_clock::now();
     
     typename DataStorage::SubsequenceIterator iter =
