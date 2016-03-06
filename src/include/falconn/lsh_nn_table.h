@@ -256,6 +256,13 @@ struct LSHConstructionParameters {
   ///
   StorageHashTable storage_hash_table = StorageHashTable::Unknown;
   ///
+  /// Number of threads used to set up the hash table.
+  /// Zero indicates that FALCONN should use the maximum number of available
+  /// hardware threads (or 1 if this number cannot be determined).
+  /// The number of threads used is always at most the number of tables l.
+  ///
+  int_fast32_t num_setup_threads = -1;
+  ///
   /// Randomness seed.
   ///
   uint64_t seed = 409556018;

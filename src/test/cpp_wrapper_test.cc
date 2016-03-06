@@ -106,6 +106,7 @@ TEST(WrapperTest, DenseHPTest1) {
   params.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
   params.k = 2;
   params.l = 4;
+  params.num_setup_threads = 0;
   
   basic_test_dense_1(params);
 }
@@ -122,6 +123,7 @@ TEST(WrapperTest, DenseCPTest1) {
   params.l = 8;
   params.last_cp_dimension = dim;
   params.num_rotations = 3;
+  params.num_setup_threads = 0;
 
   basic_test_dense_1(params);
 }
@@ -136,6 +138,7 @@ TEST(WrapperTest, SparseHPTest1) {
   params.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
   params.k = 2;
   params.l = 4;
+  params.num_setup_threads = 0;
 
   basic_test_sparse_1(params);
 }
@@ -153,6 +156,7 @@ TEST(WrapperTest, SparseCPTest1) {
   params.feature_hashing_dimension = 8;
   params.last_cp_dimension = 8;
   params.num_rotations = 3;
+  params.num_setup_threads = 0;
   
   basic_test_sparse_1(params);
 }
@@ -167,6 +171,7 @@ TEST(WrapperTest, FlatHashTableTest1) {
   params.storage_hash_table = StorageHashTable::FlatHashTable;
   params.k = 2;
   params.l = 4;
+  params.num_setup_threads = 0;
   
   basic_test_dense_1(params);
 }
@@ -181,6 +186,7 @@ TEST(WrapperTest, BitPackedFlatHashTableTest1) {
   params.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
   params.k = 2;
   params.l = 4;
+  params.num_setup_threads = 0;
   
   basic_test_dense_1(params);
 }
@@ -195,6 +201,7 @@ TEST(WrapperTest, STLHashTableTest1) {
   params.storage_hash_table = StorageHashTable::STLHashTable;
   params.k = 2;
   params.l = 4;
+  params.num_setup_threads = 0;
   
   basic_test_dense_1(params);
 }
@@ -209,6 +216,7 @@ TEST(WrapperTest, LinearProbingHashTableTest1) {
   params.storage_hash_table = StorageHashTable::LinearProbingHashTable;
   params.k = 2;
   params.l = 4;
+  params.num_setup_threads = 0;
   
   basic_test_dense_1(params);
 }
@@ -256,6 +264,9 @@ TEST(WrapperTest, GetDefaultParametersTest1) {
   EXPECT_EQ(LSHFamily::CrossPolytope, params.lsh_family);
   EXPECT_EQ(3, params.k);
   EXPECT_EQ(2, params.last_cp_dimension);
+  EXPECT_EQ(StorageHashTable::BitPackedFlatHashTable,
+      params.storage_hash_table);
+  EXPECT_EQ(0, params.num_setup_threads);
 }
   
 TEST(WrapperTest, GetDefaultParametersTest2) {
@@ -266,4 +277,7 @@ TEST(WrapperTest, GetDefaultParametersTest2) {
   
   EXPECT_EQ(2, params.num_rotations);
   EXPECT_EQ(1024, params.feature_hashing_dimension);
+  EXPECT_EQ(0, params.num_setup_threads);
+  EXPECT_EQ(StorageHashTable::BitPackedFlatHashTable,
+      params.storage_hash_table);
 }

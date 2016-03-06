@@ -261,6 +261,8 @@ struct GetDefaultParameters<DenseVector<CoordinateType>> {
     }
 
     result.l = 10;
+    result.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
+    result.num_setup_threads = 0;
     
     int_fast32_t number_of_hash_bits = 1;
     while ((1 << (number_of_hash_bits + 2)) <= dataset_size) {
@@ -287,6 +289,8 @@ struct GetDefaultParameters<SparseVector<CoordinateType>> {
     result.num_rotations = 2;
 
     result.l = 10;
+    result.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
+    result.num_setup_threads = 0;
     
     int_fast32_t number_of_hash_bits = 1;
     while ((1 << (number_of_hash_bits + 2)) <= dataset_size) {
@@ -435,6 +439,12 @@ class StaticTableFactory {
     if (params_.l < 1) {
       throw LSHNNTableSetupError("The number of hash tables l must be at "
           "least 1. Maybe you forgot to set l in the parameter struct?");
+    }
+    if (params_.num_setup_threads < 0) {
+      throw LSHNNTableSetupError("The number of setup threads cannot be "
+          "negative. Maybe you forgot to set num_setup_threads in the "
+          "parameter struct? A value of 0 indicates that FALCONN should use "
+          "the maximum number of available hardware threads.");
     }
   
     data_storage_ = std::move(DataStorageAdapter<PointSet>::template
@@ -618,7 +628,7 @@ class StaticTableFactory {
     typedef core::StaticLSHTable<PointType, KeyType, LSHType, HashType,
         CompositeHashTableType, DataStorageType> LSHTableType;
     std::unique_ptr<LSHTableType> lsh_table(new LSHTableType(lsh.get(),
-        composite_table.get(), *data_storage_));
+        composite_table.get(), *data_storage_, params_.num_setup_threads));
     
     std::unique_ptr<typename LSHTableType::Query> query(
         new typename LSHTableType::Query(*lsh_table));
