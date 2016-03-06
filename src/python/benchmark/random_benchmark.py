@@ -128,8 +128,10 @@ params_hp = falconn.LSHConstructionParameters()
 params_hp.dimension = d
 params_hp.lsh_family = 'hyperplane'
 params_hp.distance_function = 'negative_inner_product'
+params_hp.storage_hash_table = 'flat_hash_table'
 params_hp.k = 19
 params_hp.l = 10
+params_hp.num_setup_threads = 0
 params_hp.seed = seed ^ 833840234
 
 print('Hyperplane hash\n')
@@ -155,8 +157,10 @@ params_cp = falconn.LSHConstructionParameters()
 params_cp.dimension = d
 params_cp.lsh_family = 'cross_polytope'
 params_cp.distance_function = 'negative_inner_product'
+params_cp.storage_hash_table = 'flat_hash_table'
 params_cp.k = 3
 params_cp.l = 10
+params_cp.num_setup_threads = 0
 params_cp.last_cp_dimension = 16
 params_cp.num_rotations = 3
 params_cp.seed = seed ^ 833840234

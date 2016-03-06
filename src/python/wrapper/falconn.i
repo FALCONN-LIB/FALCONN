@@ -30,6 +30,7 @@ namespace std {
 %ignore cpp_to_python_construction_parameters;
 %ignore lsh_family_from_string;
 %ignore distance_function_from_string;
+%ignore storage_hash_table_from_string;
 %rename(CppLSHConstructionParameters) falconn::LSHConstructionParameters;
 
 %exception {

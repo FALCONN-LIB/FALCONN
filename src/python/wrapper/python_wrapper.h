@@ -79,13 +79,13 @@ class PyLSHNearestNeighborTableDenseDouble {
     return result;
   }
 
-  std::vector<int32_t> get_unique_sorted_candidates(const double* vec,
+  /*std::vector<int32_t> get_unique_sorted_candidates(const double* vec,
       int len) {
     ConstVectorMap q(vec, len);
     std::vector<int32_t> result;
     table_->get_unique_sorted_candidates(q, &result);
     return result;
-  }
+  }*/
   
   void reset_query_statistics() {
     table_->reset_query_statistics();
@@ -161,13 +161,13 @@ class PyLSHNearestNeighborTableDenseFloat {
     return result;
   }
 
-  std::vector<int32_t> get_unique_sorted_candidates(const float* vec,
+  /*std::vector<int32_t> get_unique_sorted_candidates(const float* vec,
       int len) {
     ConstVectorMap q(vec, len);
     std::vector<int32_t> result;
     table_->get_unique_sorted_candidates(q, &result);
     return result;
-  }
+  }*/
   
   void reset_query_statistics() {
     table_->reset_query_statistics();
@@ -186,8 +186,10 @@ struct LSHConstructionParameters {
   int_fast32_t dimension = -1;
   std::string lsh_family = "unknown";
   std::string distance_function = "unknown";
+  std::string storage_hash_table = "unknown";
   int_fast32_t  k = -1;
   int_fast32_t l = -1;
+  int_fast32_t num_setup_threads = -1;
   uint64_t seed = 409556018;
   int_fast32_t last_cp_dimension = -1;
   int_fast32_t num_rotations = -1;
@@ -222,6 +224,20 @@ LSHFamily lsh_family_from_string(const std::string& str) {
   throw PyLSHNearestNeighborTableError("Unknown LSH family parameter.");
 }
 
+// %ignore'd in the swig wrapper
+StorageHashTable storage_hash_table_from_string(const std::string& str) {
+  std::string tmp_storage_hash_table = str;
+  std::transform(tmp_storage_hash_table.begin(), tmp_storage_hash_table.end(),
+      tmp_storage_hash_table.begin(), tolower);
+  for (int ii = 0; ii < static_cast<int>(kStorageHashTableStrings.size());
+      ++ii) {
+    if (tmp_storage_hash_table == kStorageHashTableStrings[ii]) {
+      return StorageHashTable(ii);
+    }
+  }
+  throw PyLSHNearestNeighborTableError("Unknown storage hash table parameter.");
+}
+
 
 // %ignore'd in the swig wrapper
 void python_to_cpp_construction_parameters(
@@ -231,8 +247,11 @@ void python_to_cpp_construction_parameters(
   cpp_params->lsh_family = lsh_family_from_string(py_params.lsh_family);
   cpp_params->distance_function = distance_function_from_string(
       py_params.distance_function);
+  cpp_params->storage_hash_table = storage_hash_table_from_string(
+      py_params.storage_hash_table);
   cpp_params->k = py_params.k;
   cpp_params->l = py_params.l;
+  cpp_params->num_setup_threads = py_params.num_setup_threads;
   cpp_params->seed = py_params.seed;
   cpp_params->last_cp_dimension = py_params.last_cp_dimension;
   cpp_params->num_rotations = py_params.num_rotations;
@@ -263,8 +282,18 @@ void cpp_to_python_construction_parameters(
   py_params->distance_function = kDistanceFunctionStrings[
       distance_function_int];
 
+  int_fast32_t storage_hash_table_int = static_cast<int_fast32_t>(
+      cpp_params.storage_hash_table);
+  if (storage_hash_table_int < 0 || storage_hash_table_int >=
+      static_cast<int_fast32_t>(kStorageHashTableStrings.size())) {
+    throw PyLSHNearestNeighborTableError("Unknown storage hash table value.");
+  }
+  py_params->storage_hash_table = kStorageHashTableStrings[
+      storage_hash_table_int];
+
   py_params->k = cpp_params.k;
   py_params->l = cpp_params.l;
+  py_params->num_setup_threads = cpp_params.num_setup_threads;
   py_params->seed = cpp_params.seed;
   py_params->last_cp_dimension = cpp_params.last_cp_dimension;
   py_params->num_rotations = cpp_params.num_rotations;
