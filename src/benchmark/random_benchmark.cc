@@ -4,8 +4,7 @@
 #include <memory>
 #include <stdexcept>
 
-#include "Eigen/Dense"
-
+#include "falconn/eigen_wrapper.h"
 #include "falconn/lsh_nn_table.h"
 
 using std::chrono::duration;
