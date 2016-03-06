@@ -66,7 +66,7 @@ using falconn::get_default_parameters;
 typedef DenseVector<float> Point;
 
 const string FILE_NAME = "dataset/glove.840B.300d.dat";
-const int NUM_QUERIES = 100;
+const int NUM_QUERIES = 1000;
 const int SEED = 4057218;
 const int NUM_HASH_TABLES = 50;
 const int NUM_HASH_BITS = 18;

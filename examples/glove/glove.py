@@ -7,10 +7,10 @@ import math
 if __name__ == '__main__':
     dataset_file = 'dataset/glove.840B.300d.npy'
     number_of_queries = 1000
-    # we build only 10 tables, increasing this quantity will improve the query time
+    # we build only 50 tables, increasing this quantity will improve the query time
     # at a cost of slower preprocessing and larger memory footprint, feel free to
     # play with this number
-    number_of_tables = 10
+    number_of_tables = 50
 
     print('Reading the dataset')
     dataset = np.load(dataset_file)
@@ -59,10 +59,12 @@ if __name__ == '__main__':
     # for sparse data set it to 2
     params_cp.num_rotations = 1
     params_cp.seed = 5721840
-    # we build 20-bit hashes so that each table has
-    # 2^20 bins; this is a good choise since 2^20 is of the same
+    params_cp.num_setup_threads = 0
+    params_cp.storage_hash_table = 'bit_packed_flat_hash_table'
+    # we build 18-bit hashes so that each table has
+    # 2^18 bins; this is a good choise since 2^18 is of the same
     # order of magnitude as the number of data points
-    falconn.compute_number_of_hash_functions(20, params_cp)
+    falconn.compute_number_of_hash_functions(18, params_cp)
 
     print('Constructing the LSH table')
     t1 = timeit.default_timer()
