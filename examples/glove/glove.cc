@@ -60,6 +60,7 @@ using falconn::DistanceFunction;
 using falconn::LSHConstructionParameters;
 using falconn::LSHFamily;
 using falconn::LSHNearestNeighborTable;
+using falconn::StorageHashTable;
 using falconn::get_default_parameters;
 
 typedef DenseVector<float> Point;
@@ -67,8 +68,8 @@ typedef DenseVector<float> Point;
 const string FILE_NAME = "dataset/glove.840B.300d.dat";
 const int NUM_QUERIES = 100;
 const int SEED = 4057218;
-const int NUM_HASH_TABLES = 10;
-const int NUM_HASH_BITS = 20;
+const int NUM_HASH_TABLES = 50;
+const int NUM_HASH_BITS = 18;
 const int NUM_ROTATIONS = 1;
 
 /*
@@ -296,6 +297,8 @@ int main() {
     params.distance_function = DistanceFunction::EuclideanSquared;
     compute_number_of_hash_functions<Point>(NUM_HASH_BITS, &params);
     params.num_rotations = NUM_ROTATIONS;
+    params.num_setup_threads = 0;
+    params.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
     /*
       For an easy way out, you could have used the following.
 
