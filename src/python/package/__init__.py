@@ -131,6 +131,14 @@ class LSHConstructionParameters(_internal.LSHConstructionParameters):
     Can be either `'euclidean_squared'` or `'negative_inner_product'`;
     * `k`: number of hash functions per table. Required for all the hash families.
     * `l`: number of hash tables. Required for all the hash families;
+    * `storage_hash_table`: how the low-level hash tables are stored. Required for
+    all the hash families. Can be equal to: `flat_hash_table`,
+    `bit_packed_flat_hash_table`, `stl_hash_table` or `linear_probing_hash_table`.
+    * `num_setup_threads`: number of threads used to set up the hash table.
+    Required for all the hash families.
+    Zero indicates that FALCONN should use the maximum number of available
+    hardware threads (or `1` if this number cannot be determined).
+    The number of threads used is always at most the number of tables `l`.
     * `seed` (default `409556018`): randomness seed.
 
     Optional parameters:
@@ -194,7 +202,6 @@ class LSHIndex:
     * `find_nearest_neighbor()`
     * `get_candidates_with_duplicates()`
     * `get_unique_candidates()`
-    * `get_unique_sorted_candidates()`
 
     to execute queries.
 
@@ -205,7 +212,6 @@ class LSHIndex:
 
     * `get_candidates_with_duplicates()`
     * `get_unique_candidates()`
-    * `get_unique_sorted_candidates()`
 
     as well as high-level functions that filter this list for you:
 
@@ -400,24 +406,7 @@ class LSHIndex:
         self._check_built()
         self._check_query(query)
         return self._table.get_unique_candidates(query)
-        
-    def get_unique_sorted_candidates(self, query):
-        """Retrieve the sorted list of unique candidates for a query.
-
-        Returns the keys of all candidates in the probing sequence for
-        query. Each candidate is returned once and the resulting list
-        is sorted according to the key.
-
-        Arguments:
-
-        * `query`: a query given as a one-dimension NumPy array of the same
-        `dtype` as the dataset; the dimension of `query` much match
-        the second dimension of the dataset.
-        """
-        self._check_built()
-        self._check_query(query)
-        return self._table.get_unique_sorted_candidates(query)
-        
+                
     def reset_query_statistics(self):
         """Reset the query statistics."""
         self._check_built()

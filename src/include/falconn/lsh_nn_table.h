@@ -206,13 +206,28 @@ static const std::array<const char*, 3> kDistanceFunctionStrings = {
 ///
 enum class StorageHashTable {
   Unknown = 0,
-
+  ///
+  /// The set of points whose hash is equal to a given one is retrieved using
+  /// "naive" buckets. One table takes space O(#points + #bins).
+  ///
   FlatHashTable = 1,
-
+  ///
+  /// The same as FlatHashTable, but everything is packed using as few bits as
+  /// possible. THIS OPTION IS RECOMMENDED unless the number of bins is much
+  /// larger than the number of points (in which case we recommend to use
+  /// LinearProbingHashTable).
+  ///
   BitPackedFlatHashTable = 2,
-
+  ///
+  /// Here, std::unordered_map is used. One tables takes space O(#points), but
+  /// the leading constant is much higher than that of bucket-based approaches.
+  ///
   STLHashTable = 3,
-
+  ///
+  /// The same as STLHashTable, but the custom implementation based on
+  /// *linear probing* is used. THIS OPTION IS RECOMMENDED if the number of
+  /// bins is much higher than the number of points.
+  ///
   LinearProbingHashTable = 4
 };
 
