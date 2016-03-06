@@ -132,14 +132,14 @@ class LSHConstructionParameters(_internal.LSHConstructionParameters):
     * `k`: number of hash functions per table. Required for all the hash families.
     * `l`: number of hash tables. Required for all the hash families;
     * `storage_hash_table`: how the low-level hash tables are stored. Required for
-    all the hash families. Can be equal to: `flat_hash_table`,
-    `bit_packed_flat_hash_table`, `stl_hash_table` or `linear_probing_hash_table`.
+    all the hash families. Can be equal to: `'flat_hash_table'`,
+    `'bit_packed_flat_hash_table'`, `'stl_hash_table'` or
+    `'linear_probing_hash_table'`.
     * `num_setup_threads`: number of threads used to set up the hash table.
     Required for all the hash families.
     Zero indicates that FALCONN should use the maximum number of available
     hardware threads (or `1` if this number cannot be determined).
     The number of threads used is always at most the number of tables `l`.
-    * `seed` (default `409556018`): randomness seed.
 
     Optional parameters:
 
@@ -154,6 +154,7 @@ class LSHConstructionParameters(_internal.LSHConstructionParameters):
     feature hashing dimension leads to faster hash computations, but the
     quality of the hash also degrades. The value `-1` indicates that no
     feature hashing is performed (default `-1`).
+    * `seed` (default `409556018`): randomness seed.
     """
     pass
 
