@@ -2,6 +2,7 @@
 #define __TEST_UTILS_H__
 
 #include <algorithm>
+#include <random>
 #include <utility>
 #include <vector>
 
