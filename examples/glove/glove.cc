@@ -297,6 +297,7 @@ int main() {
     params.distance_function = DistanceFunction::EuclideanSquared;
     compute_number_of_hash_functions<Point>(NUM_HASH_BITS, &params);
     params.num_rotations = NUM_ROTATIONS;
+    // we want to use all the available threads to set up
     params.num_setup_threads = 0;
     params.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
     /*

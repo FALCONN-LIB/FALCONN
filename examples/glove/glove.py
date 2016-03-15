@@ -59,6 +59,7 @@ if __name__ == '__main__':
     # for sparse data set it to 2
     params_cp.num_rotations = 1
     params_cp.seed = 5721840
+    # we want to use all the available threads to set up
     params_cp.num_setup_threads = 0
     params_cp.storage_hash_table = 'bit_packed_flat_hash_table'
     # we build 18-bit hashes so that each table has
