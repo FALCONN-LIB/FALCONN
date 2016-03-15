@@ -87,7 +87,7 @@ seed = 119417657
 
 print(sepline)
 print('FALCONN Python random data benchmark')
-print('Data set paramters:')
+print('Data set parameters:')
 print('n = {}'.format(n))
 print('d = {}'.format(d))
 print('num_queries = {}'.format(num_queries))
