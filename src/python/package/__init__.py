@@ -42,7 +42,7 @@ An intended workflow is as follows:
 parameters; (later, tune them if necessary);
 * second, create an instance of `LSHIndex` passing the
 `LSHConstructionParameters` object we've just built;
-* third, call `fit()` method of the `LSHIndex` object,
+* third, call `setup()` method of the `LSHIndex` object,
 passing the dataset;
 * then, increase the number of table probes using the `set_num_probes()`
 method until you get the desired accuracy on a sample set of queries;
@@ -183,7 +183,7 @@ class LSHIndex:
     parameters are not (yet) checked for correctness.
 
     After creating an instance of `LSHIndex`, one needs to call
-    `fit()` passing a dataset. A dataset must be a two-dimensional
+    `setup()` passing a dataset. A dataset must be a two-dimensional
     NumPy array with dtype `numpy.float32` or `numpy.float64`. Rows
     of the array are interpreted as data points. Thus, the second
     dimension of the array must match the dimension from parameters.
@@ -244,7 +244,7 @@ class LSHIndex:
         self._dataset = None
         self._table = None
 
-    def fit(self, dataset):
+    def setup(self, dataset):
         """Build the LSH data structure from a given dataset.
         
         The method builds the LSH data structure using the parameters
@@ -284,7 +284,7 @@ class LSHIndex:
 
     def _check_built(self):
         if self._dataset is None or self._table is None:
-            raise RuntimeError('LSH table is not built (use fit())')
+            raise RuntimeError('LSH table is not built (use setup())')
 
     def _check_query(self, query):
         if not isinstance(query, _numpy.ndarray):

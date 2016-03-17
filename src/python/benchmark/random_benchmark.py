@@ -138,7 +138,7 @@ print('Hyperplane hash\n')
 
 start = timeit.default_timer()
 hp_table = falconn.LSHIndex(params_hp)
-hp_table.fit(data)
+hp_table.setup(data)
 hp_table.set_num_probes(2464)
 stop = timeit.default_timer()
 hp_construction_time = stop - start
@@ -169,7 +169,7 @@ print('Cross polytope hash\n')
 
 start = timeit.default_timer()
 cp_table = falconn.LSHIndex(params_cp)
-cp_table.fit(data)
+cp_table.setup(data)
 cp_table.set_num_probes(896)
 stop = timeit.default_timer()
 cp_construction_time = stop - start
