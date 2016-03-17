@@ -35,6 +35,8 @@ The plot axes are: accuracy retrieving 10 closest data points vs. the number of 
 
 <img src="plot.png" width="500"/>
 
+[direct link](https://raw.githubusercontent.com/ilyaraz/FALCONN/master/plot.png)
+
 ### Questions
 
 Maybe your question is already answered in our [Frequently Asked Questions](https://github.com/falconn-lib/falconn/wiki/FAQ).
