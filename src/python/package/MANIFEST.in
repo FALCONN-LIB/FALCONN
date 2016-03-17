@@ -1,4 +1,5 @@
 include README.md
+include plot.png
 include LICENSE.txt
 include CONTRIBUTORS.md
 include falconn/swig/python_wrapper.h
