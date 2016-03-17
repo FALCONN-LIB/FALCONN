@@ -23,15 +23,17 @@ so FALCONN is easy to set up. For further details, please see our [documentation
 
 On data sets with about 1 million points in around 100 dimensions, FALCONN typically
 requires a few milliseconds per query (running on a reasonably modern desktop CPU).
+
 Below are the results of FALCONN being compared with other open source similarity search
-algorithms. The dataset, which consists of vector representations for words produced by GloVe,
-has 1.2M points in 100 dimensions. The results for other algorithms are taken from ann-benchmarks
-created by Erik Bernhardsson. Note that FALCONN is especially good in the regime of high accuracy
+algorithms. The dataset, which consists of vector representations for words produced by [GloVe](http://nlp.stanford.edu/projects/glove/),
+has 1.2M points in 100 dimensions. The results for other algorithms are taken from [ann-benchmarks](https://github.com/erikbern/ann-benchmarks)
+created by [Erik Bernhardsson](http://erikbern.com/).
+Note that FALCONN is especially good in the regime of high accuracy
 (0.8 or more).
 
 The plot axes are: accuracy retrieving 10 closest data points vs. the number of queries per second.
 
-![ann-benchmarks plot](plot.png)
+<img src="plot.png" width="500"/>
 
 ### Questions
 
