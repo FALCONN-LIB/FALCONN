@@ -7,7 +7,7 @@ def test_lsh_index_positive():
   p = falconn.get_default_parameters(n, d)
   t = falconn.LSHIndex(p)
   dataset = np.random.randn(n, d).astype(np.float32)
-  t.fit(dataset)
+  t.setup(dataset)
   u = np.random.randn(d).astype(np.float32)
   t.find_k_nearest_neighbors(u, 10)
   t.find_near_neighbors(u, 10.0)
@@ -34,26 +34,26 @@ def test_lsh_index_negative():
     pass
   try:
     dataset = [[1.0, 2.0], [3.0, 4.0]]
-    t.fit(dataset)
+    t.setup(dataset)
     assert False
   except TypeError:
     pass
   try:
     dataset = np.random.randn(n, d).astype(np.int32)
-    t.fit(dataset)
+    t.setup(dataset)
     assert False
   except ValueError:
     pass
   try:
     dataset = np.random.randn(10, 10, 10)
-    t.fit(dataset)
+    t.setup(dataset)
     assert False
   except ValueError:
     pass
   dataset = np.random.randn(n, d).astype(np.float32)
-  t.fit(dataset)
+  t.setup(dataset)
   dataset = np.random.randn(n, d).astype(np.float64)
-  t.fit(dataset)
+  t.setup(dataset)
   u = np.random.randn(d).astype(np.float64)
   
   try:
