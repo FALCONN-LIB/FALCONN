@@ -45,6 +45,7 @@ python_package:
 	mkdir -p $(PYTHON_PKG_DIR)/falconn/swig
 	mkdir -p $(PYTHON_PKG_DIR)/benchmarks
 	cp README.md $(PYTHON_PKG_DIR)
+	cp plot.png $(PYTHON_PKG_DIR)
 	cp LICENSE.txt $(PYTHON_PKG_DIR)
 	cp CONTRIBUTORS.md $(PYTHON_PKG_DIR)
 	cp src/python/wrapper/python_wrapper.h $(PYTHON_PKG_DIR)/falconn/swig
