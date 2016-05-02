@@ -33,107 +33,112 @@ void FHTDoubleIterativeHelperAVX(double *buffer, int len, int logLen);
 #endif
 
 int FHTFloat(float *buffer, int len, int chunk) {
-  #ifdef __AVX__
+#ifdef __AVX__
   return FHTFloatCombinedAVX(buffer, len, chunk);
-  #else
+#else
   return FHTFloatCombined(buffer, len, chunk);
-  #endif
+#endif
 }
 
 int FHTDouble(double *buffer, int len, int chunk) {
-  #ifdef __AVX__
+#ifdef __AVX__
   return FHTDoubleCombinedAVX(buffer, len, chunk);
-  #else
+#else
   return FHTDoubleCombined(buffer, len, chunk);
-  #endif
+#endif
 }
 
-#define GEN_ITERATIVE_HELPER(NAME, TYPE)       \
-void NAME(TYPE *buffer, int len, int logLen) { \
-  int i, j, k, step, step2;                    \
-  TYPE u, v;                                   \
-                                               \
-  for (i = 0; i < logLen; ++i) {               \
-    step = 1 << i;                             \
-    step2 = step << 1;                         \
-    for (j = 0; j < len; j += step2) {         \
-      for (k = j; k < j + step; ++k) {         \
-	u = buffer[k];                         \
-	v = buffer[k + step];                  \
-	buffer[k] = u + v;                     \
-	buffer[k + step] = u - v;              \
-      }                                        \
-    }                                          \
-  }                                            \
-}
+#define GEN_ITERATIVE_HELPER(NAME, TYPE)         \
+  void NAME(TYPE *buffer, int len, int logLen) { \
+    int i, j, k, step, step2;                    \
+    TYPE u, v;                                   \
+                                                 \
+    for (i = 0; i < logLen; ++i) {               \
+      step = 1 << i;                             \
+      step2 = step << 1;                         \
+      for (j = 0; j < len; j += step2) {         \
+        for (k = j; k < j + step; ++k) {         \
+          u = buffer[k];                         \
+          v = buffer[k + step];                  \
+          buffer[k] = u + v;                     \
+          buffer[k + step] = u - v;              \
+        }                                        \
+      }                                          \
+    }                                            \
+  }
 
 GEN_ITERATIVE_HELPER(FHTFloatIterativeHelper, float)
 GEN_ITERATIVE_HELPER(FHTDoubleIterativeHelper, double)
 
 #define GEN_COMBINED_HELPER(NAME, SUBNAME, TYPE) \
-void NAME(TYPE *buffer, int len, int chunk) {    \
-  int logLen, hl, i;                             \
-  TYPE u, v;                                     \
+  void NAME(TYPE *buffer, int len, int chunk) {  \
+    int logLen, hl, i;                           \
+    TYPE u, v;                                   \
                                                  \
-  if (len == 1) {                                \
-    return;                                      \
-  }                                              \
-  if (len <= chunk) {                            \
-    logLen = 0;                                  \
-    while (1 << logLen < len) {                  \
-      ++logLen;                                  \
+    if (len == 1) {                              \
+      return;                                    \
     }                                            \
-    SUBNAME(buffer, len, logLen);                \
-    return;                                      \
-  }                                              \
-  hl = len / 2;                                  \
-  NAME(buffer, hl, chunk);                       \
-  NAME(buffer + hl, hl, chunk);                  \
-  for (i = 0; i < hl; ++i) {                     \
-    u = buffer[i];                               \
-    v = buffer[i + hl];                          \
-    buffer[i] = u + v;                           \
-    buffer[i + hl] = u - v;                      \
-  }                                              \
-}
+    if (len <= chunk) {                          \
+      logLen = 0;                                \
+      while (1 << logLen < len) {                \
+        ++logLen;                                \
+      }                                          \
+      SUBNAME(buffer, len, logLen);              \
+      return;                                    \
+    }                                            \
+    hl = len / 2;                                \
+    NAME(buffer, hl, chunk);                     \
+    NAME(buffer + hl, hl, chunk);                \
+    for (i = 0; i < hl; ++i) {                   \
+      u = buffer[i];                             \
+      v = buffer[i + hl];                        \
+      buffer[i] = u + v;                         \
+      buffer[i + hl] = u - v;                    \
+    }                                            \
+  }
 
 GEN_COMBINED_HELPER(FHTFloatCombinedHelper, FHTFloatIterativeHelper, float)
 GEN_COMBINED_HELPER(FHTDoubleCombinedHelper, FHTDoubleIterativeHelper, double)
 
 #ifdef __AVX__
 
-#define GEN_COMBINED_HELPER_AVX(NAME, SUBNAME, TYPE, BATCH_TYPE, STEP, LOAD, SAVE, ADD, SUB) \
-void NAME(TYPE *buffer, int len, int chunk) {                                                \
-  int hl, logLen, j;                                                                \
-  TYPE *uu, *vv;                                                                    \
-  BATCH_TYPE A, B;                                                                  \
-                                                                                    \
-  if (len == 1) {                                                                   \
-    return;                                                                         \
-  }                                                                                 \
-  if (len <= chunk) {                                                               \
-    logLen = 0;                                                                     \
-    while (1 << logLen < len) {                                                     \
-      ++logLen;                                                                     \
-    }                                                                               \
-    SUBNAME(buffer, len, logLen);                                                   \
-    return;                                                                         \
-  }                                                                                 \
-  hl = len / 2;                                                                     \
-  NAME(buffer, hl, chunk);                                                          \
-  NAME(buffer + hl, hl, chunk);                                                     \
-  for (j = 0; j < hl; j += STEP) {                                                  \
-    uu = buffer + j;                                                                \
-    vv = uu + hl;                                                                   \
-    A = LOAD(uu);                                                                   \
-    B = LOAD(vv);                                                                   \
-    SAVE(uu, ADD(A, B));                                                            \
-    SAVE(vv, SUB(A, B));                                                            \
-  }                                                                                 \
-}
+#define GEN_COMBINED_HELPER_AVX(NAME, SUBNAME, TYPE, BATCH_TYPE, STEP, LOAD, \
+                                SAVE, ADD, SUB)                              \
+  void NAME(TYPE *buffer, int len, int chunk) {                              \
+    int hl, logLen, j;                                                       \
+    TYPE *uu, *vv;                                                           \
+    BATCH_TYPE A, B;                                                         \
+                                                                             \
+    if (len == 1) {                                                          \
+      return;                                                                \
+    }                                                                        \
+    if (len <= chunk) {                                                      \
+      logLen = 0;                                                            \
+      while (1 << logLen < len) {                                            \
+        ++logLen;                                                            \
+      }                                                                      \
+      SUBNAME(buffer, len, logLen);                                          \
+      return;                                                                \
+    }                                                                        \
+    hl = len / 2;                                                            \
+    NAME(buffer, hl, chunk);                                                 \
+    NAME(buffer + hl, hl, chunk);                                            \
+    for (j = 0; j < hl; j += STEP) {                                         \
+      uu = buffer + j;                                                       \
+      vv = uu + hl;                                                          \
+      A = LOAD(uu);                                                          \
+      B = LOAD(vv);                                                          \
+      SAVE(uu, ADD(A, B));                                                   \
+      SAVE(vv, SUB(A, B));                                                   \
+    }                                                                        \
+  }
 
-GEN_COMBINED_HELPER_AVX(FHTFloatCombinedHelperAVX, FHTFloatIterativeHelperAVX, float, __m256, 8, _mm256_load_ps, _mm256_store_ps, _mm256_add_ps, _mm256_sub_ps)
-GEN_COMBINED_HELPER_AVX(FHTDoubleCombinedHelperAVX, FHTDoubleIterativeHelperAVX, double, __m256d, 4, _mm256_load_pd, _mm256_store_pd, _mm256_add_pd, _mm256_sub_pd)
+GEN_COMBINED_HELPER_AVX(FHTFloatCombinedHelperAVX, FHTFloatIterativeHelperAVX,
+                        float, __m256, 8, _mm256_load_ps, _mm256_store_ps,
+                        _mm256_add_ps, _mm256_sub_ps)
+GEN_COMBINED_HELPER_AVX(FHTDoubleCombinedHelperAVX, FHTDoubleIterativeHelperAVX,
+                        double, __m256d, 4, _mm256_load_pd, _mm256_store_pd,
+                        _mm256_add_pd, _mm256_sub_pd)
 
 void FHTFloatIterative8HelperAVX(float *buffer) {
   __m256 A, B, C, D, E, ZERO;
@@ -161,19 +166,19 @@ void FHTFloatIterative8HelperAVX(float *buffer) {
 }
 
 #define BUTTERFLY_FLOAT(A, B, T) \
-  T = _mm256_sub_ps(A, B); \
-  A = _mm256_add_ps(A, B); \
+  T = _mm256_sub_ps(A, B);       \
+  A = _mm256_add_ps(A, B);       \
   B = T
 
 #define BUTTERFLY_DOUBLE(A, B, T) \
-  T = _mm256_sub_pd(A, B); \
-  A = _mm256_add_pd(A, B); \
+  T = _mm256_sub_pd(A, B);        \
+  A = _mm256_add_pd(A, B);        \
   B = T
 
 void FHTFloatIterative16HelperAVX(float *buffer) {
   __m256 A, B, C, D, E, ZERO, A0, A1;
   int i;
-  
+
   ZERO = _mm256_set_ps(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   for (i = 0; i < 16; i += 8) {
     // Iteration #0
@@ -206,7 +211,7 @@ void FHTFloatIterative16HelperAVX(float *buffer) {
 void FHTFloatIterative32HelperAVX(float *buffer) {
   __m256 A, B, C, D, E, ZERO, A0, A1, A2, A3, T;
   int i;
-  
+
   ZERO = _mm256_set_ps(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   for (i = 0; i < 32; i += 8) {
     // Iteration #0
@@ -248,8 +253,7 @@ void FHTFloatIterativeHelperAVX(float *buffer, int len, int logLen) {
     u = buffer[0];
     buffer[0] += buffer[1];
     buffer[1] = u - buffer[1];
-  }
-  else if (len == 4) {
+  } else if (len == 4) {
     u = buffer[0];
     v = buffer[1];
     w = buffer[2];
@@ -258,17 +262,13 @@ void FHTFloatIterativeHelperAVX(float *buffer, int len, int logLen) {
     buffer[1] = u - v + w - x;
     buffer[2] = u + v - w - x;
     buffer[3] = u - v - w + x;
-  }
-  else if (len == 8) {
+  } else if (len == 8) {
     FHTFloatIterative8HelperAVX(buffer);
-  }
-  else if (len == 16) {
+  } else if (len == 16) {
     FHTFloatIterative16HelperAVX(buffer);
-  }
-  else if (len == 32) {
+  } else if (len == 32) {
     FHTFloatIterative32HelperAVX(buffer);
-  }
-  else {
+  } else {
     FHTFloatIterativeLongHelperAVX(buffer, len, logLen);
   }
 }
@@ -279,13 +279,12 @@ void FHTDoubleIterativeHelperAVX(double *buffer, int len, int logLen) {
   int i, step, step2, level, j, startLevel;
   __m256d ZERO, A, B, C, D, A0, A1, A2, A3, A4, A5, A6, A7, T;
   double *u, *v, *aux;
-  
+
   if (len == 2) {
     tmp = buffer[0];
     buffer[0] += buffer[1];
     buffer[1] = tmp - buffer[1];
-  }
-  else {
+  } else {
     ZERO = _mm256_set_pd(0.0, 0.0, 0.0, 0.0);
     for (i = 0; i < len; i += 4) {
       // Iteration #0
@@ -306,8 +305,7 @@ void FHTDoubleIterativeHelperAVX(double *buffer, int len, int logLen) {
       return;
     }
     if (len == 8) {
-    }
-    else if (len == 16) {
+    } else if (len == 16) {
       A0 = _mm256_load_pd(buffer);
       A1 = _mm256_load_pd(buffer + 4);
       A2 = _mm256_load_pd(buffer + 8);
@@ -321,38 +319,37 @@ void FHTDoubleIterativeHelperAVX(double *buffer, int len, int logLen) {
       _mm256_store_pd(buffer + 8, A2);
       _mm256_store_pd(buffer + 12, A3);
       return;
-    }
-    else {
+    } else {
       for (i = 0; i < len; i += 32) {
-	aux = buffer + i;
-	A0 = _mm256_load_pd(aux);
-	A1 = _mm256_load_pd(aux + 4);
-	A2 = _mm256_load_pd(aux + 8);
-	A3 = _mm256_load_pd(aux + 12);
-	A4 = _mm256_load_pd(aux + 16);
-	A5 = _mm256_load_pd(aux + 20);
-	A6 = _mm256_load_pd(aux + 24);
-	A7 = _mm256_load_pd(aux + 28);
-	BUTTERFLY_DOUBLE(A0, A1, T);
-	BUTTERFLY_DOUBLE(A2, A3, T);
-	BUTTERFLY_DOUBLE(A4, A5, T);
-	BUTTERFLY_DOUBLE(A6, A7, T);
-	BUTTERFLY_DOUBLE(A0, A2, T);
-	BUTTERFLY_DOUBLE(A1, A3, T);
-	BUTTERFLY_DOUBLE(A4, A6, T);
-	BUTTERFLY_DOUBLE(A5, A7, T);
-	BUTTERFLY_DOUBLE(A0, A4, T);
-	BUTTERFLY_DOUBLE(A1, A5, T);
-	BUTTERFLY_DOUBLE(A2, A6, T);
-	BUTTERFLY_DOUBLE(A3, A7, T);
-	_mm256_store_pd(aux, A0);
-	_mm256_store_pd(aux + 4, A1);
-	_mm256_store_pd(aux + 8, A2);
-	_mm256_store_pd(aux + 12, A3);
-	_mm256_store_pd(aux + 16, A4);
-	_mm256_store_pd(aux + 20, A5);
-	_mm256_store_pd(aux + 24, A6);
-	_mm256_store_pd(aux + 28, A7);
+        aux = buffer + i;
+        A0 = _mm256_load_pd(aux);
+        A1 = _mm256_load_pd(aux + 4);
+        A2 = _mm256_load_pd(aux + 8);
+        A3 = _mm256_load_pd(aux + 12);
+        A4 = _mm256_load_pd(aux + 16);
+        A5 = _mm256_load_pd(aux + 20);
+        A6 = _mm256_load_pd(aux + 24);
+        A7 = _mm256_load_pd(aux + 28);
+        BUTTERFLY_DOUBLE(A0, A1, T);
+        BUTTERFLY_DOUBLE(A2, A3, T);
+        BUTTERFLY_DOUBLE(A4, A5, T);
+        BUTTERFLY_DOUBLE(A6, A7, T);
+        BUTTERFLY_DOUBLE(A0, A2, T);
+        BUTTERFLY_DOUBLE(A1, A3, T);
+        BUTTERFLY_DOUBLE(A4, A6, T);
+        BUTTERFLY_DOUBLE(A5, A7, T);
+        BUTTERFLY_DOUBLE(A0, A4, T);
+        BUTTERFLY_DOUBLE(A1, A5, T);
+        BUTTERFLY_DOUBLE(A2, A6, T);
+        BUTTERFLY_DOUBLE(A3, A7, T);
+        _mm256_store_pd(aux, A0);
+        _mm256_store_pd(aux + 4, A1);
+        _mm256_store_pd(aux + 8, A2);
+        _mm256_store_pd(aux + 12, A3);
+        _mm256_store_pd(aux + 16, A4);
+        _mm256_store_pd(aux + 20, A5);
+        _mm256_store_pd(aux + 24, A6);
+        _mm256_store_pd(aux + 28, A7);
       }
       startLevel = 5;
     }
@@ -360,14 +357,14 @@ void FHTDoubleIterativeHelperAVX(double *buffer, int len, int logLen) {
       step = 1 << level;
       step2 = step << 1;
       for (i = 0; i < len; i += step2) {
-	for (j = 0; j < step; j += 4) {
-	  u = buffer + i + j;
-	  v = u + step;
-	  A = _mm256_load_pd(u);
-	  B = _mm256_load_pd(v);
-	  _mm256_store_pd(u, _mm256_add_pd(A, B));
-	  _mm256_store_pd(v, _mm256_sub_pd(A, B));
-	}
+        for (j = 0; j < step; j += 4) {
+          u = buffer + i + j;
+          v = u + step;
+          A = _mm256_load_pd(u);
+          B = _mm256_load_pd(v);
+          _mm256_store_pd(u, _mm256_add_pd(A, B));
+          _mm256_store_pd(v, _mm256_sub_pd(A, B));
+        }
       }
     }
   }
@@ -378,14 +375,13 @@ void FHTFloatNormalizeAVX(float *buffer, int len) {
   int i;
   __m256 S, A;
 
-  s = 1 / sqrt(len + 0.0);
-  
+  s = 1 / sqrtf(len + 0.0);
+
   if (len < 8) {
     for (i = 0; i < len; ++i) {
       buffer[i] *= s;
     }
-  }
-  else {
+  } else {
     S = _mm256_set_ps(s, s, s, s, s, s, s, s);
     for (i = 0; i < len; i += 8) {
       A = _mm256_load_ps(buffer + i);
@@ -398,15 +394,14 @@ void FHTDoubleNormalizeAVX(double *buffer, int len) {
   double s;
   int i;
   __m256d S, A;
-  
+
   s = 1 / sqrt(len + 0.0);
-    
+
   if (len < 4) {
     for (i = 0; i < len; ++i) {
       buffer[i] *= s;
     }
-  }
-  else {
+  } else {
     S = _mm256_set_pd(s, s, s, s);
     for (i = 0; i < len; i += 4) {
       A = _mm256_load_pd(buffer + i);
@@ -416,56 +411,58 @@ void FHTDoubleNormalizeAVX(double *buffer, int len) {
 }
 
 #define GEN_COMBINED_AVX(NAME, SUBNAME1, SUBNAME2, TYPE) \
-int NAME(TYPE *buffer, int len, int chunk) {             \
-  if (chunk < 8) {                                       \
-    return -1;                                           \
-  }                                                      \
+  int NAME(TYPE *buffer, int len, int chunk) {           \
+    if (chunk < 8) {                                     \
+      return -1;                                         \
+    }                                                    \
                                                          \
-  if (len == 1) {                                        \
+    if (len == 1) {                                      \
+      return 0;                                          \
+    }                                                    \
+                                                         \
+    if (len < 1 || len & (len - 1)) {                    \
+      return -1;                                         \
+    }                                                    \
+                                                         \
+    SUBNAME1(buffer, len, chunk);                        \
+    SUBNAME2(buffer, len);                               \
+                                                         \
     return 0;                                            \
-  }                                                      \
-                                                         \
-  if (len < 1 || len & (len - 1)) {                      \
-    return -1;                                           \
-  }                                                      \
-                                                         \
-  SUBNAME1(buffer, len, chunk);                          \
-  SUBNAME2(buffer, len);                                 \
-                                                         \
-  return 0;                                              \
-}
+  }
 
-GEN_COMBINED_AVX(FHTFloatCombinedAVX, FHTFloatCombinedHelperAVX, FHTFloatNormalizeAVX, float)
+GEN_COMBINED_AVX(FHTFloatCombinedAVX, FHTFloatCombinedHelperAVX,
+                 FHTFloatNormalizeAVX, float)
 
-GEN_COMBINED_AVX(FHTDoubleCombinedAVX, FHTDoubleCombinedHelperAVX, FHTDoubleNormalizeAVX, double)
+GEN_COMBINED_AVX(FHTDoubleCombinedAVX, FHTDoubleCombinedHelperAVX,
+                 FHTDoubleNormalizeAVX, double)
 
 #endif
 
-#define GEN_COMBINED(NAME, SUBNAME, TYPE)    \
-int NAME(TYPE *buffer, int len, int chunk) { \
-  int i;                                     \
-  TYPE s;                                    \
-                                             \
-  if (chunk < 8) {                           \
-    return -1;                               \
-  }                                          \
-                                             \
-  if (len < 1 || len & (len - 1)) {          \
-    return -1;                               \
-  }                                          \
-                                             \
-  SUBNAME(buffer, len, chunk);               \
-                                             \
-  s = 1.0 / sqrt(len + 0.0);                 \
-  for (i = 0; i < len; ++i) {                \
-    buffer[i] *= s;                          \
-  }                                          \
-  return 0;                                  \
-}
+#define GEN_COMBINED(NAME, SUBNAME, TYPE, SQRT_FUNC) \
+  int NAME(TYPE *buffer, int len, int chunk) {       \
+    int i;                                           \
+    TYPE s;                                          \
+                                                     \
+    if (chunk < 8) {                                 \
+      return -1;                                     \
+    }                                                \
+                                                     \
+    if (len < 1 || len & (len - 1)) {                \
+      return -1;                                     \
+    }                                                \
+                                                     \
+    SUBNAME(buffer, len, chunk);                     \
+                                                     \
+    s = 1.0 / SQRT_FUNC(len + 0.0);                  \
+    for (i = 0; i < len; ++i) {                      \
+      buffer[i] *= s;                                \
+    }                                                \
+    return 0;                                        \
+  }
 
-GEN_COMBINED(FHTFloatCombined, FHTFloatCombinedHelper, float)
+GEN_COMBINED(FHTFloatCombined, FHTFloatCombinedHelper, float, sqrtf)
 
-GEN_COMBINED(FHTDoubleCombined, FHTDoubleCombinedHelper, double)
+GEN_COMBINED(FHTDoubleCombined, FHTDoubleCombinedHelper, double, sqrt)
 
 #ifdef __AVX__
 
@@ -474,7 +471,7 @@ void FHTFloatIterativeLongHelperAVX(float *buffer, int len, int logLen) {
   __m256 ZERO, A, B, C, D, E;
   __m256 A0, A1, A2, A3, A4, A5, A6, A7, T;
   float *u, *v;
-  
+
   ZERO = _mm256_set_ps(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   for (i = 0; i < len; i += 8) {
     // Iteration #0
