@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -O3 -march=native -std=c99 -pedantic -Wall -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes
+CFLAGS = -O3 -march=native -std=c99 -pedantic -Wall -Wextra -Wshadow -Wpointer-arith -Wcast-qual -Wstrict-prototypes -Wmissing-prototypes
 CXX = g++
 CXXFLAGS = -O3 -march=native -std=c++11 -Wall
 

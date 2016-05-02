@@ -21,7 +21,7 @@ using fc::CosineDistanceSparse;
 using fc::ArrayDataStorage;
 using fc::DynamicCompositeHashTable;
 using fc::DynamicLinearProbingHashTable;
-//using lsh::DynamicLSHTable;
+// using lsh::DynamicLSHTable;
 using fc::HyperplaneHashDense;
 using fc::HyperplaneHashSparse;
 using fc::NearestNeighborQuery;
@@ -34,7 +34,6 @@ using std::vector;
 
 typedef HyperplaneHashDense<float>::VectorType DenseVector;
 typedef HyperplaneHashSparse<float>::VectorType SparseVector;
-
 
 TEST(NNQueryTest, DenseTest1) {
   const int dim = 5;
@@ -71,26 +70,21 @@ TEST(NNQueryTest, DenseTest1) {
 
   typedef ArrayDataStorage<DenseVector> ArrayDataStorageType;
   ArrayDataStorageType data_storage(points);
-  
+
   HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, points, 1);
   LSHTableType::Query query(lsh_table);
   NearestNeighborQuery<LSHTableType::Query, DenseVector, int32_t, DenseVector,
                        float, CosineDistanceDense<float>, ArrayDataStorageType>
       nn_query(&query, data_storage);
-                       
 
   int res1 = nn_query.find_nearest_neighbor(p1, p1, l, -1);
   EXPECT_EQ(0, res1);
@@ -109,7 +103,6 @@ TEST(NNQueryTest, DenseTest1) {
   int res4 = nn_query.find_nearest_neighbor(p2query, p2query, l, -1);
   EXPECT_EQ(1, res4);
 }
-
 
 TEST(NNQueryTest, SparseTest1) {
   const int dim = 100;
@@ -133,7 +126,7 @@ TEST(NNQueryTest, SparseTest1) {
   p3.push_back(make_pair(3, -1.0));
   p3.push_back(make_pair(20, 3.0));
   p3.push_back(make_pair(72, -5.0));
-  
+
   vector<SparseVector> points;
   points.push_back(p1);
   points.push_back(p2);
@@ -144,17 +137,13 @@ TEST(NNQueryTest, SparseTest1) {
 
   HyperplaneHashSparse<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<SparseVector,
-                         int32_t,
-                         HyperplaneHashSparse<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
+  typedef StaticLSHTable<SparseVector, int32_t, HyperplaneHashSparse<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, points, 1);
   LSHTableType::Query query(lsh_table);
   NearestNeighborQuery<LSHTableType::Query, SparseVector, int32_t, SparseVector,
@@ -176,7 +165,6 @@ TEST(NNQueryTest, SparseTest1) {
   EXPECT_EQ(1, res4);
 }
 
-
 TEST(NNQueryTest, MultiprobeTest1) {
   const int dim = 4;
   int k = 3;
@@ -195,20 +183,16 @@ TEST(NNQueryTest, MultiprobeTest1) {
 
   typedef ArrayDataStorage<DenseVector> ArrayDataStorageType;
   ArrayDataStorageType data_storage(points);
-  
+
   HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, points, 1);
   LSHTableType::Query query(lsh_table);
   NearestNeighborQuery<LSHTableType::Query, DenseVector, int32_t, DenseVector,
@@ -226,7 +210,6 @@ TEST(NNQueryTest, MultiprobeTest1) {
   int res2 = nn_query.find_nearest_neighbor(pquery, pquery, 2 << k, -1);
   EXPECT_EQ(0, res2);
 }
-
 
 TEST(NNQueryTest, FindNearNeighborsTest1) {
   const int dim = 4;
@@ -257,20 +240,16 @@ TEST(NNQueryTest, FindNearNeighborsTest1) {
 
   typedef ArrayDataStorage<DenseVector> ArrayDataStorageType;
   ArrayDataStorageType data_storage(points);
-  
+
   HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, points, 1);
   LSHTableType::Query query(lsh_table);
   NearestNeighborQuery<LSHTableType::Query, DenseVector, int32_t, DenseVector,
@@ -304,7 +283,6 @@ TEST(NNQueryTest, FindNearNeighborsTest1) {
   vector<int32_t> expected4 = {};
   check_result(make_pair(res4.begin(), res4.end()), expected4);
 }
-
 
 TEST(NNQueryTest, KNNTest1) {
   const int dim = 4;
@@ -344,17 +322,13 @@ TEST(NNQueryTest, KNNTest1) {
 
   HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, points, 1);
   LSHTableType::Query query(lsh_table);
   NearestNeighborQuery<LSHTableType::Query, DenseVector, int32_t, DenseVector,

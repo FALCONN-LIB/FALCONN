@@ -12,45 +12,41 @@ namespace falconn {
 ///
 /// Common exception base class
 ///
-class FalconnError: public std::logic_error {
+class FalconnError : public std::logic_error {
  public:
   FalconnError(const char* msg) : logic_error(msg) {}
 };
-
 
 ///
 /// General traits class for point types. Only the template specializations
 /// below correspond to valid point types.
 ///
-template<typename PointType>
+template <typename PointType>
 struct PointTypeTraits {
   PointTypeTraits() {
-    static_assert(FalseStruct<PointType>::value,
-        "Point type not supported.");
+    static_assert(FalseStruct<PointType>::value, "Point type not supported.");
   }
- 
-  template<typename PT>
+
+  template <typename PT>
   struct FalseStruct : std::false_type {};
 };
-
 
 ///
 /// Type for dense points / vectors. The coordinate type can be either float
 /// or double (i.e., use DenseVector<float> or DenseVector<double>). In most
 /// cases, float (single precision) should be sufficient.
 ///
-template<typename CoordinateType>
-using DenseVector = Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1,
-                                  Eigen::ColMajor>;
+template <typename CoordinateType>
+using DenseVector =
+    Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>;
 
 ///
 /// Traits class for accessing the corresponding scalar type.
 ///
-template<typename CoordinateType>
+template <typename CoordinateType>
 struct PointTypeTraits<DenseVector<CoordinateType>> {
   typedef CoordinateType ScalarType;
 };
-
 
 ///
 /// Type for sparse points / vectors. The coordinate type can be either float
@@ -64,18 +60,17 @@ struct PointTypeTraits<DenseVector<CoordinateType>> {
 /// might be useful if you have indices that fit into an int16_t and you want
 /// to save memory.
 ///
-template<typename CoordinateType, typename IndexType = int32_t>
+template <typename CoordinateType, typename IndexType = int32_t>
 using SparseVector = std::vector<std::pair<IndexType, CoordinateType>>;
 
 ///
 /// Traits class for accessing the corresponding scalar type.
 ///
-template<typename CoordinateType, typename IndexT>
+template <typename CoordinateType, typename IndexT>
 struct PointTypeTraits<SparseVector<CoordinateType, IndexT>> {
   typedef CoordinateType ScalarType;
   typedef IndexT IndexType;
 };
-
 
 ///
 /// Data structure for point query statistics
@@ -84,7 +79,7 @@ struct QueryStatistics {
   ///
   /// Average total query time
   ///
-  double average_total_query_time = 0.0; 
+  double average_total_query_time = 0.0;
   ///
   /// Average hashing time
   ///
@@ -108,7 +103,6 @@ struct QueryStatistics {
 };
 
 }  // namespace falconn
-
 
 // Workaround for the CYGWIN bug described in
 // http://stackoverflow.com/questions/28997206/cygwin-support-for-c11-in-g4-9-2

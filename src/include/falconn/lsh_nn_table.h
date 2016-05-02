@@ -1,7 +1,6 @@
 #ifndef __WRAPPER_H__
 #define __WRAPPER_H__
 
-
 #include <array>
 #include <cstdint>
 #include <memory>
@@ -25,7 +24,6 @@ class LSHNearestNeighborTableError : public FalconnError {
   LSHNearestNeighborTableError(const char* msg) : FalconnError(msg) {}
 };
 
-
 ///
 /// The common interface shared by all LSH table wrappers.
 ///
@@ -35,7 +33,7 @@ class LSHNearestNeighborTableError : public FalconnError {
 /// The KeyType template parameter is optional and the default int32_t is
 /// sufficient for up to 10^9 points.
 ///
-template<typename PointType, typename KeyType = int32_t>
+template <typename PointType, typename KeyType = int32_t>
 class LSHNearestNeighborTable {
  public:
   ///
@@ -49,7 +47,7 @@ class LSHNearestNeighborTable {
   /// Gets the number of probes used for each query.
   ///
   virtual int_fast64_t get_num_probes() = 0;
- 
+
   ///
   /// Sets the maximum number of candidates considered in each query.
   /// The constant kNoMaxNumCandidates indicates that all candidates retrieved
@@ -77,10 +75,8 @@ class LSHNearestNeighborTable {
   /// Find the keys of the k closest candidates in the probing sequence for q.
   /// The keys are returned in order of increasing distance to q.
   ///
-  virtual void find_k_nearest_neighbors(
-      const PointType& q,
-      int_fast64_t k,
-      std::vector<KeyType>* result) = 0;
+  virtual void find_k_nearest_neighbors(const PointType& q, int_fast64_t k,
+                                        std::vector<KeyType>* result) = 0;
 
   ///
   /// Returns the keys corresponding to candidates in the probing sequence for q
@@ -90,16 +86,15 @@ class LSHNearestNeighborTable {
       const PointType& q,
       typename PointTypeTraits<PointType>::ScalarType threshold,
       std::vector<KeyType>* result) = 0;
- 
+
   ///
   /// Returns the keys of all candidates in the probing sequence for q. If a
   /// candidate key is found in multiple tables, it will appear multiple times
   /// in the result. The candidates are returned in the order in which they
   /// appear in the probing sequence.
   ///
-  virtual void get_candidates_with_duplicates(
-      const PointType& q,
-      std::vector<KeyType>* result) = 0;
+  virtual void get_candidates_with_duplicates(const PointType& q,
+                                              std::vector<KeyType>* result) = 0;
 
   ///
   /// Returns the keys of all candidates in the probing sequence for q.
@@ -107,10 +102,9 @@ class LSHNearestNeighborTable {
   /// candidates are returned in the order of their first occurrence in the
   /// probing sequence.
   ///
-  virtual void get_unique_candidates(
-      const PointType& q,
-      std::vector<KeyType>* result) = 0;
-  
+  virtual void get_unique_candidates(const PointType& q,
+                                     std::vector<KeyType>* result) = 0;
+
   ///
   /// Resets the query statistics.
   ///
@@ -130,13 +124,12 @@ class LSHNearestNeighborTable {
   virtual ~LSHNearestNeighborTable() {}
 };
 
-
 ///
 /// The supported LSH families.
 ///
 enum class LSHFamily {
   Unknown = 0,
-  
+
   ///
   /// The hyperplane hash proposed in
   ///
@@ -149,7 +142,7 @@ enum class LSHFamily {
   ///
   /// The cross polytope hash first proposed in
   ///
-  /// "Spherical LSH for Approximate Nearest Neighbor Search on Unit 
+  /// "Spherical LSH for Approximate Nearest Neighbor Search on Unit
   //   Hypersphere",
   /// Kengo Terasawa, Yuzuru Tanaka
   /// WADS 2007
@@ -165,11 +158,7 @@ enum class LSHFamily {
 };
 
 static const std::array<const char*, 3> kLSHFamilyStrings = {
-    "unknown",
-    "hyperplane",
-    "cross_polytope"
-};
-
+    "unknown", "hyperplane", "cross_polytope"};
 
 ///
 /// The supported distance functions.
@@ -195,11 +184,7 @@ enum class DistanceFunction {
 };
 
 static const std::array<const char*, 3> kDistanceFunctionStrings = {
-    "unknown",
-    "negative_inner_product",
-    "euclidean_squared"
-};
-
+    "unknown", "negative_inner_product", "euclidean_squared"};
 
 ///
 /// The supported low-level storage hash tables.
@@ -232,13 +217,8 @@ enum class StorageHashTable {
 };
 
 static const std::array<const char*, 5> kStorageHashTableStrings = {
-    "unknown",
-    "flat_hash_table",
-    "bit_packed_flat_hash_table",
-    "stl_hash_table",
-    "linear_probing_hash_table"
-};
-
+    "unknown", "flat_hash_table", "bit_packed_flat_hash_table",
+    "stl_hash_table", "linear_probing_hash_table"};
 
 ///
 /// Contains the parameters for constructing a LSH table wrapper. Not all fields
@@ -291,7 +271,7 @@ struct LSHConstructionParameters {
   ///
   /// Number of pseudo-random rotations. Required only for the
   /// cross-polytope hash.
-  /// 
+  ///
   /// For sparse data, it is recommended to set num_rotations to 2.
   /// For sufficiently dense data, 1 rotation usually suffices.
   ///
@@ -302,9 +282,8 @@ struct LSHConstructionParameters {
   /// hash computations, but the quality of the hash also degrades.
   /// The value -1 indicates that no feature hashing is performed.
   ///
-  int_fast32_t feature_hashing_dimension = -1;   
+  int_fast32_t feature_hashing_dimension = -1;
 };
-
 
 ///
 /// Computes the number of hash functions in order to get a hash with the given
@@ -319,7 +298,7 @@ struct LSHConstructionParameters {
 ///   - k
 ///   - last_cp_dim (for the cross polytope hash, both dense and sparse)
 ///
-template<typename PointType>
+template <typename PointType>
 void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
                                       LSHConstructionParameters* params);
 
@@ -343,12 +322,10 @@ void compute_number_of_hash_functions(int_fast32_t number_of_hash_bits,
 /// improve the query time, you should increase l (the number of tables) after
 /// calling this function.
 ///
-template<typename PointType>
+template <typename PointType>
 LSHConstructionParameters get_default_parameters(
-    int_fast64_t dataset_size,
-    int_fast32_t dimension,
-    DistanceFunction distance_function,
-    bool is_sufficiently_dense);
+    int_fast64_t dataset_size, int_fast32_t dimension,
+    DistanceFunction distance_function, bool is_sufficiently_dense);
 
 ///
 /// An exception class for errors occuring while setting up the LSH table
@@ -359,20 +336,18 @@ class LSHNNTableSetupError : public FalconnError {
   LSHNNTableSetupError(const char* msg) : FalconnError(msg) {}
 };
 
-
 ///
 /// A struct for wrapping point data stored in a single dense data array. The
 /// coordinate order is assumed to be point-by-point (row major), i.e., the
 /// first dimension coordinates belong to the first point and there are
 /// num_points points in total.
 ///
-template<typename CoordinateType>
+template <typename CoordinateType>
 struct PlainArrayPointSet {
   const CoordinateType* data;
   int_fast32_t num_points;
   int_fast32_t dimension;
 };
-
 
 ///
 /// Function for constructing an LSH table wrapper. The template parameters
@@ -380,7 +355,7 @@ struct PlainArrayPointSet {
 /// PointSet template parameter default is set so that a std::vector<PointType>
 /// can be passed as the set of points for which a LSH table should be
 /// constructed.
-/// 
+///
 /// For dense data stored in a single large array, you can also use the
 /// PlainArrayPointSet struct as the PointSet template parameter in order to
 /// pass a densly stored data array.
@@ -389,13 +364,10 @@ struct PlainArrayPointSet {
 ///
 /// The caller assumes ownership of the returned pointer.
 ///
-template<
-typename PointType,
-typename KeyType = int32_t,
-typename PointSet = std::vector<PointType>>
+template <typename PointType, typename KeyType = int32_t,
+          typename PointSet = std::vector<PointType>>
 std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> construct_table(
-    const PointSet& points,
-    const LSHConstructionParameters& params);
+    const PointSet& points, const LSHConstructionParameters& params);
 
 }  // namespace falconn
 

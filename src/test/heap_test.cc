@@ -39,7 +39,7 @@ TEST(HeapTest, SimpleHeapTest1) {
   ASSERT_EQ(5.0, k);
   ASSERT_EQ(5, d);
 
-  h.reset(); 
+  h.reset();
   h.insert_unsorted(2.0, 2);
   h.insert_unsorted(10.0, 10);
   h.insert_unsorted(8.0, 8);
@@ -90,7 +90,7 @@ TEST(HeapTest, SimpleHeapTest2) {
   ASSERT_EQ(5.0, k);
   ASSERT_EQ(5, d);
 
-  h.reset(); 
+  h.reset();
   h.insert_unsorted(2.0, 2);
   h.insert_unsorted(10.0, 10);
   h.insert_unsorted(8.0, 8);

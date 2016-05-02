@@ -14,25 +14,25 @@ class BitPackedVectorError : public FalconnError {
   BitPackedVectorError(const char* msg) : FalconnError(msg) {}
 };
 
-
-template <
-typename DataType,
-typename StorageType = uint64_t,
-typename IndexType = int_fast64_t>
+template <typename DataType, typename StorageType = uint64_t,
+          typename IndexType = int_fast64_t>
 class BitPackedVector {
  public:
   BitPackedVector(int_fast64_t num_items, int_fast64_t item_size)
       : num_items_(num_items), item_size_(item_size) {
     if (item_size > 8 * static_cast<int_fast64_t>(sizeof(DataType))) {
-      throw BitPackedVectorError("DataType too small for the number of bits "
+      throw BitPackedVectorError(
+          "DataType too small for the number of bits "
           "specified.");
     }
     if (item_size > num_bits_per_package_) {
-      throw BitPackedVectorError("Currently the item size must be at most the "
+      throw BitPackedVectorError(
+          "Currently the item size must be at most the "
           "data package size.");
     }
     if (num_items > std::numeric_limits<IndexType>::max()) {
-      throw BitPackedVectorError("IndexType too small for the vector size "
+      throw BitPackedVectorError(
+          "IndexType too small for the vector size "
           "specified.");
     }
     num_data_packets_ = (num_items_ * item_size_) / num_bits_per_package_;
@@ -60,14 +60,14 @@ class BitPackedVector {
         num_bits_per_package_ - (offset_in_package + item_size_);
     if (remaining_bits >= 0) {
       // Zero out the remaining bits
-      //printf("index %lld  remaining_bits %lld  result %llu\n", index,
+      // printf("index %lld  remaining_bits %lld  result %llu\n", index,
       //    remaining_bits, result);
       result <<= remaining_bits + offset_in_package;
       result >>= remaining_bits + offset_in_package;
-      //printf("index %lld  remaining_bits %lld  result %llu\n", index,
+      // printf("index %lld  remaining_bits %lld  result %llu\n", index,
       //    remaining_bits, result);
     } else {
-      //printf("get: in else case\n");
+      // printf("get: in else case\n");
       // remaining_bits is negative here.
       StorageType tmp = data_[first_package + 1];
       tmp <<= (num_bits_per_package_ + remaining_bits);
@@ -76,7 +76,7 @@ class BitPackedVector {
     }
     return static_cast<DataType>(result);
   }
-  
+
   // For (potential) performance reasons, set() does no bounds checking.
   void set(IndexType index, DataType value) {
     int_fast64_t first_bit = index * item_size_;
@@ -95,7 +95,7 @@ class BitPackedVector {
     StorageType new_package, tmp;
     if (offset_in_package != 0) {
       new_package = data_[first_package]
-          << (num_bits_per_package_ - offset_in_package);
+                    << (num_bits_per_package_ - offset_in_package);
       new_package >>= (num_bits_per_package_ - offset_in_package);
       tmp = value;
       /*printf("set index %lld  value %lld  new_package %llu  tmp %llu\n",
@@ -113,7 +113,7 @@ class BitPackedVector {
     StorageType tmp = value;*/
     /*printf("set index %lld  value %lld  new_package %llu  tmp %llu\n",
           index, value, new_package, tmp);*/
-    //new_package |= tmp << offset_in_package;
+    // new_package |= tmp << offset_in_package;
     /*printf("set index %lld  value %lld  new_package2 %llu  tmp %llu\n",
           index, value, new_package, tmp);*/
     int_fast64_t remaining_bits =
@@ -130,7 +130,7 @@ class BitPackedVector {
           index, value, remaining_bits, tmp);*/
       data_[first_package] = new_package;
     } else {
-      //printf("set: in else case\n");
+      // printf("set: in else case\n");
       data_[first_package] = new_package;
       tmp = value;
       new_package = tmp >> (item_size_ + remaining_bits);
@@ -139,12 +139,12 @@ class BitPackedVector {
       tmp <<= -remaining_bits;
       data_[first_package + 1] = tmp | new_package;
     }
-    //printf("current state: %llx\n", data_[0]);
+    // printf("current state: %llx\n", data_[0]);
   }
- 
+
  private:
   const int_fast64_t num_bits_per_package_ = 8 * sizeof(StorageType);
-  
+
   int_fast64_t num_items_;
   int_fast64_t item_size_;
   int_fast64_t num_data_packets_;
@@ -153,6 +153,5 @@ class BitPackedVector {
 
 }  // namespace core
 }  // namespace falconn
-
 
 #endif

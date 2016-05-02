@@ -18,11 +18,8 @@ class FlatHashTableError : public HashTableError {
   FlatHashTableError(const char* msg) : HashTableError(msg) {}
 };
 
-
-template<
-typename KeyType,
-typename ValueType = int32_t,
-typename IndexType = int32_t>
+template <typename KeyType, typename ValueType = int32_t,
+          typename IndexType = int32_t>
 class FlatHashTable {
  public:
   class Factory {
@@ -60,7 +57,7 @@ class FlatHashTable {
 
     KeyComparator comp(keys);
     indices_.resize(keys.size());
-    for(IndexType ii = 0; static_cast<size_t>(ii) < indices_.size(); ++ii) {
+    for (IndexType ii = 0; static_cast<size_t>(ii) < indices_.size(); ++ii) {
       if (keys[ii] >= static_cast<KeyType>(num_buckets_) || keys[ii] < 0) {
         throw FlatHashTableError("Key value out of range.");
       }
@@ -73,8 +70,8 @@ class FlatHashTable {
       IndexType end_index = cur_index;
       do {
         end_index += 1;
-      } while (end_index < static_cast<IndexType>(indices_.size())
-               && keys[indices_[cur_index]] == keys[indices_[end_index]]);
+      } while (end_index < static_cast<IndexType>(indices_.size()) &&
+               keys[indices_[cur_index]] == keys[indices_[end_index]]);
 
       bucket_list_[keys[indices_[cur_index]]].first = cur_index;
       bucket_list_[keys[indices_[cur_index]]].second = end_index - cur_index;
@@ -85,11 +82,11 @@ class FlatHashTable {
   std::pair<Iterator, Iterator> retrieve(const KeyType& key) {
     IndexType start = bucket_list_[key].first;
     IndexType len = bucket_list_[key].second;
-    //printf("retrieve for key %u\n", key);
-    //printf("  start: %lld  len %lld\n", start, len);
+    // printf("retrieve for key %u\n", key);
+    // printf("  start: %lld  len %lld\n", start, len);
     return std::make_pair(&(indices_[start]), &(indices_[start + len]));
   }
- 
+
  private:
   IndexType num_buckets_ = -1;
   bool entries_added_ = false;
@@ -102,14 +99,13 @@ class FlatHashTable {
    public:
     KeyComparator(const std::vector<KeyType>& keys) : keys_(keys) {}
 
-    bool operator() (IndexType ii, IndexType jj) {
+    bool operator()(IndexType ii, IndexType jj) {
       return keys_[ii] < keys_[jj];
     }
 
     const std::vector<KeyType>& keys_;
   };
 };
-
 
 }  // namespace core
 }  // namespace falconn

@@ -17,56 +17,56 @@ class LSHFunctionError : public FalconnError {
 // The helper class also has functions for retrieving the probing sequence,
 // either in a "lazy" probe-by-probe way or with a "batch" method for a fixed
 // number of probes.
-template<typename HashFunction>
+template <typename HashFunction>
 class HashObjectQuery {
  private:
   typedef typename HashFunction::MultiProbeLookup MultiProbeLookup;
   typedef typename HashFunction::TransformedVectorType TransformedVectorType;
   typedef typename HashFunction::HashTransformation HashTransformation;
- 
+
  public:
   typedef typename HashFunction::HashType HashType;
   typedef typename HashFunction::VectorType VectorType;
 
-  class ProbingSequenceIterator : public std::iterator<
-                                      std::forward_iterator_tag,
-                                      std::pair<HashType, int_fast32_t>> {
+  class ProbingSequenceIterator
+      : public std::iterator<std::forward_iterator_tag,
+                             std::pair<HashType, int_fast32_t>> {
    public:
     ProbingSequenceIterator(HashObjectQuery* parent = nullptr)
         : parent_(parent) {
       if (parent_ != nullptr) {
         if (!parent_->multiprobe_.get_next_probe(&cur_val_.first,
-                                                &cur_val_.second)) {
+                                                 &cur_val_.second)) {
           parent_ = nullptr;
         }
       }
     }
 
     // TODO: should also check cur_val for general use?
-    bool operator == (const ProbingSequenceIterator& rhs) const {
+    bool operator==(const ProbingSequenceIterator& rhs) const {
       return parent_ == rhs.parent_;
     }
 
     // TODO: should also check cur_val for general use?
-    bool operator != (const ProbingSequenceIterator& rhs) const {
+    bool operator!=(const ProbingSequenceIterator& rhs) const {
       return parent_ != rhs.parent_;
     }
 
     typename std::iterator<std::forward_iterator_tag,
-                           std::pair<HashType, int_fast32_t> >::reference
-        operator * () const {
+                           std::pair<HashType, int_fast32_t>>::reference
+    operator*() const {
       return cur_val_;
     }
 
     typename std::iterator<std::forward_iterator_tag,
-                           std::pair<HashType, int_fast32_t> >::pointer
-        operator -> () {
+                           std::pair<HashType, int_fast32_t>>::pointer
+    operator->() {
       return &cur_val_;
     }
 
-    ProbingSequenceIterator& operator ++ () {
+    ProbingSequenceIterator& operator++() {
       if (!parent_->multiprobe_.get_next_probe(&cur_val_.first,
-          &cur_val_.second)) {
+                                               &cur_val_.second)) {
         parent_ = nullptr;
       }
       return *this;
@@ -77,13 +77,13 @@ class HashObjectQuery {
     std::pair<HashType, int_fast32_t> cur_val_;
   };
 
-  HashObjectQuery(const HashFunction& parent) : parent_(parent),
-      multiprobe_(parent), hash_transformation_(parent) {
+  HashObjectQuery(const HashFunction& parent)
+      : parent_(parent), multiprobe_(parent), hash_transformation_(parent) {
     parent_.reserve_transformed_vector_memory(&transformed_vector_);
   }
 
   std::pair<ProbingSequenceIterator, ProbingSequenceIterator>
-      get_probing_sequence(const VectorType& point) {
+  get_probing_sequence(const VectorType& point) {
     hash_transformation_.apply(point, &transformed_vector_);
     multiprobe_.setup_probing(transformed_vector_, -1);
     return std::make_pair(ProbingSequenceIterator(this),
@@ -94,7 +94,8 @@ class HashObjectQuery {
                            std::vector<std::vector<HashType>>* probes,
                            int_fast64_t num_probes) {
     if (num_probes < parent_.l_) {
-      throw LSHFunctionError("Number of probes must be at least "
+      throw LSHFunctionError(
+          "Number of probes must be at least "
           "the number of tables.");
     }
     if (static_cast<int_fast64_t>(probes->size()) != parent_.l_) {
@@ -114,7 +115,7 @@ class HashObjectQuery {
       if (!multiprobe_.get_next_probe(&cur_probe, &cur_table)) {
         break;
       }
-      //printf("%u %d\n", cur_probe, cur_table);
+      // printf("%u %d\n", cur_probe, cur_table);
       (*probes)[cur_table].push_back(cur_probe);
     }
   }
@@ -125,7 +126,6 @@ class HashObjectQuery {
   HashTransformation hash_transformation_;
   TransformedVectorType transformed_vector_;
 };
-
 
 }  // namespace core
 }  // namespace falconn

@@ -19,22 +19,18 @@ class HeapBase {
     Item() {}
     Item(const KeyType& k, const DataType& d) : key(k), data(d) {}
 
-    bool operator < (const Item& i2) const {
-      return key < i2.key;
-    }
+    bool operator<(const Item& i2) const { return key < i2.key; }
   };
 
   void extract_min(KeyType* key, DataType* data) {
-    *key  = v_[0].key;
+    *key = v_[0].key;
     *data = v_[0].data;
     num_elements_ -= 1;
     v_[0] = v_[num_elements_];
     heap_down(0);
   }
 
-  bool empty() {
-    return num_elements_ == 0;
-  }
+  bool empty() { return num_elements_ == 0; }
 
   void insert_unsorted(const KeyType& key, const DataType& data) {
     if (v_.size() == static_cast<size_t>(num_elements_)) {
@@ -64,26 +60,16 @@ class HeapBase {
     }
   }
 
-  void reset() {
-    num_elements_ = 0;
-  }
+  void reset() { num_elements_ = 0; }
 
-  void resize(size_t new_size) {
-    v_.resize(new_size);
-  }
- 
+  void resize(size_t new_size) { v_.resize(new_size); }
+
  protected:
-  int_fast32_t lchild(int_fast32_t x) {
-    return 2 * x + 1;
-  }
+  int_fast32_t lchild(int_fast32_t x) { return 2 * x + 1; }
 
-  int_fast32_t rchild(int_fast32_t x) {
-    return 2 * x + 2;
-  }
+  int_fast32_t rchild(int_fast32_t x) { return 2 * x + 2; }
 
-  int_fast32_t parent(int_fast32_t x) {
-    return (x - 1) / 2;
-  }
+  int_fast32_t parent(int_fast32_t x) { return (x - 1) / 2; }
 
   void swap_entries(int_fast32_t a, int_fast32_t b) {
     Item tmp = v_[a];
@@ -131,7 +117,6 @@ class HeapBase {
   int_fast32_t num_elements_ = 0;
 };
 
-
 template <typename KeyType, typename DataType>
 class SimpleHeap : public HeapBase<KeyType, DataType> {
  public:
@@ -145,15 +130,12 @@ class SimpleHeap : public HeapBase<KeyType, DataType> {
 
   // TODO: move this to the base class (if necessary) and add implementation for
   // the augmented version
-  KeyType min_key() {
-    return this->v_[0].key;
-  }
+  KeyType min_key() { return this->v_[0].key; }
 
   std::vector<typename HeapBase<KeyType, DataType>::Item>& get_data() {
     return this->v_;
   }
 };
-
 
 template <typename KeyType, typename DataType>
 class AugmentedHeap : public HeapBase<KeyType, DataType> {
@@ -164,7 +146,7 @@ class AugmentedHeap : public HeapBase<KeyType, DataType> {
       *key = guaranteed_top_.key;
       *data = guaranteed_top_.data;
     } else {
-      *key  = this->v_[0].key;
+      *key = this->v_[0].key;
       *data = this->v_[0].data;
       this->num_elements_ -= 1;
       this->v_[0] = this->v_[this->num_elements_];
@@ -172,9 +154,7 @@ class AugmentedHeap : public HeapBase<KeyType, DataType> {
     }
   }
 
-  bool empty() {
-    return this->num_elements_ == 0 && !has_guaranteed_top_;
-  }
+  bool empty() { return this->num_elements_ == 0 && !has_guaranteed_top_; }
 
   void insert_guaranteed_top(const KeyType& key, const DataType& data) {
     has_guaranteed_top_ = true;

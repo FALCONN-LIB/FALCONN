@@ -16,20 +16,17 @@ namespace core {
 // The Sparse functions assume that the data points are stored as a
 // std::vector of (index, coefficient) pairs. The indices must be sorted.
 
-template<
-typename CoordinateType = float,
-typename IndexType = int32_t>
+template <typename CoordinateType = float, typename IndexType = int32_t>
 struct CosineDistanceSparse {
   typedef std::vector<std::pair<IndexType, CoordinateType>> VectorType;
 
-  CoordinateType operator () (const VectorType& p1, const VectorType& p2) {
+  CoordinateType operator()(const VectorType& p1, const VectorType& p2) {
     CoordinateType res = 0.0;
     IndexType ii1 = 0, ii2 = 0;
     IndexType p1size = p1.size();
     IndexType p2size = p2.size();
 
     while (ii1 < p1size && ii2 < p2size) {
-
       while (ii1 < p1size && p1[ii1].first < p2[ii2].first) {
         ii1 += 1;
       }
@@ -59,18 +56,17 @@ struct CosineDistanceSparse {
   }
 };
 
-
 // The Dense functions assume that the data points are stored as dense
 // Eigen column vectors.
 
-template<typename CoordinateType = float>
+template <typename CoordinateType = float>
 struct CosineDistanceDense {
   typedef Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>
       VectorType;
 
   template <typename Derived1, typename Derived2>
-  CoordinateType operator () (const Eigen::MatrixBase<Derived1>& p1,
-                              const Eigen::MatrixBase<Derived2>& p2) {
+  CoordinateType operator()(const Eigen::MatrixBase<Derived1>& p1,
+                            const Eigen::MatrixBase<Derived2>& p2) {
     // negate the result because LSHTable assumes that smaller distances
     // are better
     return -p1.dot(p2);

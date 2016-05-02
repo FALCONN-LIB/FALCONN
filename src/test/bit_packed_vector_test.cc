@@ -22,7 +22,6 @@ TEST(BitPackedVectorTest, SimpleTest1) {
   }
 }
 
-
 TEST(BitPackedVectorTest, SimpleTest2) {
   int num_bits = 10;
   int size = 1 << num_bits;
@@ -35,7 +34,6 @@ TEST(BitPackedVectorTest, SimpleTest2) {
     EXPECT_EQ(ii, v.get(ii));
   }
 }
-
 
 TEST(BitPackedVectorTest, RandomTest1) {
   int_fast64_t num_bits = 30;
@@ -58,7 +56,6 @@ TEST(BitPackedVectorTest, RandomTest1) {
   }
 }
 
-
 TEST(BitPackedVectorTest, ExhaustiveTest1) {
   int_fast64_t num_bits = 2;
   int_fast64_t maxint = 1 << num_bits;
@@ -75,7 +72,7 @@ TEST(BitPackedVectorTest, ExhaustiveTest1) {
           v.set(2, kk);
           v.set(3, ll);
 
-          //printf("%d %d %d %d\n", ii, jj, kk, ll);
+          // printf("%d %d %d %d\n", ii, jj, kk, ll);
 
           EXPECT_EQ(ii, v.get(0));
           EXPECT_EQ(jj, v.get(1));

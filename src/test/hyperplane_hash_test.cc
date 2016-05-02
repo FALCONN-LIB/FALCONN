@@ -112,7 +112,7 @@ TEST(HyperplaneHashTest, DenseHyperplaneMultiProbeTest1) {
   hash.hash(v2, &hashes2);
   hash.hash(v3, &hashes3);
 
-  DenseQuery query(hash); 
+  DenseQuery query(hash);
   vector<vector<uint32_t>> probes_by_table1, probes_by_table2, probes_by_table3;
   query.get_probes_by_table(v1, &probes_by_table1, l);
   for (int ii = 0; ii < l; ++ii) {
@@ -135,9 +135,7 @@ TEST(HyperplaneHashTest, DenseHyperplaneMultiProbeTest1) {
   }
 }
 
-float compute_score(const DenseVector& ips,
-                    uint32_t bitmask,
-                    int k) {
+float compute_score(const DenseVector& ips, uint32_t bitmask, int k) {
   float score = 0.0;
   for (int ii = 0; ii < k; ++ii) {
     if ((bitmask & (1 << ii)) != 0) {
@@ -146,7 +144,6 @@ float compute_score(const DenseVector& ips,
   }
   return score;
 }
-
 
 TEST(HyperplaneHashTest, DenseHyperplaneMultiProbeTest2) {
   DenseVector v1(4);
@@ -160,7 +157,7 @@ TEST(HyperplaneHashTest, DenseHyperplaneMultiProbeTest2) {
   int l = 1;
   uint64_t seed = 84529034;
   HyperplaneHashDense<float> hash(dim, k, l, seed);
-  DenseQuery query(hash); 
+  DenseQuery query(hash);
   vector<vector<uint32_t>> probes_by_table;
 
   query.get_probes_by_table(v1, &probes_by_table, 8);
@@ -202,7 +199,7 @@ TEST(HyperplaneHashTest, DenseHyperplaneMultiProbeTest3) {
   unsigned int num_probes = 1 << k;
   uint64_t seed = 572893248;
   HyperplaneHashDense<float> hash(dim, k, l, seed);
-  DenseQuery query(hash); 
+  DenseQuery query(hash);
   vector<vector<uint32_t>> probes_by_table;
 
   query.get_probes_by_table(v1, &probes_by_table, num_probes);
@@ -255,18 +252,18 @@ TEST(HyperplaneHashTest, DenseHyperplaneMultiProbeTest4) {
   int l = 1;
   unsigned int num_probes = 1 << k;
   uint64_t seed = 572893248;
-  //uint64_t seed = time(nullptr);
+  // uint64_t seed = time(nullptr);
   std::mt19937_64 gen(seed);
   std::uniform_int_distribution<int_fast64_t> seed_gen(0, 1000000000);
   float eps = 0.000001;
-  
+
   int num_trials = 1000;
   std::vector<int> positions1;
   std::vector<int> positions2;
 
   for (int trial = 0; trial < num_trials; ++trial) {
     HyperplaneHashDense<float> hash(dim, k, l, seed_gen(gen));
-    DenseQuery query(hash); 
+    DenseQuery query(hash);
     vector<vector<uint32_t>> probes_by_table;
 
     query.get_probes_by_table(v1, &probes_by_table, num_probes);
@@ -340,13 +337,13 @@ TEST(HyperplaneHashTest, DenseHyperplaneMultiProbeTest4) {
 
   sort(positions1.begin(), positions1.end());
   int percentile_pos = positions1[0.9 * positions1.size()];
-  //printf("90th percentile position: %d, which is %f of all probes\n",
+  // printf("90th percentile position: %d, which is %f of all probes\n",
   //    percentile_pos, static_cast<float>(percentile_pos) / num_probes);
   ASSERT_LT(static_cast<float>(percentile_pos) / num_probes, 0.2);
 
   sort(positions2.begin(), positions2.end());
   int percentile_pos2 = positions2[0.9 * positions2.size()];
-  //printf("90th percentile position: %d, which is %f of all probes\n",
+  // printf("90th percentile position: %d, which is %f of all probes\n",
   //    percentile_pos, static_cast<float>(percentile_pos) / num_probes);
   ASSERT_LT(static_cast<float>(percentile_pos2) / num_probes, 0.2);
 }
@@ -366,8 +363,8 @@ TEST(HyperplaneHashTest, DenseHyperplaneMultiProbeTest5) {
   vector<uint32_t> probes;
 
   std::pair<DenseQuery::ProbingSequenceIterator,
-            DenseQuery::ProbingSequenceIterator> iters
-      = query.get_probing_sequence(v1);
+            DenseQuery::ProbingSequenceIterator>
+      iters = query.get_probing_sequence(v1);
   for (; iters.first != iters.second; ++iters.first) {
     ASSERT_EQ(0, iters.first->second);
     probes.push_back(iters.first->first);
@@ -416,7 +413,7 @@ TEST(HyperplaneHashTest, SparseHyperplaneMultiProbeTest1) {
   int k = 3;
   int l = 2;
   uint64_t seed = 890124523;
-  
+
   HyperplaneHashSparse<float> hash(dim, k, l, seed);
   vector<uint32_t> hashes1(l), hashes2(l), hashes3(l);
   hash.hash(v1, &hashes1);

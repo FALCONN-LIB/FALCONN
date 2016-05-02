@@ -18,8 +18,7 @@ class IncrementalSorter {
       std::sort(data_->begin(), data_->end());
       sorted_to_ = data_->size();
     } else {
-      std::nth_element(data_->begin(),
-                       data_->begin() + cur_block_size_ - 1,
+      std::nth_element(data_->begin(), data_->begin() + cur_block_size_ - 1,
                        data_->end());
       std::sort(data_->begin(), data_->begin() + cur_block_size_);
       sorted_to_ = cur_block_size_;
@@ -41,13 +40,11 @@ class IncrementalSorter {
         sorted_to_ = data_->size();
       } else {
         std::nth_element(data_->begin() + sorted_to_,
-                         data_->begin() + next_sorted_to - 1,
-                         data_->end());
-        std::sort(data_->begin() + sorted_to_,
-                  data_->begin() + next_sorted_to);
+                         data_->begin() + next_sorted_to - 1, data_->end());
+        std::sort(data_->begin() + sorted_to_, data_->begin() + next_sorted_to);
         sorted_to_ = next_sorted_to;
       }
-      //printf("now sorted to %d\n", sorted_to_);
+      // printf("now sorted to %d\n", sorted_to_);
       return (*data_)[index];
     }
   };

@@ -17,11 +17,8 @@ class DataTransformationError : public FalconnError {
 template <typename Point>
 class IdentityTransformation {
  public:
-  void apply(Point*) const {
-    return;
-  }
+  void apply(Point*) const { return; }
 };
-
 
 template <typename Point>
 class NormalizingTransformation {
@@ -32,10 +29,7 @@ class NormalizingTransformation {
   }
 };
 
-
-template <
-typename Point,
-typename DataStorage>
+template <typename Point, typename DataStorage>
 class CenteringTransformation {
  public:
   CenteringTransformation(const DataStorage& data) {
@@ -65,24 +59,20 @@ class CenteringTransformation {
   Point center_;
 };
 
-
 // First applies Transformation2, then Transformation1.
-template<
-typename Point,
-typename Transformation1,
-typename Transformation2>
+template <typename Point, typename Transformation1, typename Transformation2>
 class ComposedTransformation {
  public:
   ComposedTransformation(std::unique_ptr<Transformation1> transformation1,
                          std::unique_ptr<Transformation2> transformation2)
       : transformation1_(std::move(transformation1)),
         transformation2_(std::move(transformation2)) {}
-  
+
   void apply(Point* p) const {
     transformation2_->apply(p);
     transformation1_->apply(p);
   }
- 
+
  private:
   std::unique_ptr<Transformation1> transformation1_;
   std::unique_ptr<Transformation2> transformation2_;

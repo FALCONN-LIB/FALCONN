@@ -15,7 +15,6 @@ using fc::PlainArrayDataStorage;
 using fc::TransformedDataStorage;
 using std::vector;
 
-
 TEST(DataStorageTest, TransformedTest1) {
   typedef DenseVector<float> Vec;
   int dim = 4;
@@ -30,12 +29,12 @@ TEST(DataStorageTest, TransformedTest1) {
   points.push_back(p1);
   points.push_back(p2);
   points.push_back(p3);
-  
+
   ArrayDataStorage<Vec> storage(points);
   NormalizingTransformation<Vec> transformation;
   TransformedDataStorage<Vec, NormalizingTransformation<Vec>,
-      ArrayDataStorage<Vec>> transformed_storage(transformation, storage);
-
+                         ArrayDataStorage<Vec>>
+      transformed_storage(transformation, storage);
 
   auto iter = transformed_storage.get_full_sequence();
 
@@ -53,7 +52,7 @@ TEST(DataStorageTest, TransformedTest1) {
   EXPECT_NEAR(iter.get_point()[1], 1.0, eps);
   EXPECT_NEAR(iter.get_point()[2], 0.0, eps);
   EXPECT_NEAR(iter.get_point()[3], 0.0, eps);
-  
+
   ++iter;
   ASSERT_TRUE(iter.is_valid());
   EXPECT_NEAR(iter.get_point()[0], 0.0, eps);
@@ -73,7 +72,7 @@ TEST(DataStorageTest, TransformedTest1) {
   EXPECT_NEAR(points[1][1], 2.0, eps);
   EXPECT_NEAR(points[1][2], 0.0, eps);
   EXPECT_NEAR(points[1][3], 0.0, eps);
-  
+
   EXPECT_NEAR(points[2][0], 0.0, eps);
   EXPECT_NEAR(points[2][1], 0.0, eps);
   EXPECT_NEAR(points[2][2], 0.0, eps);
@@ -90,7 +89,7 @@ TEST(DataStorageTest, PlainArrayTest1) {
   PlainArrayDataStorage<Vec> ds(data, num_points, dim);
 
   ASSERT_EQ(ds.size(), num_points);
-  
+
   auto iter = ds.get_full_sequence();
 
   ASSERT_TRUE(iter.is_valid());
@@ -101,12 +100,12 @@ TEST(DataStorageTest, PlainArrayTest1) {
   ASSERT_TRUE(iter.is_valid());
   EXPECT_EQ(iter.get_point()[0], 3.0);
   EXPECT_EQ(iter.get_point()[1], 4.0);
-  
+
   ++iter;
   ASSERT_TRUE(iter.is_valid());
   EXPECT_EQ(iter.get_point()[0], 5.0);
   EXPECT_EQ(iter.get_point()[1], 6.0);
-  
+
   ++iter;
   ASSERT_FALSE(iter.is_valid());
 
@@ -125,7 +124,7 @@ TEST(DataStorageTest, PlainArrayTest2) {
   PlainArrayDataStorage<Vec> ds(data, num_points, dim);
 
   ASSERT_EQ(ds.size(), num_points);
-  
+
   std::vector<int32_t> keys = {0, 2};
   auto iter = ds.get_subsequence(keys);
 
@@ -137,7 +136,7 @@ TEST(DataStorageTest, PlainArrayTest2) {
   ASSERT_TRUE(iter.is_valid());
   EXPECT_EQ(iter.get_point()[0], 5.0);
   EXPECT_EQ(iter.get_point()[1], 6.0);
-  
+
   ++iter;
   ASSERT_FALSE(iter.is_valid());
 

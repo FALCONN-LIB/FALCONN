@@ -10,14 +10,12 @@ namespace falconn {
 namespace core {
 
 // Computes *SQUARED* Euclidean distance between sparse or dense vectors.
-  
-template<
-typename CoordinateType = float,
-typename IndexType = int32_t>
+
+template <typename CoordinateType = float, typename IndexType = int32_t>
 struct EuclideanDistanceSparse {
   typedef std::vector<std::pair<IndexType, CoordinateType>> VectorType;
 
-  CoordinateType operator () (const VectorType& p1, const VectorType& p2) {
+  CoordinateType operator()(const VectorType& p1, const VectorType& p2) {
     CoordinateType res = 0.0;
     IndexType ii1 = 0, ii2 = 0;
     IndexType p1size = p1.size();
@@ -60,18 +58,17 @@ struct EuclideanDistanceSparse {
   }
 };
 
-
 // The Dense functions assume that the data points are stored as dense
 // Eigen column vectors.
 
-template<typename CoordinateType = float>
+template <typename CoordinateType = float>
 struct EuclideanDistanceDense {
   typedef Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>
       VectorType;
 
   template <typename Derived1, typename Derived2>
-  CoordinateType operator () (const Eigen::MatrixBase<Derived1>& p1,
-                              const Eigen::MatrixBase<Derived2>& p2) {
+  CoordinateType operator()(const Eigen::MatrixBase<Derived1>& p1,
+                            const Eigen::MatrixBase<Derived2>& p2) {
     return (p1 - p2).squaredNorm();
   }
 };

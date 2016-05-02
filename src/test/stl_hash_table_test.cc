@@ -33,8 +33,8 @@ TEST(STLHashTableTest, RetrieveTest4) {
   int num_trials = 100;
   uint64_t seed = 302342321;
   std::mt19937_64 gen(seed);
-  std::uniform_int_distribution<uint64_t> dis(0,
-      std::numeric_limits<uint64_t>::max());
+  std::uniform_int_distribution<uint64_t> dis(
+      0, std::numeric_limits<uint64_t>::max());
 
   for (int ii = 0; ii < num_trials; ++ii) {
     STLHashTable<uint32_t> table;
