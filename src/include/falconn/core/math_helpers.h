@@ -22,23 +22,21 @@ int_fast64_t log2ceil(int_fast64_t x) {
   return res;
 }
 
-
-template<typename Point>
+template <typename Point>
 struct NormalizationHelper {
   static void normalize(Point*) {
     static_assert(FalseStruct<Point>::value, "Point type not supported.");
   }
-  template<typename T> struct FalseStruct : std::false_type {};
+  template <typename T>
+  struct FalseStruct : std::false_type {};
 };
 
-template<typename CoordinateType>
+template <typename CoordinateType>
 struct NormalizationHelper<DenseVector<CoordinateType>> {
-  static void normalize(DenseVector<CoordinateType>* p) {
-    p->normalize();
-  }
+  static void normalize(DenseVector<CoordinateType>* p) { p->normalize(); }
 };
 
-template<typename Point>
+template <typename Point>
 void normalize(Point* p) {
   NormalizationHelper<Point>::normalize(p);
 }

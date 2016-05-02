@@ -25,9 +25,7 @@ class DataStorageError : public FalconnError {
 // NearestNeighborQuery for points stored in std::vectors, arbitrary memory
 // locations (keys are pointers), and contiguous data in an Eigen matrix.
 // TODO: implement EigenMatrixDataStorage and PointerDataStorage.
-template<
-typename PointType,
-typename KeyType = int32_t>
+template <typename PointType, typename KeyType = int32_t>
 class ArrayDataStorage {
  public:
   class FullSequenceIterator {
@@ -52,21 +50,15 @@ class ArrayDataStorage {
 
     FullSequenceIterator() {}
 
-    const PointType& get_point() const {
-      return parent_->data_[index_];
-    }
+    const PointType& get_point() const { return parent_->data_[index_]; }
 
-    const KeyType& get_key() const {
-      return index_;
-    }
+    const KeyType& get_key() const { return index_; }
 
-    bool is_valid() const {
-      return parent_ != nullptr;
-    }
-    
-    void operator ++ () {
-      if (index_ >= 0
-          && index_ + 1 < static_cast<int_fast64_t>(parent_->data_.size())) {
+    bool is_valid() const { return parent_ != nullptr; }
+
+    void operator++() {
+      if (index_ >= 0 &&
+          index_ + 1 < static_cast<int_fast64_t>(parent_->data_.size())) {
         index_ += 1;
         if (index_ + 2 < static_cast<int_fast64_t>(parent_->data_.size())) {
           // TODO: try different prefetching steps
@@ -87,7 +79,6 @@ class ArrayDataStorage {
     const ArrayDataStorage* parent_ = nullptr;
     StdVectorPrefetcher<PointType> prefetcher_;
   };
-
 
   class SubsequenceIterator {
    public:
@@ -124,13 +115,9 @@ class ArrayDataStorage {
       return parent_->data_[(*keys_)[index_]];
     }
 
-    const KeyType& get_key() const {
-      return (*keys_)[index_];
-    }
+    const KeyType& get_key() const { return (*keys_)[index_]; }
 
-    bool is_valid() const {
-      return parent_ != nullptr;
-    }
+    bool is_valid() const { return parent_ != nullptr; }
 
     /*bool operator != (const Iterator& rhs) const {
       if (parent_ != rhs.parent_) {
@@ -143,9 +130,9 @@ class ArrayDataStorage {
       return false;
     }*/
 
-    void operator ++ () {
-      if (index_ >= 0
-          && index_ + 1 < static_cast<int_fast64_t>(keys_->size())) {
+    void operator++() {
+      if (index_ >= 0 &&
+          index_ + 1 < static_cast<int_fast64_t>(keys_->size())) {
         index_ += 1;
         if (index_ + 2 < static_cast<int_fast64_t>(keys_->size())) {
           // TODO: try different prefetching steps
@@ -178,9 +165,7 @@ class ArrayDataStorage {
     return data_[index];
   }*/
 
-  int_fast64_t size() const {
-    return data_.size();
-  }
+  int_fast64_t size() const { return data_.size(); }
 
   SubsequenceIterator get_subsequence(const std::vector<KeyType>& keys) const {
     return SubsequenceIterator(keys, *this);
@@ -189,33 +174,27 @@ class ArrayDataStorage {
   FullSequenceIterator get_full_sequence() const {
     return FullSequenceIterator(*this);
   }
- 
+
  private:
   const std::vector<PointType>& data_;
 };
 
-
-
-template<
-typename PointType,
-typename KeyType = int32_t>
+template <typename PointType, typename KeyType = int32_t>
 class PlainArrayDataStorage {
   PlainArrayDataStorage() {
     static_assert(FalseStruct<PointType>::value, "Point type not supported.");
   }
-  
-  template<typename PT>
+
+  template <typename PT>
   struct FalseStruct : std::false_type {};
 };
 
-template<
-typename CoordinateType,
-typename KeyType>
+template <typename CoordinateType, typename KeyType>
 class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
  public:
   typedef Eigen::Map<const DenseVector<CoordinateType>> ConstVectorMap;
   typedef Eigen::Map<DenseVector<CoordinateType>> VectorMap;
-  
+
   class FullSequenceIterator {
    public:
     FullSequenceIterator(const PlainArrayDataStorage& parent)
@@ -241,21 +220,17 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
 
     const ConstVectorMap& get_point() {
       new (&tmp_map_) ConstVectorMap(&(parent_->data_[index_ * parent_->dim_]),
-                                 static_cast<int>(parent_->dim_));
+                                     static_cast<int>(parent_->dim_));
       return tmp_map_;
     }
 
-    const KeyType& get_key() const {
-      return index_;
-    }
+    const KeyType& get_key() const { return index_; }
 
-    bool is_valid() const {
-      return parent_ != nullptr;
-    }
-    
-    void operator ++ () {
-      if (index_ >= 0
-          && index_ + 1 < static_cast<int_fast64_t>(parent_->size())) {
+    bool is_valid() const { return parent_ != nullptr; }
+
+    void operator++() {
+      if (index_ >= 0 &&
+          index_ + 1 < static_cast<int_fast64_t>(parent_->size())) {
         index_ += 1;
         if (index_ + 2 < static_cast<int_fast64_t>(parent_->size())) {
           // TODO: try different prefetching steps
@@ -277,8 +252,7 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
     ConstVectorMap tmp_map_;
     PlainArrayPrefetcher<CoordinateType> prefetcher_;
   };
-  
-  
+
   class SubsequenceIterator {
    public:
     SubsequenceIterator(const std::vector<KeyType>& keys,
@@ -305,28 +279,24 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
     SubsequenceIterator() {}
 
     const ConstVectorMap& get_point() {
-      new (&tmp_map_) ConstVectorMap(
-          &(parent_->data_[(*keys_)[index_] * parent_->dim_]),
-          static_cast<int>(parent_->dim_));
+      new (&tmp_map_)
+          ConstVectorMap(&(parent_->data_[(*keys_)[index_] * parent_->dim_]),
+                         static_cast<int>(parent_->dim_));
       return tmp_map_;
     }
 
-    const KeyType& get_key() const {
-      return (*keys_)[index_];
-    }
+    const KeyType& get_key() const { return (*keys_)[index_]; }
 
-    bool is_valid() const {
-      return parent_ != nullptr;
-    }
+    bool is_valid() const { return parent_ != nullptr; }
 
-    void operator ++ () {
-      if (index_ >= 0
-          && index_ + 1 < static_cast<int_fast64_t>(keys_->size())) {
+    void operator++() {
+      if (index_ >= 0 &&
+          index_ + 1 < static_cast<int_fast64_t>(keys_->size())) {
         index_ += 1;
         if (index_ + 2 < static_cast<int_fast64_t>(keys_->size())) {
           // TODO: try different prefetching steps
-          prefetcher_.prefetch(
-              parent_->data_ + (*keys_)[index_ + 2] * parent_->dim_);
+          prefetcher_.prefetch(parent_->data_ +
+                               (*keys_)[index_ + 2] * parent_->dim_);
         }
       } else {
         if (index_ == -1) {
@@ -345,15 +315,12 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
     ConstVectorMap tmp_map_;
     PlainArrayPrefetcher<CoordinateType> prefetcher_;
   };
-  
-  PlainArrayDataStorage(const CoordinateType* data,
-                        int_fast64_t num_points,
+
+  PlainArrayDataStorage(const CoordinateType* data, int_fast64_t num_points,
                         int_fast64_t dim)
       : data_(data), num_points_(num_points), dim_(dim) {}
-  
-  int_fast64_t size() const {
-    return num_points_; 
-  }
+
+  int_fast64_t size() const { return num_points_; }
 
   SubsequenceIterator get_subsequence(const std::vector<KeyType>& keys) const {
     return SubsequenceIterator(keys, *this);
@@ -362,27 +329,22 @@ class PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType> {
   FullSequenceIterator get_full_sequence() const {
     return FullSequenceIterator(*this);
   }
- 
+
  private:
   const CoordinateType* data_;
   int_fast64_t num_points_;
   int_fast64_t dim_;
 };
 
-
-
-template<
-typename PointType,
-typename Transformation,
-typename InnerDataStorage,
-typename KeyType = int32_t>
+template <typename PointType, typename Transformation,
+          typename InnerDataStorage, typename KeyType = int32_t>
 class TransformedDataStorage {
  public:
   class FullSequenceIterator {
    public:
     FullSequenceIterator(const TransformedDataStorage& parent)
         : parent_(&parent), iter_(parent.storage_.get_full_sequence()) {}
-    
+
     FullSequenceIterator() {}
 
     const PointType& get_point() {
@@ -391,18 +353,12 @@ class TransformedDataStorage {
       return tmp_point_;
     }
 
-    const KeyType& get_key() const {
-      return iter_.get_key();
-    }
+    const KeyType& get_key() const { return iter_.get_key(); }
 
-    bool is_valid() const {
-      return iter_.is_valid();
-    }
-    
-    void operator ++ () {
-      ++iter_;
-    }
-   
+    bool is_valid() const { return iter_.is_valid(); }
+
+    void operator++() { ++iter_; }
+
    private:
     const TransformedDataStorage* parent_ = nullptr;
     typename InnerDataStorage::FullSequenceIterator iter_;
@@ -414,26 +370,20 @@ class TransformedDataStorage {
     SubsequenceIterator(const TransformedDataStorage& parent,
                         const std::vector<KeyType>& keys)
         : parent_(&parent), iter_(parent.storage_.get_sub_sequence(keys)) {}
-    
+
     SubsequenceIterator() {}
-    
+
     const PointType& get_point() {
       tmp_point_ = iter_.get_point();
       parent_->transformation_->apply(&tmp_point_);
       return tmp_point_;
     }
 
-    const KeyType& get_key() const {
-      return iter_.get_key();
-    }
+    const KeyType& get_key() const { return iter_.get_key(); }
 
-    bool is_valid() const {
-      return iter_.is_valid();
-    }
-    
-    void operator ++ () {
-      ++iter_;
-    }
+    bool is_valid() const { return iter_.is_valid(); }
+
+    void operator++() { ++iter_; }
 
    private:
     const TransformedDataStorage* parent_ = nullptr;
@@ -444,11 +394,9 @@ class TransformedDataStorage {
   TransformedDataStorage(const Transformation& transformation,
                          const InnerDataStorage& storage)
       : transformation_(transformation), storage_(storage) {}
-  
-  int_fast64_t size() const {
-    return storage_.size();
-  }
-  
+
+  int_fast64_t size() const { return storage_.size(); }
+
   SubsequenceIterator get_subsequence(const std::vector<KeyType>& keys) const {
     return SubsequenceIterator(keys, *this);
   }

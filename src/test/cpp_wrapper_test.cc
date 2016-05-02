@@ -24,7 +24,7 @@ using std::vector;
 void basic_test_dense_1(const LSHConstructionParameters& params) {
   typedef DenseVector<float> Point;
   int dim = 4;
-  
+
   Point p1(dim);
   p1[0] = 1.0;
   p1[1] = 0.0;
@@ -44,9 +44,9 @@ void basic_test_dense_1(const LSHConstructionParameters& params) {
   points.push_back(p1);
   points.push_back(p2);
   points.push_back(p3);
-  
-  unique_ptr<LSHNearestNeighborTable<Point>> table(std::move(
-      construct_table<Point>(points, params)));
+
+  unique_ptr<LSHNearestNeighborTable<Point>> table(
+      std::move(construct_table<Point>(points, params)));
 
   int32_t res1 = table->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
@@ -64,7 +64,6 @@ void basic_test_dense_1(const LSHConstructionParameters& params) {
   EXPECT_EQ(1, res4);
 }
 
-
 void basic_test_sparse_1(const LSHConstructionParameters& params) {
   typedef SparseVector<float> Point;
   Point p1;
@@ -78,9 +77,9 @@ void basic_test_sparse_1(const LSHConstructionParameters& params) {
   points.push_back(p1);
   points.push_back(p2);
   points.push_back(p3);
-  
-  unique_ptr<LSHNearestNeighborTable<Point>> table(std::move(
-      construct_table<Point>(points, params)));
+
+  unique_ptr<LSHNearestNeighborTable<Point>> table(
+      std::move(construct_table<Point>(points, params)));
 
   int32_t res1 = table->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
@@ -95,8 +94,6 @@ void basic_test_sparse_1(const LSHConstructionParameters& params) {
   EXPECT_EQ(1, res4);
 }
 
-
-
 TEST(WrapperTest, DenseHPTest1) {
   int dim = 4;
   LSHConstructionParameters params;
@@ -107,10 +104,9 @@ TEST(WrapperTest, DenseHPTest1) {
   params.k = 2;
   params.l = 4;
   params.num_setup_threads = 0;
-  
+
   basic_test_dense_1(params);
 }
-
 
 TEST(WrapperTest, DenseCPTest1) {
   int dim = 4;
@@ -128,7 +124,6 @@ TEST(WrapperTest, DenseCPTest1) {
   basic_test_dense_1(params);
 }
 
-
 TEST(WrapperTest, SparseHPTest1) {
   int dim = 100;
   LSHConstructionParameters params;
@@ -143,7 +138,6 @@ TEST(WrapperTest, SparseHPTest1) {
   basic_test_sparse_1(params);
 }
 
-
 TEST(WrapperTest, SparseCPTest1) {
   int dim = 100;
   LSHConstructionParameters params;
@@ -157,10 +151,9 @@ TEST(WrapperTest, SparseCPTest1) {
   params.last_cp_dimension = 8;
   params.num_rotations = 3;
   params.num_setup_threads = 0;
-  
+
   basic_test_sparse_1(params);
 }
-
 
 TEST(WrapperTest, FlatHashTableTest1) {
   int dim = 4;
@@ -172,10 +165,9 @@ TEST(WrapperTest, FlatHashTableTest1) {
   params.k = 2;
   params.l = 4;
   params.num_setup_threads = 0;
-  
+
   basic_test_dense_1(params);
 }
-
 
 TEST(WrapperTest, BitPackedFlatHashTableTest1) {
   int dim = 4;
@@ -187,10 +179,9 @@ TEST(WrapperTest, BitPackedFlatHashTableTest1) {
   params.k = 2;
   params.l = 4;
   params.num_setup_threads = 0;
-  
+
   basic_test_dense_1(params);
 }
-
 
 TEST(WrapperTest, STLHashTableTest1) {
   int dim = 4;
@@ -202,10 +193,9 @@ TEST(WrapperTest, STLHashTableTest1) {
   params.k = 2;
   params.l = 4;
   params.num_setup_threads = 0;
-  
+
   basic_test_dense_1(params);
 }
-
 
 TEST(WrapperTest, LinearProbingHashTableTest1) {
   int dim = 4;
@@ -217,10 +207,9 @@ TEST(WrapperTest, LinearProbingHashTableTest1) {
   params.k = 2;
   params.l = 4;
   params.num_setup_threads = 0;
-  
+
   basic_test_dense_1(params);
 }
-
 
 TEST(WrapperTest, ComputeNumberOfHashFunctionsTest) {
   typedef DenseVector<float> VecDense;
@@ -237,7 +226,7 @@ TEST(WrapperTest, ComputeNumberOfHashFunctionsTest) {
   compute_number_of_hash_functions<VecDense>(5, &params);
   EXPECT_EQ(1, params.k);
   EXPECT_EQ(16, params.last_cp_dimension);
-  
+
   params.dimension = 100;
   params.lsh_family = LSHFamily::Hyperplane;
   compute_number_of_hash_functions<VecSparse>(8, &params);
@@ -253,8 +242,8 @@ TEST(WrapperTest, ComputeNumberOfHashFunctionsTest) {
 TEST(WrapperTest, GetDefaultParametersTest1) {
   typedef DenseVector<float> Vec;
 
-  LSHConstructionParameters params = get_default_parameters<Vec>(1000000, 128,
-      DistanceFunction::NegativeInnerProduct, true);
+  LSHConstructionParameters params = get_default_parameters<Vec>(
+      1000000, 128, DistanceFunction::NegativeInnerProduct, true);
 
   EXPECT_EQ(1, params.num_rotations);
   EXPECT_EQ(-1, params.feature_hashing_dimension);
@@ -265,19 +254,19 @@ TEST(WrapperTest, GetDefaultParametersTest1) {
   EXPECT_EQ(3, params.k);
   EXPECT_EQ(2, params.last_cp_dimension);
   EXPECT_EQ(StorageHashTable::BitPackedFlatHashTable,
-      params.storage_hash_table);
+            params.storage_hash_table);
   EXPECT_EQ(0, params.num_setup_threads);
 }
-  
+
 TEST(WrapperTest, GetDefaultParametersTest2) {
   typedef SparseVector<float> Vec;
-  
-  LSHConstructionParameters params = get_default_parameters<Vec>(1000000,
-      100000, DistanceFunction::NegativeInnerProduct, true);
-  
+
+  LSHConstructionParameters params = get_default_parameters<Vec>(
+      1000000, 100000, DistanceFunction::NegativeInnerProduct, true);
+
   EXPECT_EQ(2, params.num_rotations);
   EXPECT_EQ(1024, params.feature_hashing_dimension);
   EXPECT_EQ(0, params.num_setup_threads);
   EXPECT_EQ(StorageHashTable::BitPackedFlatHashTable,
-      params.storage_hash_table);
+            params.storage_hash_table);
 }

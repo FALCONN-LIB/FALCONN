@@ -34,13 +34,12 @@ class StaticProbingHashTableError : public HashTableError {
   StaticProbingHashTableError(const char* msg) : HashTableError(msg) {}
 };
 
-template<
-typename KeyType,
-typename IndexType = int32_t>  // Integer type large enough to index into the
-                               // table
+template <typename KeyType,
+          typename IndexType =
+              int32_t>  // Integer type large enough to index into the
+                        // table
 class StaticLinearProbingHashTable {
  public:
-
   class Factory {
    public:
     Factory(int_fast64_t table_size) : table_size_(table_size) {
@@ -80,7 +79,7 @@ class StaticLinearProbingHashTable {
 
     KeyComparator comp(keys);
     indices_.resize(keys.size());
-    for(IndexType ii = 0; ii < static_cast<IndexType>(indices_.size()); ++ii) {
+    for (IndexType ii = 0; ii < static_cast<IndexType>(indices_.size()); ++ii) {
       indices_[ii] = ii;
     }
     std::sort(indices_.begin(), indices_.end(), comp);
@@ -91,12 +90,13 @@ class StaticLinearProbingHashTable {
       KeyType cur_hash = keys[indices_[cur_index]];
       do {
         end_index += 1;
-      } while (end_index < static_cast<IndexType>(indices_.size())
-               && keys[indices_[end_index]] == cur_hash);
+      } while (end_index < static_cast<IndexType>(indices_.size()) &&
+               keys[indices_[end_index]] == cur_hash);
 
       IndexType ii = find_free_entry(cur_hash);
       if (ii < 0) {
-        throw StaticProbingHashTableError("Free entry is negative (probably "
+        throw StaticProbingHashTableError(
+            "Free entry is negative (probably "
             "the table size is too small).");
       }
       table_[ii].start = cur_index;
@@ -132,7 +132,7 @@ class StaticLinearProbingHashTable {
     // nothing found
     return std::make_pair(&(indices_[0]), &(indices_[0]));
   }
- 
+
  private:
   // TODO: make the hash function a template argument
   IndexType hash(const KeyType& key) const {
@@ -178,17 +178,13 @@ class StaticLinearProbingHashTable {
    public:
     KeyComparator(const std::vector<KeyType>& keys) : keys_(keys) {}
 
-    bool operator() (IndexType ii, IndexType jj) {
+    bool operator()(IndexType ii, IndexType jj) {
       return keys_[ii] < keys_[jj];
     }
 
     const std::vector<KeyType>& keys_;
   };
 };
-
-
-
-
 
 // The dynamic hash table uses the following hashing rules:
 // On insertion:
@@ -215,46 +211,47 @@ class DynamicProbingHashTableError : public HashTableError {
   DynamicProbingHashTableError(const char* msg) : HashTableError(msg) {}
 };
 
-template<
-typename KeyType,
-typename ValueType = int32_t,
-typename IndexType = int32_t>  // Integer type large enough to index into the
-                               // table
+template <typename KeyType, typename ValueType = int32_t,
+          typename IndexType =
+              int32_t>  // Integer type large enough to index into the
+                        // table
 class DynamicLinearProbingHashTable {
  public:
   static void check_parameters(double maximum_load,
                                double maximum_fraction_deleted,
-                               double resizing_factor,
-                               IndexType initial_size) {
+                               double resizing_factor, IndexType initial_size) {
     if (maximum_load >= 1.0) {
-      throw DynamicProbingHashTableError("Maximum hash table load must be less "
-                                         "than 1.0.");
+      throw DynamicProbingHashTableError(
+          "Maximum hash table load must be less "
+          "than 1.0.");
     }
     if (maximum_load <= 0.0) {
-      throw DynamicProbingHashTableError("Maximum hash table load must be "
-                                         "larger than 0.0.");
+      throw DynamicProbingHashTableError(
+          "Maximum hash table load must be "
+          "larger than 0.0.");
     }
     if (maximum_fraction_deleted >= 1.0) {
-      throw DynamicProbingHashTableError("Maximum hash table fraction of "
-                                         "deleted entries must be less than "
-                                         "1.0.");
+      throw DynamicProbingHashTableError(
+          "Maximum hash table fraction of "
+          "deleted entries must be less than "
+          "1.0.");
     }
     if (resizing_factor <= 1.0) {
-      throw DynamicProbingHashTableError("Hash table resizing factor must be "
-                                         "greater than 1.0.");
+      throw DynamicProbingHashTableError(
+          "Hash table resizing factor must be "
+          "greater than 1.0.");
     }
     if (initial_size < 1) {
-      throw DynamicProbingHashTableError("Initial table size must be at "
-                                         "least 1.");
+      throw DynamicProbingHashTableError(
+          "Initial table size must be at "
+          "least 1.");
     }
   }
 
   class Factory {
    public:
-    Factory(double maximum_load,
-            double maximum_fraction_deleted,
-            double resizing_factor,
-            IndexType initial_size)
+    Factory(double maximum_load, double maximum_fraction_deleted,
+            double resizing_factor, IndexType initial_size)
         : maximum_load_(maximum_load),
           maximum_fraction_deleted_(maximum_fraction_deleted),
           resizing_factor_(resizing_factor),
@@ -266,9 +263,7 @@ class DynamicLinearProbingHashTable {
 
     DynamicLinearProbingHashTable<KeyType, ValueType>* new_hash_table() {
       return new DynamicLinearProbingHashTable<KeyType, ValueType>(
-          maximum_load_,
-          maximum_fraction_deleted_,
-          resizing_factor_,
+          maximum_load_, maximum_fraction_deleted_, resizing_factor_,
           initial_size_);
     }
 
@@ -286,16 +281,13 @@ class DynamicLinearProbingHashTable {
    public:
     Iterator() : cur_loc_(), key_(), parent_(nullptr) {}
 
-    Iterator(IndexType cur_loc,
-             KeyType key,
+    Iterator(IndexType cur_loc, KeyType key,
              DynamicLinearProbingHashTable const* parent)
         : cur_loc_(cur_loc), key_(key), parent_(parent) {}
-    
-    ValueType operator * () const {
-      return parent_->table_[cur_loc_].value;
-    }
 
-    bool operator != (const Iterator& iter) const {
+    ValueType operator*() const { return parent_->table_[cur_loc_].value; }
+
+    bool operator!=(const Iterator& iter) const {
       if (parent_ == iter.parent_) {
         if (parent_ == nullptr) {
           return false;
@@ -307,18 +299,16 @@ class DynamicLinearProbingHashTable {
       }
     }
 
-    bool operator == (const Iterator& iter) const {
-      return !(*this != iter);
-    }
+    bool operator==(const Iterator& iter) const { return !(*this != iter); }
 
-    Iterator& operator++ () {
+    Iterator& operator++() {
       cur_loc_ += 1;
       if (cur_loc_ == static_cast<IndexType>(parent_->table_.size())) {
         cur_loc_ = 0;
       }
       while (parent_->table_[cur_loc_].state != kEmpty) {
-        if (parent_->table_[cur_loc_].state != kDeleted
-            && parent_->table_[cur_loc_].key == key_) {
+        if (parent_->table_[cur_loc_].state != kDeleted &&
+            parent_->table_[cur_loc_].key == key_) {
           return *this;
         }
         cur_loc_ += 1;
@@ -335,7 +325,6 @@ class DynamicLinearProbingHashTable {
     KeyType key_;
     DynamicLinearProbingHashTable const* parent_;
   };
- 
 
   DynamicLinearProbingHashTable(double maximum_load,
                                 double maximum_fraction_deleted,
@@ -349,7 +338,7 @@ class DynamicLinearProbingHashTable {
     default_entry.value = 0;
     default_entry.state = kEmpty;
     check_parameters(maximum_load_, maximum_fraction_deleted_, resizing_factor_,
-        initial_size);
+                     initial_size);
     table_.assign(initial_size, default_entry);
   }
 
@@ -357,12 +346,12 @@ class DynamicLinearProbingHashTable {
     // This rule also re-hashes if the index is already in the table.
     // We accept this sloppiness because re-insertions should never
     // happen in the first place.
-    //printf("In insert for index %d\n", index);
-    //printf("  table size: %lu\n", table_.size());
-    
+    // printf("In insert for index %d\n", index);
+    // printf("  table size: %lu\n", table_.size());
+
     IndexType cur_loc = hash(key);
-    while (table_[cur_loc].state == kActive
-        && (table_[cur_loc].key != key || table_[cur_loc].value != value)) {
+    while (table_[cur_loc].state == kActive &&
+           (table_[cur_loc].key != key || table_[cur_loc].value != value)) {
       cur_loc += 1;
       if (cur_loc == static_cast<IndexType>(table_.size())) {
         cur_loc = 0;
@@ -384,28 +373,28 @@ class DynamicLinearProbingHashTable {
       num_active_entries_ += 1;
       num_deleted_entries_ -= 1;
     } else {
-      throw DynamicProbingHashTableError("key-value pair already exists in the "
-                                         "hash table.");
+      throw DynamicProbingHashTableError(
+          "key-value pair already exists in the "
+          "hash table.");
     }
 
-    if (static_cast<double>(num_active_entries_ + num_deleted_entries_)
-            / table_.size() > maximum_load_) {
-      //printf("  rehashing ...\n");
+    if (static_cast<double>(num_active_entries_ + num_deleted_entries_) /
+            table_.size() >
+        maximum_load_) {
+      // printf("  rehashing ...\n");
       rehash();
-      //printf("    done\n");
-      //printf("  table size after rehash: %lu\n", table_.size());
+      // printf("    done\n");
+      // printf("  table size after rehash: %lu\n", table_.size());
     }
   }
 
-
   void remove(const KeyType& key, const ValueType& value) {
-    //printf("In remove for index %d\n", index);
-    //printf("  table size: %lu\n", table_.size());
+    // printf("In remove for index %d\n", index);
+    // printf("  table size: %lu\n", table_.size());
     IndexType cur_loc = hash(key);
-    while (table_[cur_loc].state == kDeleted
-            || (table_[cur_loc].state == kActive
-                && (table_[cur_loc].key != key
-                    || table_[cur_loc].value != value))) {
+    while (table_[cur_loc].state == kDeleted ||
+           (table_[cur_loc].state == kActive &&
+            (table_[cur_loc].key != key || table_[cur_loc].value != value))) {
       cur_loc += 1;
       if (cur_loc == static_cast<IndexType>(table_.size())) {
         cur_loc = 0;
@@ -413,32 +402,29 @@ class DynamicLinearProbingHashTable {
     }
 
     if (table_[cur_loc].state == kEmpty) {
-      throw DynamicProbingHashTableError("Entry does not exist in the hash "
-                                         "table.");
+      throw DynamicProbingHashTableError(
+          "Entry does not exist in the hash "
+          "table.");
     } else {
       table_[cur_loc].state = kDeleted;
       num_deleted_entries_ += 1;
       num_active_entries_ -= 1;
     }
 
-    if (static_cast<double>(num_deleted_entries_) / table_.size()
-        > maximum_fraction_deleted_) {
+    if (static_cast<double>(num_deleted_entries_) / table_.size() >
+        maximum_fraction_deleted_) {
       rehash();
-      //printf("  table size after rehash: %lu\n", table_.size());
+      // printf("  table size after rehash: %lu\n", table_.size());
     }
   }
 
-
   std::pair<Iterator, Iterator> retrieve(const KeyType& key) const {
-    //printf("In retrieve %d\n", lsh_hash);
+    // printf("In retrieve %d\n", lsh_hash);
     IndexType cur_loc = hash(key);
     while (table_[cur_loc].state != kEmpty) {
-      if (table_[cur_loc].state != kDeleted
-          && table_[cur_loc].key == key) {
-        //printf("  returning valid iterator.\n");
-        return std::make_pair(Iterator(cur_loc,
-                                       table_[cur_loc].key,
-                                       this),
+      if (table_[cur_loc].state != kDeleted && table_[cur_loc].key == key) {
+        // printf("  returning valid iterator.\n");
+        return std::make_pair(Iterator(cur_loc, table_[cur_loc].key, this),
                               Iterator());
       }
       cur_loc += 1;
@@ -446,20 +432,14 @@ class DynamicLinearProbingHashTable {
         cur_loc = 0;
       }
     }
-    //printf("  returning end iterator.\n");
+    // printf("  returning end iterator.\n");
     return std::make_pair(Iterator(), Iterator());
   }
 
+  IndexType get_table_size() { return table_.size(); }
 
-  IndexType get_table_size() {
-    return table_.size();
-  }
-  
-  
- private: 
-  IndexType hash(const KeyType& key) const {
-    return hash(key, table_.size());
-  }
+ private:
+  IndexType hash(const KeyType& key) const { return hash(key, table_.size()); }
 
   IndexType hash(const KeyType& key, uint_fast64_t table_size) const {
     return (static_cast<uint_fast64_t>(key) * kLargePrime) % table_size;
@@ -488,12 +468,13 @@ class DynamicLinearProbingHashTable {
   const uint_fast64_t kLargePrime = 2147483647;
 
   void rehash() {
-    //printf("In rehash --------------\n");
+    // printf("In rehash --------------\n");
     IndexType new_size = num_active_entries_;
     new_size = std::max(std::ceil(new_size * resizing_factor_), 1.0);
     if (new_size <= num_active_entries_) {
-      throw DynamicProbingHashTableError("Resize did not lead to an empty "
-                                         "cell, increase the resizing factor.");
+      throw DynamicProbingHashTableError(
+          "Resize did not lead to an empty "
+          "cell, increase the resizing factor.");
     }
 
     std::vector<TableEntry> new_table;
@@ -514,7 +495,7 @@ class DynamicLinearProbingHashTable {
         }
 
         new_table[cur_loc].state = kActive;
-        new_table[cur_loc].value= table_[ii].value;
+        new_table[cur_loc].value = table_[ii].value;
         new_table[cur_loc].key = table_[ii].key;
       }
     }

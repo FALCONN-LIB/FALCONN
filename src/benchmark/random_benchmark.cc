@@ -32,35 +32,31 @@ typedef falconn::DenseVector<float> Vec;
 
 class Timer {
  public:
-  Timer() {
-    start_time = high_resolution_clock::now();
-  }
+  Timer() { start_time = high_resolution_clock::now(); }
 
   double elapsed_seconds() {
     auto end_time = high_resolution_clock::now();
     auto elapsed = duration_cast<duration<double>>(end_time - start_time);
     return elapsed.count();
   }
- 
+
  private:
   decltype(high_resolution_clock::now()) start_time;
 };
 
-
-template<typename PointType>
+template <typename PointType>
 void run_experiment(LSHNearestNeighborTable<PointType>* table,
                     const std::vector<PointType> queries,
-                    const std::vector<int> true_nns,
-                    double* avg_query_time,
+                    const std::vector<int> true_nns, double* avg_query_time,
                     double* success_probability) {
   double average_query_time_outside = 0.0;
   int num_correct = 0;
 
   for (int ii = 0; ii < static_cast<int>(queries.size()); ++ii) {
     Timer query_time;
-    
+
     int32_t res = table->find_nearest_neighbor(queries[ii]);
-    
+
     average_query_time_outside += query_time.elapsed_seconds();
     if (res == true_nns[ii]) {
       num_correct += 1;
@@ -70,47 +66,50 @@ void run_experiment(LSHNearestNeighborTable<PointType>* table,
   average_query_time_outside /= queries.size();
   *avg_query_time = average_query_time_outside;
   *success_probability = static_cast<double>(num_correct) / queries.size();
-  cout << "Average query time (measured outside): "
-       << scientific << average_query_time_outside << " seconds" << endl;
-  cout << "Empirical success probability: " << fixed
-       << *success_probability << endl << endl;
+  cout << "Average query time (measured outside): " << scientific
+       << average_query_time_outside << " seconds" << endl;
+  cout << "Empirical success probability: " << fixed << *success_probability
+       << endl
+       << endl;
   cout << "Query statistics:" << endl;
   QueryStatistics stats = table->get_query_statistics();
   cout << "Average total query time: " << scientific
        << stats.average_total_query_time << " seconds" << endl;
-  cout << "Average LSH time:         "
-       << stats.average_lsh_time << " seconds" << endl;
-  cout << "Average hash table time:  "
-       << stats.average_hash_table_time << " seconds" << endl;
-  cout << "Average distance time:    "
-       << stats.average_distance_time << " seconds" << endl;
+  cout << "Average LSH time:         " << stats.average_lsh_time << " seconds"
+       << endl;
+  cout << "Average hash table time:  " << stats.average_hash_table_time
+       << " seconds" << endl;
+  cout << "Average distance time:    " << stats.average_distance_time
+       << " seconds" << endl;
   cout << "Average number of candidates:        " << fixed
        << stats.average_num_candidates << endl;
   cout << "Average number of unique candidates: "
-       << stats.average_num_unique_candidates << endl << endl;
+       << stats.average_num_unique_candidates << endl
+       << endl;
   cout << "Diagnostics:" << endl;
   double mismatch = average_query_time_outside - stats.average_total_query_time;
   cout << "Outside - inside average total query time: " << scientific
        << mismatch << " seconds (" << fixed
        << 100.0 * mismatch / average_query_time_outside << " %)" << endl;
-  double unaccounted = stats.average_total_query_time - stats.average_lsh_time
-      - stats.average_hash_table_time - stats.average_distance_time;
+  double unaccounted = stats.average_total_query_time - stats.average_lsh_time -
+                       stats.average_hash_table_time -
+                       stats.average_distance_time;
   cout << "Unaccounted inside query time: " << scientific << unaccounted
        << " seconds (" << fixed
        << 100.0 * unaccounted / stats.average_total_query_time << " %)" << endl;
 }
 
-
 int main() {
   try {
     const char* sepline =
-      "-----------------------------------------------------------------------";
+        "----------------------------------------------------------------------"
+        "-";
 
     // Data set parameters
-    int n = 1000000;    // number of data points
-    int d = 128;      // dimension
-    int num_queries = 1000;    // number of query points
-    double r = std::sqrt(2.0) / 2.0;    // distance to planted query
+    int n = 1000000;                  // number of data points
+    int d = 128;                      // dimension
+    int num_queries = 1000;           // number of query points
+    double r = std::sqrt(2.0) / 2.0;  // distance to planted query
     uint64_t seed = 119417657;
 
     // Common LSH parameters
@@ -171,9 +170,9 @@ int main() {
     double average_scan_time = 0.0;
     for (int ii = 0; ii < num_queries; ++ii) {
       const Vec& q = queries[ii];
-    
+
       Timer query_time;
-    
+
       int best_index = 0;
       float best_ip = q.dot(data[0]);
       for (int jj = 1; jj < n; ++jj) {
@@ -184,9 +183,8 @@ int main() {
         }
       }
       true_nn[ii] = best_index;
-    
+
       average_scan_time += query_time.elapsed_seconds();
-      
     }
     average_scan_time /= num_queries;
     cout << "Average query time: " << average_scan_time << " seconds" << endl
@@ -202,13 +200,13 @@ int main() {
     params_hp.l = num_tables;
     params_hp.num_setup_threads = num_setup_threads;
     params_hp.seed = seed ^ 833840234;
-  
+
     cout << "Hyperplane hash" << endl << endl;
 
     Timer hp_construction;
-  
-    unique_ptr<LSHNearestNeighborTable<Vec>> hptable(std::move(
-        construct_table<Vec>(data, params_hp)));
+
+    unique_ptr<LSHNearestNeighborTable<Vec>> hptable(
+        std::move(construct_table<Vec>(data, params_hp)));
     hptable->set_num_probes(2464);
 
     double hp_construction_time = hp_construction.elapsed_seconds();
@@ -222,7 +220,7 @@ int main() {
     double hp_avg_time;
     double hp_success_prob;
     run_experiment(hptable.get(), queries, true_nn, &hp_avg_time,
-        &hp_success_prob);
+                   &hp_success_prob);
     cout << sepline << endl;
     hptable.reset(nullptr);
 
@@ -238,13 +236,13 @@ int main() {
     params_cp.num_rotations = 3;
     params_cp.num_setup_threads = num_setup_threads;
     params_cp.seed = seed ^ 833840234;
-  
+
     cout << "Cross polytope hash" << endl << endl;
 
     Timer cp_construction;
-  
-    unique_ptr<LSHNearestNeighborTable<Vec>> cptable(std::move(
-							       construct_table<Vec>(data, params_cp)));
+
+    unique_ptr<LSHNearestNeighborTable<Vec>> cptable(
+        std::move(construct_table<Vec>(data, params_cp)));
     cptable->set_num_probes(896);
 
     double cp_construction_time = cp_construction.elapsed_seconds();
@@ -260,7 +258,7 @@ int main() {
     double cp_avg_time;
     double cp_success_prob;
     run_experiment(cptable.get(), queries, true_nn, &cp_avg_time,
-		   &cp_success_prob);
+                   &cp_success_prob);
 
     cout << sepline << endl << "Summary:" << endl;
     cout << "Success probabilities:" << endl;
@@ -272,16 +270,14 @@ int main() {
     cout << "  CP time: " << cp_avg_time << endl;
     cout << "Speed-ups:" << endl;
     cout << "  HP vs linear scan: " << fixed << average_scan_time / hp_avg_time
-	 << endl;
+         << endl;
     cout << "  CP vs linear scan: " << fixed << average_scan_time / cp_avg_time
-	 << endl;
+         << endl;
     cout << "  CP vs HP: " << fixed << hp_avg_time / cp_avg_time << endl;
-  }
-  catch (std::exception &e) {
+  } catch (std::exception& e) {
     cerr << "exception: " << e.what() << endl;
     return 1;
-  }
-  catch (...) {
+  } catch (...) {
     cerr << "Unknown error" << endl;
     return 1;
   }

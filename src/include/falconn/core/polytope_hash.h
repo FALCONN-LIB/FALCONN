@@ -26,10 +26,8 @@ namespace core {
 namespace cp_hash_helpers {
 
 static inline void compute_k_parameters_for_bits(
-    int_fast32_t rotation_dim,
-    int_fast32_t number_of_hash_bits,
-    int_fast32_t* k,
-    int_fast32_t* last_cp_dim) {
+    int_fast32_t rotation_dim, int_fast32_t number_of_hash_bits,
+    int_fast32_t* k, int_fast32_t* last_cp_dim) {
   int_fast32_t bits_per_cp = log2ceil(rotation_dim) + 1;
   *k = number_of_hash_bits / bits_per_cp;
   if (*k * bits_per_cp < number_of_hash_bits) {
@@ -42,9 +40,7 @@ static inline void compute_k_parameters_for_bits(
 }
 
 static inline int_fast32_t compute_number_of_hash_bits(
-    int_fast32_t rotation_dim,
-    int_fast32_t last_cp_dim,
-    int_fast32_t k) {
+    int_fast32_t rotation_dim, int_fast32_t last_cp_dim, int_fast32_t k) {
   int_fast32_t log_rotation_dim = log2ceil(rotation_dim);
   int_fast32_t last_cp_log_dim = log2ceil(last_cp_dim);
   return (k - 1) * (log_rotation_dim + 1) + last_cp_log_dim + 1;
@@ -55,10 +51,11 @@ struct FHTFunction {
   static void apply(ScalarType*, int_fast32_t) {
     static_assert(FalseStruct<ScalarType>::value, "ScalarType not supported.");
   };
-  template<typename T> struct FalseStruct : std::false_type {};
+  template <typename T>
+  struct FalseStruct : std::false_type {};
 };
 
-template<>
+template <>
 struct FHTFunction<float> {
   static void apply(float* data, int_fast32_t dim) {
     if (FHTFloat(data, dim, std::max(dim, static_cast<int_fast32_t>(8))) != 0) {
@@ -67,11 +64,11 @@ struct FHTFunction<float> {
   }
 };
 
-template<>
+template <>
 struct FHTFunction<double> {
   static void apply(double* data, int_fast32_t dim) {
-    if (FHTDouble(data, dim, std::max(dim,
-                                      static_cast<int_fast32_t>(8))) != 0) {
+    if (FHTDouble(data, dim, std::max(dim, static_cast<int_fast32_t>(8))) !=
+        0) {
       throw LSHFunctionError("FHTDouble returned nonzero value.");
     }
   }
@@ -82,9 +79,7 @@ class FHTHelper {
  public:
   FHTHelper(int_fast32_t dim) : dim_(dim) {}
 
-  int_fast32_t get_dim() {
-    return dim_;
-  }
+  int_fast32_t get_dim() { return dim_; }
 
   void apply(ScalarType* data) {
 #ifdef __AVX__
@@ -92,9 +87,10 @@ class FHTHelper {
       FHTFunction<ScalarType>::apply(data, dim_);
     } else {
       if (aligned_data_ == nullptr) {
-        if (posix_memalign((reinterpret_cast<void**>(&aligned_data_)), 32,
-            std::max(static_cast<int_fast32_t>(dim_ * sizeof(ScalarType)),
-                     static_cast<int_fast32_t>(32))) != 0) {
+        if (posix_memalign(
+                (reinterpret_cast<void**>(&aligned_data_)), 32,
+                std::max(static_cast<int_fast32_t>(dim_ * sizeof(ScalarType)),
+                         static_cast<int_fast32_t>(32))) != 0) {
           throw LSHFunctionError("Error when allocating temporary FHT array.");
         }
       }
@@ -123,32 +119,28 @@ class FHTHelper {
 };
 
 }  // namespace cp_hash_helpers
-  
 
 // TODO: replace CoordinateType with a type trait of VectorT?
-template<
-typename Derived,
-typename VectorT,
-typename CoordinateType = float,
-typename HashT = uint32_t>
+template <typename Derived, typename VectorT, typename CoordinateType = float,
+          typename HashT = uint32_t>
 class CrossPolytopeHashBase {
  private:
   class MultiProbeLookup;
- 
+
  public:
   typedef VectorT VectorType;
   typedef HashT HashType;
   typedef Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>
       RotatedVectorType;
   typedef std::vector<RotatedVectorType> TransformedVectorType;
-  
+
   typedef HashObjectQuery<Derived> Query;
 
   class HashTransformation {
    public:
-    HashTransformation(const Derived& parent) : parent_(parent),
-        fht_helper_(parent.rotation_dim_) {}
-    
+    HashTransformation(const Derived& parent)
+        : parent_(parent), fht_helper_(parent.rotation_dim_) {}
+
     void apply(const VectorT& v, TransformedVectorType* result) {
       parent_.compute_rotated_vectors(v, result, &fht_helper_);
     }
@@ -161,15 +153,15 @@ class CrossPolytopeHashBase {
   // TODO: Can the FHT rotations be faster by doing 8 rotations (AVX float
   // register size) in parallel? If so, the table setup time could be made
   // faster by using a batch FHT below.
-  template<typename BatchVectorType>
+  template <typename BatchVectorType>
   class BatchHash {
    public:
-    BatchHash(const Derived& parent) : parent_(parent),
-                                       tmp_vector_(parent.rotation_dim_),
-                                       fht_helper_(parent.rotation_dim_) {}
+    BatchHash(const Derived& parent)
+        : parent_(parent),
+          tmp_vector_(parent.rotation_dim_),
+          fht_helper_(parent.rotation_dim_) {}
 
-    void batch_hash_single_table(const BatchVectorType& points,
-                                 int_fast32_t l,
+    void batch_hash_single_table(const BatchVectorType& points, int_fast32_t l,
                                  std::vector<HashType>* res) {
       int_fast64_t nn = points.size();
       if (static_cast<int_fast64_t>(res->size()) != nn) {
@@ -186,28 +178,28 @@ class CrossPolytopeHashBase {
           parent_.embed(iter.get_point(), l, jj, &tmp_vector_);
 
           for (int_fast32_t rot = 0; rot < parent_.num_rotations_; ++rot) {
-            tmp_vector_ = tmp_vector_.cwiseProduct(
-                parent_.random_signs_[pattern]);
+            tmp_vector_ =
+                tmp_vector_.cwiseProduct(parent_.random_signs_[pattern]);
             ++pattern;
             fht_helper_.apply(tmp_vector_.data());
           }
 
           (*res)[ii] = (*res)[ii] << (parent_.log_rotation_dim_ + 1);
-          (*res)[ii] = (*res)[ii]
-              | decodeCP(tmp_vector_, parent_.rotation_dim_);
+          (*res)[ii] =
+              (*res)[ii] | decodeCP(tmp_vector_, parent_.rotation_dim_);
         }
 
         parent_.embed(iter.get_point(), l, parent_.k_ - 1, &tmp_vector_);
         for (int_fast32_t rot = 0; rot < parent_.num_rotations_; ++rot) {
-          tmp_vector_ = tmp_vector_.cwiseProduct(
-              parent_.random_signs_[pattern]);
+          tmp_vector_ =
+              tmp_vector_.cwiseProduct(parent_.random_signs_[pattern]);
           ++pattern;
           fht_helper_.apply(tmp_vector_.data());
         }
 
         (*res)[ii] = (*res)[ii] << (parent_.last_cp_log_dim_ + 1);
         (*res)[ii] = (*res)[ii] | decodeCP(tmp_vector_, parent_.last_cp_dim_);
-        
+
         ++iter;
       }
     }
@@ -217,11 +209,9 @@ class CrossPolytopeHashBase {
     RotatedVectorType tmp_vector_;
     cp_hash_helpers::FHTHelper<CoordinateType> fht_helper_;
   };
-  
-  int_fast32_t get_l() const {
-    return l_;
-  }
-  
+
+  int_fast32_t get_l() const { return l_; }
+
   void reserve_transformed_vector_memory(TransformedVectorType* tv) const {
     tv->resize(k_ * l_);
     for (int_fast32_t ii = 0; ii < k_ * l_; ++ii) {
@@ -229,11 +219,10 @@ class CrossPolytopeHashBase {
     }
   }
 
-  void hash(const VectorType& point,
-            std::vector<HashType>* result,
-            TransformedVectorType* tmp_transformed_vector = nullptr,
-            cp_hash_helpers::FHTHelper<CoordinateType>* fht_helper = nullptr)
-      const {
+  void hash(
+      const VectorType& point, std::vector<HashType>* result,
+      TransformedVectorType* tmp_transformed_vector = nullptr,
+      cp_hash_helpers::FHTHelper<CoordinateType>* fht_helper = nullptr) const {
     bool allocated_tmpvec = false;
     if (tmp_transformed_vector == nullptr) {
       allocated_tmpvec = true;
@@ -243,8 +232,8 @@ class CrossPolytopeHashBase {
     bool allocated_fht_helper = false;
     if (fht_helper == nullptr) {
       allocated_fht_helper = true;
-      fht_helper = new cp_hash_helpers::FHTHelper<CoordinateType>(
-          rotation_dim_);
+      fht_helper =
+          new cp_hash_helpers::FHTHelper<CoordinateType>(rotation_dim_);
     }
 
     if (fht_helper->get_dim() != rotation_dim_) {
@@ -255,7 +244,8 @@ class CrossPolytopeHashBase {
     // rotate and also decode before going to the next cross polytope)
     compute_rotated_vectors(point, tmp_transformed_vector, fht_helper);
     compute_cp_hashes(*tmp_transformed_vector, k_, l_, rotation_dim_,
-        log_rotation_dim_, last_cp_dim_, last_cp_log_dim_, result);
+                      log_rotation_dim_, last_cp_dim_, last_cp_log_dim_,
+                      result);
 
     if (allocated_tmpvec) {
       delete tmp_transformed_vector;
@@ -283,22 +273,19 @@ class CrossPolytopeHashBase {
     }
     return res;
   }
- 
+
  protected:
-  CrossPolytopeHashBase(int_fast32_t rotation_dim,
-                        int_fast32_t k,
-                        int_fast32_t l,
-                        int_fast32_t num_rotations,
-                        int_fast32_t last_cp_dim,
-                        uint_fast64_t seed)
-    : rotation_dim_(rotation_dim),
-      log_rotation_dim_(log2ceil(rotation_dim)),
-      k_(k),
-      l_(l),
-      num_rotations_(num_rotations),
-      last_cp_dim_(last_cp_dim),
-      last_cp_log_dim_(log2ceil(last_cp_dim)),
-      seed_(seed) {
+  CrossPolytopeHashBase(int_fast32_t rotation_dim, int_fast32_t k,
+                        int_fast32_t l, int_fast32_t num_rotations,
+                        int_fast32_t last_cp_dim, uint_fast64_t seed)
+      : rotation_dim_(rotation_dim),
+        log_rotation_dim_(log2ceil(rotation_dim)),
+        k_(k),
+        l_(l),
+        num_rotations_(num_rotations),
+        last_cp_dim_(last_cp_dim),
+        last_cp_log_dim_(log2ceil(last_cp_dim)),
+        seed_(seed) {
     if (rotation_dim_ < 1) {
       throw LSHFunctionError("Rotation dimension must be at least 1.");
     }
@@ -308,12 +295,14 @@ class CrossPolytopeHashBase {
     }
 
     if (last_cp_dim_ > rotation_dim_) {
-      throw LSHFunctionError("Dimension of last CP must be at most the "
+      throw LSHFunctionError(
+          "Dimension of last CP must be at most the "
           "rotation dimension.");
     }
 
     if (k_ < 1) {
-      throw LSHFunctionError("Number of hash functions must be"
+      throw LSHFunctionError(
+          "Number of hash functions must be"
           "at least 1.");
     }
 
@@ -335,16 +324,17 @@ class CrossPolytopeHashBase {
       throw LSHFunctionError("Last CP dimension must be a power of two.");
     }*/
 
-    if ((k_ - 1) * (log_rotation_dim_ + 1) + last_cp_log_dim_ + 1
-        > 8 * static_cast<int_fast32_t>(sizeof(HashType))) {
-      throw LSHFunctionError("More hash functions than supported by the "
+    if ((k_ - 1) * (log_rotation_dim_ + 1) + last_cp_log_dim_ + 1 >
+        8 * static_cast<int_fast32_t>(sizeof(HashType))) {
+      throw LSHFunctionError(
+          "More hash functions than supported by the "
           "hash type.");
     }
 
     // use the STL Mersenne Twister for random numbers
     std::mt19937_64 gen(seed_);
     std::uniform_int_distribution<int_fast32_t> bernoulli(0, 1);
-    
+
     for (int_fast32_t ii = 0; ii < k_ * l_ * num_rotations_; ++ii) {
       RotatedVectorType tmp_vec(rotation_dim_);
       for (int_fast32_t jj = 0; jj < rotation_dim_; ++jj) {
@@ -353,12 +343,10 @@ class CrossPolytopeHashBase {
       random_signs_.push_back(tmp_vec);
     }
   }
-  
+
   static void compute_cp_hashes(const TransformedVectorType& rotated_vectors,
-                                int_fast32_t k,
-                                int_fast32_t l,
-                                int_fast32_t dim,
-                                int_fast32_t log_dim,
+                                int_fast32_t k, int_fast32_t l,
+                                int_fast32_t dim, int_fast32_t log_dim,
                                 int_fast32_t last_dim,
                                 int_fast32_t last_log_dim,
                                 std::vector<HashType>* hashes) {
@@ -369,7 +357,7 @@ class CrossPolytopeHashBase {
 
     for (int_fast32_t ii = 0; ii < l; ++ii) {
       res[ii] = 0;
-      
+
       for (int_fast32_t jj = 0; jj < k - 1; ++jj) {
         res[ii] = res[ii] << (log_dim + 1);
         res[ii] = res[ii] | decodeCP(rotated_vectors[ii * k + jj], dim);
@@ -380,8 +368,8 @@ class CrossPolytopeHashBase {
     }
   }
 
-  const int_fast32_t rotation_dim_;    // dimension of the vectors to be rotated
-  const int_fast32_t log_rotation_dim_;// binary log of rotation_dim
+  const int_fast32_t rotation_dim_;  // dimension of the vectors to be rotated
+  const int_fast32_t log_rotation_dim_;  // binary log of rotation_dim
   const int_fast32_t k_;
   const int_fast32_t l_;
   const int_fast32_t num_rotations_;
@@ -389,14 +377,13 @@ class CrossPolytopeHashBase {
   const int_fast32_t last_cp_log_dim_;
   const uint_fast64_t seed_;
   std::vector<RotatedVectorType> random_signs_;
- 
+
  private:
   friend Query;
-  
-  void compute_rotated_vectors(const VectorT& v,
-                               TransformedVectorType* result,
-                               cp_hash_helpers::FHTHelper<CoordinateType>* fht)
-      const {
+
+  void compute_rotated_vectors(
+      const VectorT& v, TransformedVectorType* result,
+      cp_hash_helpers::FHTHelper<CoordinateType>* fht) const {
     int_fast32_t pattern = 0;
     for (int_fast32_t ii = 0; ii < l_; ++ii) {
       for (int_fast32_t jj = 0; jj < k_; ++jj) {
@@ -412,7 +399,7 @@ class CrossPolytopeHashBase {
     }
   }
 
-  //friend BatchHash;
+  // friend BatchHash;
   // Helper class for multiprobe LSH
   class MultiProbeLookup {
    public:
@@ -448,28 +435,26 @@ class CrossPolytopeHashBase {
       if (num_probes_ >= 0 && num_probes_ <= l_) {
         // If we don't want extra probes, the top probes are going to be the
         // standard hashes for each table.
-        compute_cp_hashes(transformed_vector, k_, l_,
-            dim_, log_dim_, last_cp_dim_, last_cp_log_dim_,
-            &main_table_probes_);
+        compute_cp_hashes(transformed_vector, k_, l_, dim_, log_dim_,
+                          last_cp_dim_, last_cp_log_dim_, &main_table_probes_);
         return;
       }
-
 
       int sorting_block_size = 0;
       if (num_probes_ >= 0) {
         double b = 1.0;
         double sqrt2 = std::sqrt(2.0);
-        while (std::pow(b, k_ - 1)
-            * std::max(1.0, b * last_cp_dim_ / static_cast<double>(dim_))
-            < static_cast<double>(num_probes_) / l_) {
+        while (std::pow(b, k_ - 1) *
+                   std::max(1.0, b * last_cp_dim_ / static_cast<double>(dim_)) <
+               static_cast<double>(num_probes_) / l_) {
           b *= sqrt2;
         }
-        sorting_block_size = std::min(1,  static_cast<int>(
-            std::round(b * sqrt2)));
+        sorting_block_size =
+            std::min(1, static_cast<int>(std::round(b * sqrt2)));
       } else {
         sorting_block_size = 8;
       }
-      //printf("sorting block size: %d\n", sorting_block_size_);
+      // printf("sorting block size: %d\n", sorting_block_size_);
 
       // For each CP, we now sort the potential hash values (2 * dim) by their
       // distance to the largest absolute value in the respective CP
@@ -477,8 +462,8 @@ class CrossPolytopeHashBase {
         for (int_fast32_t jj = 0; jj < k_; ++jj) {
           int_fast32_t cur_cp_dim = (jj == k_ - 1 ? last_cp_dim_ : dim_);
           const VectorType& cur_vec = transformed_vector[ii * k_ + jj];
-          std::vector<std::pair<CoordinateType, int_fast32_t>>& cur_indices
-              = sorted_coordinate_indices_[ii * k_ + jj];
+          std::vector<std::pair<CoordinateType, int_fast32_t>>& cur_indices =
+              sorted_coordinate_indices_[ii * k_ + jj];
 
           // TODO: use eigen for abs and max here
           CoordinateType max_abs_coord = std::abs(cur_vec[0]);
@@ -488,16 +473,15 @@ class CrossPolytopeHashBase {
 
           for (int_fast32_t mm = 0; mm < cur_cp_dim; ++mm) {
             cur_indices[mm] = std::make_pair(max_abs_coord - cur_vec[mm], mm);
-            cur_indices[mm + cur_cp_dim] = std::make_pair(
-                max_abs_coord + cur_vec[mm], mm + cur_cp_dim);
+            cur_indices[mm + cur_cp_dim] =
+                std::make_pair(max_abs_coord + cur_vec[mm], mm + cur_cp_dim);
           }
-          
+
           inc_sorted_coordinate_indices_[ii * k_ + jj].reset(
-              &(sorted_coordinate_indices_[ii * k_ + jj]),
-              sorting_block_size);
+              &(sorted_coordinate_indices_[ii * k_ + jj]), sorting_block_size);
         }
       }
-      
+
       // We use a heap to construct the probing sequence.
       if (num_probes_ >= 0) {
         heap_.resize(2 * k_ * l_ * num_probes_ + l_);
@@ -532,17 +516,17 @@ class CrossPolytopeHashBase {
         heap_.extract_min(&cur_score, &cur_candidate);
         int_fast32_t cur_table = cur_candidate.table_;
         int_fast32_t cur_cp = cur_candidate.cur_cp_;
-        int_fast32_t cur_sorted_coord_index
-          = cur_candidate.cur_sorted_coord_index_;
+        int_fast32_t cur_sorted_coord_index =
+            cur_candidate.cur_sorted_coord_index_;
 
         /*printf("Current probe: score = %f  hash = %d  table = %d"
             " cp = %d  sorted_index = %d\n", cur_score,
             cur_candidate.prev_cps_hash_, cur_table, cur_cp,
             cur_sorted_coord_index);*/
-        
+
         if (cur_cp == k_) {
           // have complete probe candidate
-          //printf("  Current probe is complete probe.\n");
+          // printf("  Current probe is complete probe.\n");
           *result_probe = cur_candidate.prev_cps_hash_;
           *result_table = cur_table;
           return true;
@@ -561,37 +545,35 @@ class CrossPolytopeHashBase {
           }
 
           CoordinateType cur_coord_score =
-              inc_sorted_coordinate_indices_[cur_table * k_ + cur_cp].get(
-                  cur_sorted_coord_index).first;
+              inc_sorted_coordinate_indices_[cur_table * k_ + cur_cp]
+                  .get(cur_sorted_coord_index)
+                  .first;
           cur_coord_score = cur_coord_score * cur_coord_score;
-          
+
           // first case: same CP, but next higher index
           if (cur_sorted_coord_index < 2 * cur_cp_dim - 1) {
             CoordinateType next_score = cur_score - cur_coord_score;
             CoordinateType next_coord_score =
-              inc_sorted_coordinate_indices_[cur_table * k_ + cur_cp].get(
-                  cur_sorted_coord_index + 1).first;
+                inc_sorted_coordinate_indices_[cur_table * k_ + cur_cp]
+                    .get(cur_sorted_coord_index + 1)
+                    .first;
             next_score += next_coord_score * next_coord_score;
 
             heap_.insert(next_score,
-                ProbeCandidate(cur_table,
-                               cur_candidate.prev_cps_hash_,
-                               cur_cp,
-                               cur_sorted_coord_index + 1));
+                         ProbeCandidate(cur_table, cur_candidate.prev_cps_hash_,
+                                        cur_cp, cur_sorted_coord_index + 1));
           }
-          
+
           // second case: next CP
           HashType cur_index =
-              inc_sorted_coordinate_indices_[cur_table * k_ + cur_cp].get(
-                  cur_sorted_coord_index).second;
-          HashType next_hash =
-              cur_candidate.prev_cps_hash_ << (cur_cp_log_dim + 1);
+              inc_sorted_coordinate_indices_[cur_table * k_ + cur_cp]
+                  .get(cur_sorted_coord_index)
+                  .second;
+          HashType next_hash = cur_candidate.prev_cps_hash_
+                               << (cur_cp_log_dim + 1);
           next_hash = next_hash | cur_index;
-          heap_.insert_guaranteed_top(cur_score,
-              ProbeCandidate(cur_table,
-                             next_hash,
-                             cur_cp + 1,
-                             0));
+          heap_.insert_guaranteed_top(
+              cur_score, ProbeCandidate(cur_table, next_hash, cur_cp + 1, 0));
         }
       }
     }
@@ -599,8 +581,7 @@ class CrossPolytopeHashBase {
    private:
     class ProbeCandidate {
      public:
-      ProbeCandidate(int_fast32_t table = 0,
-                     HashType prev_cps_hash = 0,
+      ProbeCandidate(int_fast32_t table = 0, HashType prev_cps_hash = 0,
                      int_fast32_t cur_cp = 0,
                      int_fast32_t cur_sorted_coord_index = 0)
           : table_(table),
@@ -632,36 +613,27 @@ class CrossPolytopeHashBase {
   };
 };
 
-
-
-template<
-typename CoordinateType = float,
-typename HashType = uint32_t,
-typename IndexType = int32_t>
-class CrossPolytopeHashSparse : public CrossPolytopeHashBase<
-    CrossPolytopeHashSparse<CoordinateType, HashType>,
-    std::vector<std::pair<IndexType, CoordinateType>>,
-    CoordinateType,
-    HashType> {
+template <typename CoordinateType = float, typename HashType = uint32_t,
+          typename IndexType = int32_t>
+class CrossPolytopeHashSparse
+    : public CrossPolytopeHashBase<
+          CrossPolytopeHashSparse<CoordinateType, HashType>,
+          std::vector<std::pair<IndexType, CoordinateType>>, CoordinateType,
+          HashType> {
  public:
   typedef std::vector<std::pair<IndexType, CoordinateType>> DerivedVectorT;
   typedef Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>
       HashedVectorT;
 
-  CrossPolytopeHashSparse(int_fast32_t vector_dim,
-                          int_fast32_t k,
-                          int_fast32_t l,
-                          int_fast32_t num_rotations,
+  CrossPolytopeHashSparse(int_fast32_t vector_dim, int_fast32_t k,
+                          int_fast32_t l, int_fast32_t num_rotations,
                           int_fast32_t feature_hashing_dim,
-                          int_fast32_t last_cp_dim,
-                          uint_fast64_t seed)
-    : CrossPolytopeHashBase<
-        CrossPolytopeHashSparse<CoordinateType, HashType>,
-        std::vector<std::pair<IndexType, CoordinateType>>,
-        CoordinateType,
-        HashType>(feature_hashing_dim, k, l, num_rotations,
-                  last_cp_dim, seed),
-      vector_dim_(vector_dim) {
+                          int_fast32_t last_cp_dim, uint_fast64_t seed)
+      : CrossPolytopeHashBase<CrossPolytopeHashSparse<CoordinateType, HashType>,
+                              std::vector<std::pair<IndexType, CoordinateType>>,
+                              CoordinateType, HashType>(
+            feature_hashing_dim, k, l, num_rotations, last_cp_dim, seed),
+        vector_dim_(vector_dim) {
     if (vector_dim_ < 1) {
       throw LSHFunctionError("Vector dimension must be at least 1.");
     }
@@ -671,8 +643,8 @@ class CrossPolytopeHashSparse : public CrossPolytopeHashBase<
     // the base class.
     std::mt19937_64 gen(this->seed_ ^ 846980723);
     std::uniform_int_distribution<int_fast32_t> bernoulli(0, 1);
-    std::uniform_int_distribution<int_fast32_t> feature_hashing_distribution(0,
-        this->rotation_dim_ - 1);
+    std::uniform_int_distribution<int_fast32_t> feature_hashing_distribution(
+        0, this->rotation_dim_ - 1);
 
     // feature hashing randomness
     int_fast64_t num_feature_hashing_indices =
@@ -686,70 +658,62 @@ class CrossPolytopeHashSparse : public CrossPolytopeHashBase<
   }
 
   void embed(const DerivedVectorT& v, int_fast32_t l, int_fast32_t k,
-      HashedVectorT* res) const {
+             HashedVectorT* res) const {
     res->setZero();
-    IndexType offset = ((static_cast<int_fast64_t>(l) * this->k_) + k)
-        * vector_dim_;
+    IndexType offset =
+        ((static_cast<int_fast64_t>(l) * this->k_) + k) * vector_dim_;
 
     for (IndexType ii = 0; ii < static_cast<IndexType>(v.size()); ++ii) {
       IndexType cur_ind = v[ii].first;
       CoordinateType cur_val = v[ii].second;
 
-      (*res)[feature_hashing_index_[offset + cur_ind]]
-          += feature_hashing_coeff_[offset + cur_ind] * cur_val;
+      (*res)[feature_hashing_index_[offset + cur_ind]] +=
+          feature_hashing_coeff_[offset + cur_ind] * cur_val;
     }
   }
 
  private:
-  const int_fast32_t vector_dim_;          // actual dimension of the vectors
+  const int_fast32_t vector_dim_;  // actual dimension of the vectors
   std::vector<int> feature_hashing_index_;
   std::vector<CoordinateType> feature_hashing_coeff_;
 };
 
-
-
-template<
-typename CoordinateType = float,
-typename HashType = uint32_t>
-class CrossPolytopeHashDense : public CrossPolytopeHashBase<
-    CrossPolytopeHashDense<CoordinateType, HashType>,
-    Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>,
-    CoordinateType,
-    HashType> {
+template <typename CoordinateType = float, typename HashType = uint32_t>
+class CrossPolytopeHashDense
+    : public CrossPolytopeHashBase<
+          CrossPolytopeHashDense<CoordinateType, HashType>,
+          Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>,
+          CoordinateType, HashType> {
  public:
   typedef Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>
       DerivedVectorT;
 
-  CrossPolytopeHashDense(int_fast32_t vector_dim,
-                         int_fast32_t k,
-                         int_fast32_t l,
-                         int_fast32_t num_rotations,
-                         int_fast32_t last_cp_dim,
-                         uint_fast64_t seed)
-    : CrossPolytopeHashBase<
-          CrossPolytopeHashDense<CoordinateType, HashType>,
-          Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>,
-          CoordinateType,
-          HashType>(find_next_power_of_two(vector_dim), k, l, num_rotations,
-              last_cp_dim, seed),
-      vector_dim_(vector_dim) {
+  CrossPolytopeHashDense(int_fast32_t vector_dim, int_fast32_t k,
+                         int_fast32_t l, int_fast32_t num_rotations,
+                         int_fast32_t last_cp_dim, uint_fast64_t seed)
+      : CrossPolytopeHashBase<
+            CrossPolytopeHashDense<CoordinateType, HashType>,
+            Eigen::Matrix<CoordinateType, Eigen::Dynamic, 1, Eigen::ColMajor>,
+            CoordinateType, HashType>(find_next_power_of_two(vector_dim), k, l,
+                                      num_rotations, last_cp_dim, seed),
+        vector_dim_(vector_dim) {
     if (vector_dim_ < 1) {
       throw LSHFunctionError("Vector dimension must be at least 1.");
     }
   }
 
   void embed(const DerivedVectorT& v, int, int, DerivedVectorT* result) const {
-      // TODO: use something more low-level here?
-      for (int_fast32_t ii = 0; ii < vector_dim_; ++ii) {
-        (*result)[ii] = v[ii];
-      }
-      for (int_fast32_t ii = vector_dim_; ii < this->rotation_dim_; ++ii) {
-        (*result)[ii] = 0.0;
-      }
+    // TODO: use something more low-level here?
+    for (int_fast32_t ii = 0; ii < vector_dim_; ++ii) {
+      (*result)[ii] = v[ii];
+    }
+    for (int_fast32_t ii = vector_dim_; ii < this->rotation_dim_; ++ii) {
+      (*result)[ii] = 0.0;
+    }
   }
 
  private:
-  const int_fast32_t vector_dim_;          // actual dimension of the vectors
+  const int_fast32_t vector_dim_;  // actual dimension of the vectors
 };
 
 }  // namespace core

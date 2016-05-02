@@ -4,7 +4,7 @@
  * LSH table with the following goal in mind: for a random subset of NUM_QUERIES
  * points, we would like to find a nearest neighbor (w.r.t. cosine similarity)
  * with probability at least 0.9.
- * 
+ *
  * There is a function get_default_parameters, which you can use to set the
  * parameters automatically (in the code, we show how it could have been used).
  * However, we recommend to set parameters manually to maximize the performance.
@@ -116,7 +116,7 @@ void read_dataset(string file_name, vector<Point> *dataset) {
  * Normalizes the dataset.
  */
 void normalize(vector<Point> *dataset) {
-  for (auto &p: *dataset) {
+  for (auto &p : *dataset) {
     p.normalize();
   }
 }
@@ -140,19 +140,18 @@ void gen_queries(vector<Point> *dataset, vector<Point> *queries) {
 /*
  * Generates answers for the queries using the (optimized) linear scan.
  */
-void gen_answers(const vector<Point> &dataset,
-		 const vector<Point> &queries,
-		 vector<int> *answers) {
+void gen_answers(const vector<Point> &dataset, const vector<Point> &queries,
+                 vector<int> *answers) {
   answers->resize(queries.size());
   int outer_counter = 0;
-  for (const auto &query: queries) {
+  for (const auto &query : queries) {
     float best = -10.0;
     int inner_counter = 0;
-    for (const auto &datapoint: dataset) {
+    for (const auto &datapoint : dataset) {
       float score = query.dot(datapoint);
       if (score > best) {
-	(*answers)[outer_counter] = inner_counter;
-	best = score;
+        (*answers)[outer_counter] = inner_counter;
+        best = score;
       }
       ++inner_counter;
     }
@@ -164,19 +163,18 @@ void gen_answers(const vector<Point> &dataset,
  * Computes the probability of success using a given number of probes.
  */
 double evaluate_num_probes(LSHNearestNeighborTable<Point> *table,
-			   const vector<Point> &queries,
-			   const vector<int> &answers,
-			   int num_probes) {
+                           const vector<Point> &queries,
+                           const vector<int> &answers, int num_probes) {
   table->set_num_probes(num_probes);
   int outer_counter = 0;
   int num_matches = 0;
   vector<int32_t> candidates;
-  for (const auto &query: queries) {
+  for (const auto &query : queries) {
     table->get_candidates_with_duplicates(query, &candidates);
-    for (auto x: candidates) {
+    for (auto x : candidates) {
       if (x == answers[outer_counter]) {
-	++num_matches;
-	break;
+        ++num_matches;
+        break;
       }
     }
     ++outer_counter;
@@ -190,13 +188,12 @@ double evaluate_num_probes(LSHNearestNeighborTable<Point> *table,
  * measure the time.
  */
 double evaluate_query_time(LSHNearestNeighborTable<Point> *table,
-			   const vector<Point> &queries,
-			   const vector<int> &answers,
-			   int num_probes) {
+                           const vector<Point> &queries,
+                           const vector<int> &answers, int num_probes) {
   table->set_num_probes(num_probes);
   int outer_counter = 0;
   int num_matches = 0;
-  for (const auto &query: queries) {
+  for (const auto &query : queries) {
     if (table->find_nearest_neighbor(query) == answers[outer_counter]) {
       ++num_matches;
     }
@@ -210,14 +207,12 @@ double evaluate_query_time(LSHNearestNeighborTable<Point> *table,
  * at least 0.9 using binary search.
  */
 int find_num_probes(LSHNearestNeighborTable<Point> *table,
-		    const vector<Point> &queries,
-		    const vector<int> &answers,
-		    int start_num_probes) {
+                    const vector<Point> &queries, const vector<int> &answers,
+                    int start_num_probes) {
   int num_probes = start_num_probes;
   for (;;) {
     cout << "trying " << num_probes << " probes" << endl;
-    double precision =
-      evaluate_num_probes(table, queries, answers, num_probes);
+    double precision = evaluate_num_probes(table, queries, answers, num_probes);
     if (precision >= 0.9) {
       break;
     }
@@ -230,12 +225,10 @@ int find_num_probes(LSHNearestNeighborTable<Point> *table,
   while (r - l > 1) {
     int num_probes = (l + r) / 2;
     cout << "trying " << num_probes << " probes" << endl;
-    double precision =
-      evaluate_num_probes(table, queries, answers, num_probes);
+    double precision = evaluate_num_probes(table, queries, answers, num_probes);
     if (precision >= 0.9) {
       r = num_probes;
-    }
-    else {
+    } else {
       l = num_probes;
     }
   }
@@ -255,7 +248,7 @@ int main() {
 
     // normalize the data points
     cout << "normalizing points" << endl;
-    normalize(&dataset); 
+    normalize(&dataset);
     cout << "done" << endl;
 
     // find the center of mass
@@ -281,10 +274,10 @@ int main() {
 
     // re-centering the data to make it more isotropic
     cout << "re-centering" << endl;
-    for (auto &datapoint: dataset) {
+    for (auto &datapoint : dataset) {
       datapoint -= center;
     }
-    for (auto &query: queries) {
+    for (auto &query : queries) {
       query -= center;
     }
     cout << "done" << endl;
@@ -305,9 +298,9 @@ int main() {
 
       LSHConstructionParameters params
         = get_default_parameters<Point>(dataset.size(),
-				   dataset[0].size(),
-				   DistanceFunction::EuclideanSquared,
-				   true);
+                                   dataset[0].size(),
+                                   DistanceFunction::EuclideanSquared,
+                                   true);
     */
     cout << "building the index based on the cross-polytope LSH" << endl;
     t1 = high_resolution_clock::now();
@@ -328,29 +321,25 @@ int main() {
     table->reset_query_statistics();
     double score = evaluate_query_time(&*table, queries, answers, num_probes);
     auto statistics = table->get_query_statistics();
-    cout << "average total query time: "
-	 << statistics.average_total_query_time << endl;
-    cout << "average lsh time: "
-	 << statistics.average_lsh_time << endl;
-    cout << "average hash table time: "
-	 << statistics.average_hash_table_time << endl;
-    cout << "average distance time: "
-	 << statistics.average_distance_time << endl;
+    cout << "average total query time: " << statistics.average_total_query_time
+         << endl;
+    cout << "average lsh time: " << statistics.average_lsh_time << endl;
+    cout << "average hash table time: " << statistics.average_hash_table_time
+         << endl;
+    cout << "average distance time: " << statistics.average_distance_time
+         << endl;
     cout << "average number of candidates: "
-	 << statistics.average_num_candidates << endl;
+         << statistics.average_num_candidates << endl;
     cout << "average number of unique candidates: "
-	 << statistics.average_num_unique_candidates << endl;
+         << statistics.average_num_unique_candidates << endl;
     cout << "score: " << score << endl;
-  }   
-  catch (runtime_error &e) {
+  } catch (runtime_error &e) {
     cerr << "Runtime error: " << e.what() << endl;
     return 1;
-  }
-  catch (exception &e) {
+  } catch (exception &e) {
     cerr << "Exception: " << e.what() << endl;
     return 1;
-  }
-  catch (...) {
+  } catch (...) {
     cerr << "ERROR" << endl;
     return 1;
   }

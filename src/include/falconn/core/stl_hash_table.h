@@ -8,10 +8,8 @@
 namespace falconn {
 namespace core {
 
-template<
-typename KeyType,
-typename ValueType = int32_t,
-typename IndexType = int_fast64_t>
+template <typename KeyType, typename ValueType = int32_t,
+          typename IndexType = int_fast64_t>
 class STLHashTable {
  public:
   class Factory {
@@ -27,25 +25,18 @@ class STLHashTable {
         InnerIterator;
     Iterator() {}
 
-    Iterator(const InnerIterator& iter)
-        : iter_(iter) {}
+    Iterator(const InnerIterator& iter) : iter_(iter) {}
 
-    ValueType operator * () const {
-      return iter_->second;
-    }
+    ValueType operator*() const { return iter_->second; }
 
-    Iterator& operator++ () {
+    Iterator& operator++() {
       ++iter_;
       return *this;
     }
 
-    bool operator != (const Iterator& iter) const {
-      return iter_ != iter.iter_;
-    }
+    bool operator!=(const Iterator& iter) const { return iter_ != iter.iter_; }
 
-    bool operator == (const Iterator& iter) const {
-      return iter_ == iter.iter_;
-    }
+    bool operator==(const Iterator& iter) const { return iter_ == iter.iter_; }
 
    private:
     InnerIterator iter_;

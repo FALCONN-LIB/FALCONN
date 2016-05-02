@@ -17,32 +17,30 @@ using fc::IdentityTransformation;
 using fc::NormalizingTransformation;
 using std::vector;
 
-
 TEST(DataTransformationTest, IdentityTest1) {
   typedef DenseVector<float> Vec;
   int dim = 4;
-  
+
   Vec p1(dim);
   p1[0] = 5.0;
   p1[1] = 0.0;
   p1[2] = -7.0;
   p1[3] = 0.0;
   Vec p1copy = p1;
-  
+
   IdentityTransformation<Vec> transformation;
   transformation.apply(&p1);
- 
+
   EXPECT_EQ(5.0, p1[0]);
   for (int ii = 0; ii < dim; ++ii) {
     EXPECT_EQ(p1copy[ii], p1[ii]);
   }
 }
 
-
 TEST(DataTransformationTest, NormalizingTest1) {
   typedef DenseVector<float> Vec;
   int dim = 4;
-  
+
   Vec p1(dim);
   p1[0] = 0.8;
   p1[1] = 0.0;
@@ -50,10 +48,10 @@ TEST(DataTransformationTest, NormalizingTest1) {
   p1[3] = 0.0;
   Vec p1copy = p1;
   p1 *= 3.0;
-  
+
   NormalizingTransformation<Vec> transformation;
   transformation.apply(&p1);
- 
+
   float eps = 0.00001;
   EXPECT_NEAR(0.8, p1[0], eps);
   for (int ii = 0; ii < dim; ++ii) {
@@ -61,11 +59,10 @@ TEST(DataTransformationTest, NormalizingTest1) {
   }
 }
 
-
 TEST(DataTransformationTest, CenteringTest1) {
   typedef DenseVector<float> Vec;
   int dim = 4;
-  
+
   Vec p1(dim);
   p1 << 0.5, 0.2, 0.0, 0.9;
   Vec p2(dim);
@@ -77,7 +74,7 @@ TEST(DataTransformationTest, CenteringTest1) {
   points.push_back(p2);
   points.push_back(p3);
   ArrayDataStorage<Vec> storage(points);
-  
+
   CenteringTransformation<Vec, ArrayDataStorage<Vec>> transformation(storage);
 
   Vec p4(dim);
@@ -90,11 +87,10 @@ TEST(DataTransformationTest, CenteringTest1) {
   }
 }
 
-
 TEST(DataTransformationTest, ComposedTest1) {
   typedef DenseVector<float> Vec;
   int dim = 4;
-  
+
   Vec p1(dim);
   p1 << 1.0, 2.0, 0.0, 2.0;
   Vec p2(dim);
@@ -103,7 +99,7 @@ TEST(DataTransformationTest, ComposedTest1) {
   points.push_back(p1);
   points.push_back(p2);
   ArrayDataStorage<Vec> storage(points);
- 
+
   typedef CenteringTransformation<Vec, ArrayDataStorage<Vec>> CenteringType;
   typedef NormalizingTransformation<Vec> NormalizingType;
 

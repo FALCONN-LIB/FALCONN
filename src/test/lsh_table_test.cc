@@ -16,7 +16,7 @@ namespace ft = falconn::test;
 
 using fc::DynamicCompositeHashTable;
 using fc::DynamicLinearProbingHashTable;
-//using lsh::DynamicLSHTable;
+// using lsh::DynamicLSHTable;
 using fc::HyperplaneHashDense;
 using fc::HyperplaneHashSparse;
 using fc::PlainArrayDataStorage;
@@ -28,7 +28,7 @@ using std::make_pair;
 using std::vector;
 
 typedef HyperplaneHashDense<float>::VectorType DenseVector;
-//typedef HyperplaneHashSparse<float>::VectorType SparseVector;
+// typedef HyperplaneHashSparse<float>::VectorType SparseVector;
 
 int default_num_threads = 1;
 
@@ -68,17 +68,13 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest1) {
 
   HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, points, default_num_threads);
   LSHTableType::Query query(lsh_table);
 
@@ -108,7 +104,6 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest1) {
   vector<int32_t> expected4 = {};
   check_result(make_pair(res4.begin(), res4.end()), expected4);
 }
-
 
 TEST(LSHTableTest, LSHTableGetCandidatesTest2) {
   const int dim = 5;
@@ -142,17 +137,13 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest2) {
 
   HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, points, default_num_threads);
   LSHTableType::Query query(lsh_table);
 
@@ -182,7 +173,6 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest2) {
   vector<int32_t> expected4 = {0, 1};
   check_result(make_pair(res4.begin(), res4.end()), expected4);
 }
-
 
 TEST(LSHTableTest, LSHTableGetCandidatesTest3) {
   const int dim = 5;
@@ -216,17 +206,13 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest3) {
 
   HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, points, default_num_threads);
   LSHTableType::Query query(lsh_table);
 
@@ -258,7 +244,6 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest3) {
   vector<int32_t> expected4 = {0};
   check_result(make_pair(res4.begin(), res4.end()), expected4);
 }
-
 
 TEST(LSHTableTest, LSHTableGetCandidatesTest4) {
   const int dim = 4;
@@ -299,17 +284,13 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest4) {
   std::mt19937_64 gen(seed);
   std::uniform_int_distribution<> dist(1, 1000000000);
 
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
-  
+      CompositeTableType;
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
+
   std::vector<double> dist1(3, 0.0), dist2(3, 0.0), dist3(3, 0.0),
       dist4(3, 0.0);
 
@@ -317,9 +298,7 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest4) {
     int trial_seed = dist(gen);
 
     std::vector<int> point_permutation = {0, 1, 2};
-    std::shuffle(point_permutation.begin(),
-                 point_permutation.end(),
-                 gen);
+    std::shuffle(point_permutation.begin(), point_permutation.end(), gen);
 
     vector<DenseVector> cur_points;
     for (int ii = 0; ii < 3; ++ii) {
@@ -330,7 +309,7 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest4) {
     StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
     CompositeTableType hash_table(l, &table_factory);
     LSHTableType lsh_table(&lsh_object, &hash_table, cur_points,
-        default_num_threads);
+                           default_num_threads);
     LSHTableType::Query query(lsh_table);
 
     vector<int32_t> res1;
@@ -361,7 +340,7 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest4) {
     ASSERT_GE(res4[0], 0);
     dist4[point_permutation[res4[0]]] += 1.0 / num_trials;
   }
-  
+
   EXPECT_GT(dist1[0], dist1[1]);
   EXPECT_GT(dist1[0], dist1[2]);
   EXPECT_GT(dist1[1], dist1[2]);
@@ -378,7 +357,6 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest4) {
   EXPECT_GT(dist4[2], dist4[0]);
   EXPECT_GT(dist4[2], dist4[1]);
 }
-
 
 TEST(LSHTableTest, LSHTableGetCandidatesTest5) {
   const int dim = 4;
@@ -397,17 +375,13 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest5) {
 
   HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, points, default_num_threads);
   LSHTableType::Query query(lsh_table);
 
@@ -431,27 +405,21 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest6) {
   int seed = 65840120;
   int table_size = 10;
 
-  float data[] = {1.0, 0.0, 0.0, 0.0,
-                  0.8, 0.2, 0.0, 0.0,
-                  0.0, 0.0, 1.0, 0.0};
+  float data[] = {1.0, 0.0, 0.0, 0.0, 0.8, 0.2, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0};
   int num_points = 3;
 
   PlainArrayDataStorage<DenseVector, int32_t> ds(data, num_points, dim);
 
   HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType,
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType,
                          PlainArrayDataStorage<DenseVector, int32_t>>
-          LSHTableType;
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, ds, default_num_threads);
   LSHTableType::Query query(lsh_table);
 
@@ -483,7 +451,6 @@ TEST(LSHTableTest, LSHTableGetCandidatesTest6) {
   vector<int32_t> expected4 = {};
   check_result(make_pair(res4.begin(), res4.end()), expected4);
 }
-
 
 TEST(LSHTableTest, LSHTableMultithreadedTest1) {
   const int num_threads = 2;
@@ -518,17 +485,13 @@ TEST(LSHTableTest, LSHTableMultithreadedTest1) {
 
   HyperplaneHashDense<float> lsh_object(dim, k, l, seed);
   StaticLinearProbingHashTable<uint32_t>::Factory table_factory(table_size);
-  typedef StaticCompositeHashTable<uint32_t,
-                                   int32_t,
+  typedef StaticCompositeHashTable<uint32_t, int32_t,
                                    StaticLinearProbingHashTable<uint32_t>>
-          CompositeTableType;
+      CompositeTableType;
   CompositeTableType hash_table(l, &table_factory);
-  typedef StaticLSHTable<DenseVector,
-                         int32_t,
-                         HyperplaneHashDense<float>,
-                         uint32_t,
-                         CompositeTableType>
-          LSHTableType;
+  typedef StaticLSHTable<DenseVector, int32_t, HyperplaneHashDense<float>,
+                         uint32_t, CompositeTableType>
+      LSHTableType;
   LSHTableType lsh_table(&lsh_object, &hash_table, points, num_threads);
   LSHTableType::Query query(lsh_table);
 
