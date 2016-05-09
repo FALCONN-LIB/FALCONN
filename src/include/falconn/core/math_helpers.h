@@ -4,7 +4,7 @@
 namespace falconn {
 namespace core {
 
-int_fast64_t find_next_power_of_two(int_fast64_t x) {
+inline int_fast64_t find_next_power_of_two(int_fast64_t x) {
   int_fast64_t res = 1;
   while (res < x) {
     res *= 2;
@@ -12,7 +12,7 @@ int_fast64_t find_next_power_of_two(int_fast64_t x) {
   return res;
 }
 
-int_fast64_t log2ceil(int_fast64_t x) {
+inline int_fast64_t log2ceil(int_fast64_t x) {
   int_fast64_t res = 0;
   int_fast64_t cur = 1;
   while (cur < x) {
