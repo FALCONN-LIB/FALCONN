@@ -87,6 +87,8 @@ and analyzed in the following research paper:
 > Schmidt, "Practical and Optimal LSH for Angular Distance", NIPS 2015, full
 > version available at [arXiv:1509.02897](http://arxiv.org/abs/1509.02897)
 
+This is the right paper to cite, if you use FFHT for your research projects.
+
 ## Acknowledgments
 
 We thank Ruslan Savchenko for useful discussions.
