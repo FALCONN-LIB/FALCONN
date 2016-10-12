@@ -25,7 +25,7 @@ class LSHNearestNeighborTableError : public FalconnError {
 };
 
 ///
-/// The common interface shared by all LSH table wrappers.
+/// Common interface shared by all LSH table wrappers.
 ///
 /// The template parameter PointType should be one of the two point types
 /// introduced above (DenseVector and SparseVector), e.g., DenseVector<float>.
@@ -44,7 +44,7 @@ class LSHNearestNeighborTable {
   ///
   virtual void set_num_probes(int_fast64_t num_probes) = 0;
   ///
-  /// Gets the number of probes used for each query.
+  /// Returns the number of probes used for each query.
   ///
   virtual int_fast64_t get_num_probes() = 0;
 
@@ -57,7 +57,7 @@ class LSHNearestNeighborTable {
   ///
   virtual void set_max_num_candidates(int_fast64_t max_num_candidates) = 0;
   ///
-  /// Gets the maximum number of candidates considered in each query.
+  /// Returns the maximum number of candidates considered in each query.
   ///
   virtual int_fast64_t get_max_num_candidates() = 0;
   ///
@@ -125,7 +125,7 @@ class LSHNearestNeighborTable {
 };
 
 ///
-/// The supported LSH families.
+/// Supported LSH families.
 ///
 enum class LSHFamily {
   Unknown = 0,
@@ -147,7 +147,7 @@ enum class LSHFamily {
   /// Kengo Terasawa, Yuzuru Tanaka
   /// WADS 2007
   ///
-  /// Our implementation utilizes the improvements described in
+  /// Our implementation uses the algorithmic improvements described in
   ///
   /// "Practical and Optimal LSH for Angular Distance",
   /// Alexandr Andoni, Piotr Indyk, Thijs Laarhoven, Ilya Razenshteyn, Ludwig
@@ -161,7 +161,7 @@ static const std::array<const char*, 3> kLSHFamilyStrings = {
     "unknown", "hyperplane", "cross_polytope"};
 
 ///
-/// The supported distance functions.
+/// Supported distance functions.
 ///
 /// Note that we use distance functions only to filter the candidates in
 /// find_nearest_neighbor, find_k_nearest_neighbors, and find_near_neighbors.
@@ -187,7 +187,7 @@ static const std::array<const char*, 3> kDistanceFunctionStrings = {
     "unknown", "negative_inner_product", "euclidean_squared"};
 
 ///
-/// The supported low-level storage hash tables.
+/// Supported low-level storage hash tables.
 ///
 enum class StorageHashTable {
   Unknown = 0,
@@ -198,19 +198,19 @@ enum class StorageHashTable {
   FlatHashTable = 1,
   ///
   /// The same as FlatHashTable, but everything is packed using as few bits as
-  /// possible. THIS OPTION IS RECOMMENDED unless the number of bins is much
+  /// possible. This option is recommended unless the number of bins is much
   /// larger than the number of points (in which case we recommend to use
   /// LinearProbingHashTable).
   ///
   BitPackedFlatHashTable = 2,
   ///
-  /// Here, std::unordered_map is used. One tables takes space O(#points), but
+  /// Here, std::unordered_map is used. One table takes space O(#points), but
   /// the leading constant is much higher than that of bucket-based approaches.
   ///
   STLHashTable = 3,
   ///
   /// The same as STLHashTable, but the custom implementation based on
-  /// *linear probing* is used. THIS OPTION IS RECOMMENDED if the number of
+  /// *linear probing* is used. This option is recommended if the number of
   /// bins is much higher than the number of points.
   ///
   LinearProbingHashTable = 4
