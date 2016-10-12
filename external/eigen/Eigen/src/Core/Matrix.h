@@ -13,6 +13,45 @@
 
 namespace Eigen {
 
+namespace internal {
+template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+struct traits<Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> >
+{
+private:
+  enum { size = internal::size_at_compile_time<_Rows,_Cols>::ret };
+  typedef typename find_best_packet<_Scalar,size>::type PacketScalar;
+  enum {
+      row_major_bit = _Options&RowMajor ? RowMajorBit : 0,
+      is_dynamic_size_storage = _MaxRows==Dynamic || _MaxCols==Dynamic,
+      max_size = is_dynamic_size_storage ? Dynamic : _MaxRows*_MaxCols,
+      default_alignment = compute_default_alignment<_Scalar,max_size>::value,
+      actual_alignment = ((_Options&DontAlign)==0) ? default_alignment : 0,
+      required_alignment = unpacket_traits<PacketScalar>::alignment,
+      packet_access_bit = (packet_traits<_Scalar>::Vectorizable && (EIGEN_UNALIGNED_VECTORIZE || (actual_alignment>=required_alignment))) ? PacketAccessBit : 0
+    };
+    
+public:
+  typedef _Scalar Scalar;
+  typedef Dense StorageKind;
+  typedef Eigen::Index StorageIndex;
+  typedef MatrixXpr XprKind;
+  enum {
+    RowsAtCompileTime = _Rows,
+    ColsAtCompileTime = _Cols,
+    MaxRowsAtCompileTime = _MaxRows,
+    MaxColsAtCompileTime = _MaxCols,
+    Flags = compute_matrix_flags<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::ret,
+    Options = _Options,
+    InnerStrideAtCompileTime = 1,
+    OuterStrideAtCompileTime = (Options&RowMajor) ? ColsAtCompileTime : RowsAtCompileTime,
+    
+    // FIXME, the following flag in only used to define NeedsToAlign in PlainObjectBase
+    EvaluatorFlags = LinearAccessBit | DirectAccessBit | packet_access_bit | row_major_bit,
+    Alignment = actual_alignment
+  };
+};
+}
+
 /** \class Matrix
   * \ingroup Core_Module
   *
@@ -67,7 +106,7 @@ namespace Eigen {
   * \endcode
   *
   * This class can be extended with the help of the plugin mechanism described on the page
-  * \ref TopicCustomizingEigen by defining the preprocessor symbol \c EIGEN_MATRIX_PLUGIN.
+  * \ref TopicCustomizing_Plugins by defining the preprocessor symbol \c EIGEN_MATRIX_PLUGIN.
   *
   * <i><b>Some notes:</b></i>
   *
@@ -98,7 +137,7 @@ namespace Eigen {
   * </dl>
   *
   * <i><b>ABI and storage layout</b></i>
-  * 
+  *
   * The table below summarizes the ABI of some possible Matrix instances which is fixed thorough the lifetime of Eigen 3.
   * <table  class="manual">
   * <tr><th>Matrix type</th><th>Equivalent C structure</th></tr>
@@ -130,49 +169,10 @@ namespace Eigen {
   * </table>
   * Note that in this table Rows, Cols, MaxRows and MaxCols are all positive integers. A(S) is defined to the largest possible power-of-two
   * smaller to EIGEN_MAX_STATIC_ALIGN_BYTES.
-  * 
-  * \see MatrixBase for the majority of the API methods for matrices, \ref TopicClassHierarchy, 
-  * \ref TopicStorageOrders 
+  *
+  * \see MatrixBase for the majority of the API methods for matrices, \ref TopicClassHierarchy,
+  * \ref TopicStorageOrders
   */
-
-namespace internal {
-template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
-struct traits<Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> >
-{
-private:
-  enum { size = internal::size_at_compile_time<_Rows,_Cols>::ret };
-  typedef typename find_best_packet<_Scalar,size>::type PacketScalar;
-  enum {
-      row_major_bit = _Options&RowMajor ? RowMajorBit : 0,
-      is_dynamic_size_storage = _MaxRows==Dynamic || _MaxCols==Dynamic,
-      max_size = is_dynamic_size_storage ? Dynamic : _MaxRows*_MaxCols,
-      default_alignment = compute_default_alignment<_Scalar,max_size>::value,
-      actual_alignment = ((_Options&DontAlign)==0) ? default_alignment : 0,
-      required_alignment = unpacket_traits<PacketScalar>::alignment,
-      packet_access_bit = packet_traits<_Scalar>::Vectorizable && (actual_alignment>=required_alignment) ? PacketAccessBit : 0
-    };
-    
-public:
-  typedef _Scalar Scalar;
-  typedef Dense StorageKind;
-  typedef Eigen::Index StorageIndex;
-  typedef MatrixXpr XprKind;
-  enum {
-    RowsAtCompileTime = _Rows,
-    ColsAtCompileTime = _Cols,
-    MaxRowsAtCompileTime = _MaxRows,
-    MaxColsAtCompileTime = _MaxCols,
-    Flags = compute_matrix_flags<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols>::ret,
-    Options = _Options,
-    InnerStrideAtCompileTime = 1,
-    OuterStrideAtCompileTime = (Options&RowMajor) ? ColsAtCompileTime : RowsAtCompileTime,
-    
-    // FIXME, the following flag in only used to define NeedsToAlign in PlainObjectBase
-    EvaluatorFlags = LinearAccessBit | DirectAccessBit | packet_access_bit | row_major_bit,
-    Alignment = actual_alignment
-  };
-};
-}
 
 template<typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
 class Matrix
@@ -268,9 +268,9 @@ class Matrix
       : Base(internal::constructor_without_unaligned_array_assert())
     { Base::_check_template_params(); EIGEN_INITIALIZE_COEFFS_IF_THAT_OPTION_IS_ENABLED }
 
-#ifdef EIGEN_HAVE_RVALUE_REFERENCES
+#if EIGEN_HAS_RVALUE_REFERENCES
     EIGEN_DEVICE_FUNC
-    Matrix(Matrix&& other)
+    Matrix(Matrix&& other) EIGEN_NOEXCEPT_IF(std::is_nothrow_move_constructible<Scalar>::value)
       : Base(std::move(other))
     {
       Base::_check_template_params();
@@ -278,7 +278,7 @@ class Matrix
         Base::_set_noalias(other);
     }
     EIGEN_DEVICE_FUNC
-    Matrix& operator=(Matrix&& other)
+    Matrix& operator=(Matrix&& other) EIGEN_NOEXCEPT_IF(std::is_nothrow_move_assignable<Scalar>::value)
     {
       other.swap(*this);
       return *this;

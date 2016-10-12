@@ -10,15 +10,16 @@
 #ifndef EIGEN_SUPERLUSUPPORT_H
 #define EIGEN_SUPERLUSUPPORT_H
 
-namespace Eigen { 
+namespace Eigen {
 
+#if defined(SUPERLU_MAJOR_VERSION) && (SUPERLU_MAJOR_VERSION >= 5)
 #define DECL_GSSVX(PREFIX,FLOATTYPE,KEYTYPE)		\
     extern "C" {                                                                                          \
       extern void PREFIX##gssvx(superlu_options_t *, SuperMatrix *, int *, int *, int *,                  \
                                 char *, FLOATTYPE *, FLOATTYPE *, SuperMatrix *, SuperMatrix *,           \
                                 void *, int, SuperMatrix *, SuperMatrix *,                                \
                                 FLOATTYPE *, FLOATTYPE *, FLOATTYPE *, FLOATTYPE *,                       \
-                                mem_usage_t *, SuperLUStat_t *, int *);                           \
+                                GlobalLU_t *, mem_usage_t *, SuperLUStat_t *, int *);                     \
     }                                                                                                     \
     inline float SuperLU_gssvx(superlu_options_t *options, SuperMatrix *A,                                \
          int *perm_c, int *perm_r, int *etree, char *equed,                                               \
@@ -28,12 +29,37 @@ namespace Eigen {
          FLOATTYPE *recip_pivot_growth,                                                                   \
          FLOATTYPE *rcond, FLOATTYPE *ferr, FLOATTYPE *berr,                                              \
          SuperLUStat_t *stats, int *info, KEYTYPE) {                                                      \
-    mem_usage_t mem_usage;                                                                        \
+    mem_usage_t mem_usage;                                                                                \
+    GlobalLU_t gLU;                                                                                       \
+    PREFIX##gssvx(options, A, perm_c, perm_r, etree, equed, R, C, L,                                      \
+         U, work, lwork, B, X, recip_pivot_growth, rcond,                                                 \
+         ferr, berr, &gLU, &mem_usage, stats, info);                                                      \
+    return mem_usage.for_lu; /* bytes used by the factor storage */                                       \
+  }
+#else // version < 5.0
+#define DECL_GSSVX(PREFIX,FLOATTYPE,KEYTYPE)		\
+    extern "C" {                                                                                          \
+      extern void PREFIX##gssvx(superlu_options_t *, SuperMatrix *, int *, int *, int *,                  \
+                                char *, FLOATTYPE *, FLOATTYPE *, SuperMatrix *, SuperMatrix *,           \
+                                void *, int, SuperMatrix *, SuperMatrix *,                                \
+                                FLOATTYPE *, FLOATTYPE *, FLOATTYPE *, FLOATTYPE *,                       \
+                                mem_usage_t *, SuperLUStat_t *, int *);                                   \
+    }                                                                                                     \
+    inline float SuperLU_gssvx(superlu_options_t *options, SuperMatrix *A,                                \
+         int *perm_c, int *perm_r, int *etree, char *equed,                                               \
+         FLOATTYPE *R, FLOATTYPE *C, SuperMatrix *L,                                                      \
+         SuperMatrix *U, void *work, int lwork,                                                           \
+         SuperMatrix *B, SuperMatrix *X,                                                                  \
+         FLOATTYPE *recip_pivot_growth,                                                                   \
+         FLOATTYPE *rcond, FLOATTYPE *ferr, FLOATTYPE *berr,                                              \
+         SuperLUStat_t *stats, int *info, KEYTYPE) {                                                      \
+    mem_usage_t mem_usage;                                                                                \
     PREFIX##gssvx(options, A, perm_c, perm_r, etree, equed, R, C, L,                                      \
          U, work, lwork, B, X, recip_pivot_growth, rcond,                                                 \
          ferr, berr, &mem_usage, stats, info);                                                            \
     return mem_usage.for_lu; /* bytes used by the factor storage */                                       \
   }
+#endif
 
 DECL_GSSVX(s,float,float)
 DECL_GSSVX(c,float,std::complex<float>)
@@ -456,7 +482,7 @@ class SuperLUBase : public SparseSolverBase<Derived>
   *
   * \implsparsesolverconcept
   *
-  * \sa \ref TutorialSparseDirectSolvers
+  * \sa \ref TutorialSparseSolverConcept, class SparseLU
   */
 template<typename _MatrixType>
 class SuperLU : public SuperLUBase<_MatrixType,SuperLU<_MatrixType> >
@@ -809,7 +835,7 @@ typename SuperLU<MatrixType>::Scalar SuperLU<MatrixType>::determinant() const
   *
   * \implsparsesolverconcept
   *
-  * \sa \ref TutorialSparseDirectSolvers, class ConjugateGradient, class BiCGSTAB
+  * \sa \ref TutorialSparseSolverConcept, class IncompleteLUT, class ConjugateGradient, class BiCGSTAB
   */
 
 template<typename _MatrixType>
@@ -986,7 +1012,7 @@ void SuperILU<MatrixType>::_solve_impl(const MatrixBase<Rhs> &b, MatrixBase<Dest
                 &m_sluStat, &info, Scalar());
   StatFree(&m_sluStat);
   
-  if(&x.coeffRef(0) != x_ref.data())
+  if(x.derived().data() != x_ref.data())
     x = x_ref;
 
   m_info = info==0 ? Success : NumericalIssue;

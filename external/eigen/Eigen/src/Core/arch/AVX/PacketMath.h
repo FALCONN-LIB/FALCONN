@@ -66,6 +66,7 @@ template<> struct packet_traits<float>  : default_packet_traits
     HasExp  = 1,
     HasSqrt = 1,
     HasRsqrt = 1,
+    HasTanh  = EIGEN_FAST_MATH,
     HasBlend = 1,
     HasRound = 1,
     HasFloor = 1,
@@ -92,6 +93,9 @@ template<> struct packet_traits<double> : default_packet_traits
     HasCeil = 1
   };
 };
+
+template<> struct scalar_div_cost<float,true> { enum { value = 14 }; };
+template<> struct scalar_div_cost<double,true> { enum { value = 16 }; };
 
 /* Proper support for integers is only provided by AVX2. In the meantime, we'll
    use SSE instructions and packets to deal with integers.
@@ -152,7 +156,7 @@ template<> EIGEN_STRONG_INLINE Packet8i pdiv<Packet8i>(const Packet8i& /*a*/, co
 
 #ifdef __FMA__
 template<> EIGEN_STRONG_INLINE Packet8f pmadd(const Packet8f& a, const Packet8f& b, const Packet8f& c) {
-#if EIGEN_COMP_GNUC || EIGEN_COMP_CLANG
+#if ( EIGEN_COMP_GNUC_STRICT || (EIGEN_COMP_CLANG && (EIGEN_COMP_CLANG<308)) )
   // clang stupidly generates a vfmadd213ps instruction plus some vmovaps on registers,
   // and gcc stupidly generates a vfmadd132ps instruction,
   // so let's enforce it to generate a vfmadd231ps instruction since the most common use case is to accumulate
@@ -165,7 +169,7 @@ template<> EIGEN_STRONG_INLINE Packet8f pmadd(const Packet8f& a, const Packet8f&
 #endif
 }
 template<> EIGEN_STRONG_INLINE Packet4d pmadd(const Packet4d& a, const Packet4d& b, const Packet4d& c) {
-#if EIGEN_COMP_GNUC || EIGEN_COMP_CLANG
+#if ( EIGEN_COMP_GNUC_STRICT || (EIGEN_COMP_CLANG && (EIGEN_COMP_CLANG<308)) )
   // see above
   Packet4d res = c;
   __asm__("vfmadd231pd %[a], %[b], %[c]" : [c] "+x" (res) : [a] "x" (a), [b] "x" (b));

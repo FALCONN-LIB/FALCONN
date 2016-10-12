@@ -124,7 +124,7 @@ struct member_lpnorm {
 template <typename BinaryOp, typename Scalar>
 struct member_redux {
   typedef typename result_of<
-                     BinaryOp(Scalar,Scalar)
+                     BinaryOp(const Scalar&,const Scalar&)
                    >::type  result_type;
   template<typename _Scalar, int Size> struct Cost
   { enum { value = (Size-1) * functor_traits<BinaryOp>::Cost }; };
@@ -141,8 +141,8 @@ struct member_redux {
   *
   * \brief Pseudo expression providing partial reduction operations
   *
-  * \param ExpressionType the type of the object on which to do partial reductions
-  * \param Direction indicates the direction of the redux (#Vertical or #Horizontal)
+  * \tparam ExpressionType the type of the object on which to do partial reductions
+  * \tparam Direction indicates the direction of the redux (#Vertical or #Horizontal)
   *
   * This class represents a pseudo expression with partial reduction features.
   * It is the return type of DenseBase::colwise() and DenseBase::rowwise()
@@ -187,11 +187,11 @@ template<typename ExpressionType, int Direction> class VectorwiseOp
 
   protected:
 
-    /** \internal
-      * \returns the i-th subvector according to the \c Direction */
     typedef typename internal::conditional<isVertical,
                                typename ExpressionType::ColXpr,
                                typename ExpressionType::RowXpr>::type SubVector;
+    /** \internal
+      * \returns the i-th subvector according to the \c Direction */
     EIGEN_DEVICE_FUNC
     SubVector subVector(Index i)
     {
@@ -284,6 +284,7 @@ template<typename ExpressionType, int Direction> class VectorwiseOp
     typedef typename ReturnType<internal::member_any>::Type AnyReturnType;
     typedef PartialReduxExpr<ExpressionType, internal::member_count<Index>, Direction> CountReturnType;
     typedef typename ReturnType<internal::member_prod>::Type ProdReturnType;
+    typedef Reverse<const ExpressionType, Direction> ConstReverseReturnType;
     typedef Reverse<ExpressionType, Direction> ReverseReturnType;
 
     template<int p> struct LpNormReturnType {
@@ -456,7 +457,15 @@ template<typename ExpressionType, int Direction> class VectorwiseOp
       *
       * \sa DenseBase::reverse() */
     EIGEN_DEVICE_FUNC
-    const ReverseReturnType reverse() const
+    const ConstReverseReturnType reverse() const
+    { return ConstReverseReturnType( _expression() ); }
+
+    /** \returns a writable matrix expression
+      * where each column (or row) are reversed.
+      *
+      * \sa reverse() const */
+    EIGEN_DEVICE_FUNC
+    ReverseReturnType reverse()
     { return ReverseReturnType( _expression() ); }
 
     typedef Replicate<ExpressionType,(isVertical?Dynamic:1),(isHorizontal?Dynamic:1)> ReplicateReturnType;
@@ -540,7 +549,7 @@ template<typename ExpressionType, int Direction> class VectorwiseOp
 
     /** Returns the expression of the sum of the vector \a other to each subvector of \c *this */
     template<typename OtherDerived> EIGEN_STRONG_INLINE EIGEN_DEVICE_FUNC
-    CwiseBinaryOp<internal::scalar_sum_op<Scalar>,
+    CwiseBinaryOp<internal::scalar_sum_op<Scalar,typename OtherDerived::Scalar>,
                   const ExpressionTypeNestedCleaned,
                   const typename ExtendedType<OtherDerived>::Type>
     operator+(const DenseBase<OtherDerived>& other) const
@@ -553,7 +562,7 @@ template<typename ExpressionType, int Direction> class VectorwiseOp
     /** Returns the expression of the difference between each subvector of \c *this and the vector \a other */
     template<typename OtherDerived>
     EIGEN_DEVICE_FUNC
-    CwiseBinaryOp<internal::scalar_difference_op<Scalar>,
+    CwiseBinaryOp<internal::scalar_difference_op<Scalar,typename OtherDerived::Scalar>,
                   const ExpressionTypeNestedCleaned,
                   const typename ExtendedType<OtherDerived>::Type>
     operator-(const DenseBase<OtherDerived>& other) const
