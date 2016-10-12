@@ -4,35 +4,35 @@
 
 #include <math.h>
 
-int FHTFloatCombined(float *buffer, int len, int chunk);
-int FHTDoubleCombined(double *buffer, int len, int chunk);
+inline int FHTFloatCombined(float *buffer, int len, int chunk);
+inline int FHTDoubleCombined(double *buffer, int len, int chunk);
 
 #ifdef __AVX__
-int FHTFloatCombinedAVX(float *buffer, int len, int chunk);
-int FHTDoubleCombinedAVX(double *buffer, int len, int chunk);
+inline int FHTFloatCombinedAVX(float *buffer, int len, int chunk);
+inline int FHTDoubleCombinedAVX(double *buffer, int len, int chunk);
 #endif
 
-void FHTFloatCombinedHelper(float *buffer, int len, int chunk);
-void FHTFloatIterativeHelper(float *buffer, int len, int logLen);
+inline void FHTFloatCombinedHelper(float *buffer, int len, int chunk);
+inline void FHTFloatIterativeHelper(float *buffer, int len, int logLen);
 
-void FHTDoubleCombinedHelper(double *buffer, int len, int chunk);
-void FHTDoubleIterativeHelper(double *buffer, int len, int logLen);
+inline void FHTDoubleCombinedHelper(double *buffer, int len, int chunk);
+inline void FHTDoubleIterativeHelper(double *buffer, int len, int logLen);
 
 #ifdef __AVX__
-void FHTFloatNormalizeAVX(float *buffer, int len);
-void FHTFloatCombinedHelperAVX(float *buffer, int len, int chunk);
-void FHTFloatIterativeHelperAVX(float *buffer, int len, int logLen);
-void FHTFloatIterative8HelperAVX(float *buffer);
-void FHTFloatIterative16HelperAVX(float *buffer);
-void FHTFloatIterative32HelperAVX(float *buffer);
-void FHTFloatIterativeLongHelperAVX(float *buffer, int len, int logLen);
+inline void FHTFloatNormalizeAVX(float *buffer, int len);
+inline void FHTFloatCombinedHelperAVX(float *buffer, int len, int chunk);
+inline void FHTFloatIterativeHelperAVX(float *buffer, int len, int logLen);
+inline void FHTFloatIterative8HelperAVX(float *buffer);
+inline void FHTFloatIterative16HelperAVX(float *buffer);
+inline void FHTFloatIterative32HelperAVX(float *buffer);
+inline void FHTFloatIterativeLongHelperAVX(float *buffer, int len, int logLen);
 
-void FHTDoubleNormalizeAVX(double *buffer, int len);
-void FHTDoubleCombinedHelperAVX(double *buffer, int len, int chunk);
-void FHTDoubleIterativeHelperAVX(double *buffer, int len, int logLen);
+inline void FHTDoubleNormalizeAVX(double *buffer, int len);
+inline void FHTDoubleCombinedHelperAVX(double *buffer, int len, int chunk);
+inline void FHTDoubleIterativeHelperAVX(double *buffer, int len, int logLen);
 #endif
 
-int FHTFloat(float *buffer, int len, int chunk) {
+inline int FHTFloat(float *buffer, int len, int chunk) {
 #ifdef __AVX__
   return FHTFloatCombinedAVX(buffer, len, chunk);
 #else
@@ -40,7 +40,7 @@ int FHTFloat(float *buffer, int len, int chunk) {
 #endif
 }
 
-int FHTDouble(double *buffer, int len, int chunk) {
+inline int FHTDouble(double *buffer, int len, int chunk) {
 #ifdef __AVX__
   return FHTDoubleCombinedAVX(buffer, len, chunk);
 #else
@@ -140,7 +140,7 @@ GEN_COMBINED_HELPER_AVX(FHTDoubleCombinedHelperAVX, FHTDoubleIterativeHelperAVX,
                         double, __m256d, 4, _mm256_load_pd, _mm256_store_pd,
                         _mm256_add_pd, _mm256_sub_pd)
 
-void FHTFloatIterative8HelperAVX(float *buffer) {
+inline void FHTFloatIterative8HelperAVX(float *buffer) {
   __m256 A, B, C, D, E, ZERO;
   ZERO = _mm256_set_ps(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   // Iteration #0
@@ -175,7 +175,7 @@ void FHTFloatIterative8HelperAVX(float *buffer) {
   A = _mm256_add_pd(A, B);        \
   B = T
 
-void FHTFloatIterative16HelperAVX(float *buffer) {
+inline void FHTFloatIterative16HelperAVX(float *buffer) {
   __m256 A, B, C, D, E, ZERO, A0, A1;
   int i;
 
@@ -208,7 +208,7 @@ void FHTFloatIterative16HelperAVX(float *buffer) {
   _mm256_store_ps(buffer + 8, _mm256_sub_ps(A0, A1));
 }
 
-void FHTFloatIterative32HelperAVX(float *buffer) {
+inline void FHTFloatIterative32HelperAVX(float *buffer) {
   __m256 A, B, C, D, E, ZERO, A0, A1, A2, A3, T;
   int i;
 
@@ -247,7 +247,7 @@ void FHTFloatIterative32HelperAVX(float *buffer) {
   _mm256_store_ps(buffer + 24, _mm256_sub_ps(A1, A3));
 }
 
-void FHTFloatIterativeHelperAVX(float *buffer, int len, int logLen) {
+inline void FHTFloatIterativeHelperAVX(float *buffer, int len, int logLen) {
   float u, v, w, x;
   if (len == 2) {
     u = buffer[0];
@@ -273,7 +273,7 @@ void FHTFloatIterativeHelperAVX(float *buffer, int len, int logLen) {
   }
 }
 
-void FHTDoubleIterativeHelperAVX(double *buffer, int len, int logLen) {
+inline void FHTDoubleIterativeHelperAVX(double *buffer, int len, int logLen) {
   // This can and needs to be optimized!
   double tmp;
   int i, step, step2, level, j, startLevel;
@@ -370,7 +370,7 @@ void FHTDoubleIterativeHelperAVX(double *buffer, int len, int logLen) {
   }
 }
 
-void FHTFloatNormalizeAVX(float *buffer, int len) {
+inline void FHTFloatNormalizeAVX(float *buffer, int len) {
   float s;
   int i;
   __m256 S, A;
@@ -390,7 +390,7 @@ void FHTFloatNormalizeAVX(float *buffer, int len) {
   }
 }
 
-void FHTDoubleNormalizeAVX(double *buffer, int len) {
+inline void FHTDoubleNormalizeAVX(double *buffer, int len) {
   double s;
   int i;
   __m256d S, A;
@@ -466,7 +466,7 @@ GEN_COMBINED(FHTDoubleCombined, FHTDoubleCombinedHelper, double, sqrt)
 
 #ifdef __AVX__
 
-void FHTFloatIterativeLongHelperAVX(float *buffer, int len, int logLen) {
+inline void FHTFloatIterativeLongHelperAVX(float *buffer, int len, int logLen) {
   int i, level, j, step, step2;
   __m256 ZERO, A, B, C, D, E;
   __m256 A0, A1, A2, A3, A4, A5, A6, A7, T;
