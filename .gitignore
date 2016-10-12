@@ -7,7 +7,7 @@ python_pkg
 python_swig
 random_benchmark
 test-output.txt
-examples/glove/glove
-examples/glove/dataset
+src/examples/glove/glove
+src/examples/glove/dataset
 src/python/test/.cache
 src/python/test/__pycache__
