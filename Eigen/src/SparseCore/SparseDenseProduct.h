@@ -48,7 +48,7 @@ struct sparse_time_dense_product_impl<SparseLhsType,DenseRhsType,DenseResType, t
       // It basically represents the minimal amount of work to be done to be worth it.
       if(threads>1 && lhsEval.nonZerosEstimate() > 20000)
       {
-        #pragma omp parallel for schedule(static) num_threads(threads)
+        #pragma omp parallel for schedule(dynamic,(n+threads*4-1)/(threads*4)) num_threads(threads)
         for(Index i=0; i<n; ++i)
           processRow(lhsEval,rhs,res,alpha,i,c);
       }
@@ -72,14 +72,16 @@ struct sparse_time_dense_product_impl<SparseLhsType,DenseRhsType,DenseResType, t
 };
 
 // FIXME: what is the purpose of the following specialization? Is it for the BlockedSparse format?
-template<typename T1, typename T2/*, int _Options, typename _StrideType*/>
-struct scalar_product_traits<T1, Ref<T2/*, _Options, _StrideType*/> >
-{
-  enum {
-    Defined = 1
-  };
-  typedef typename CwiseUnaryOp<scalar_multiple2_op<T1, typename T2::Scalar>, T2>::PlainObject ReturnType;
-};
+// -> let's disable it for now as it is conflicting with generic scalar*matrix and matrix*scalar operators
+// template<typename T1, typename T2/*, int _Options, typename _StrideType*/>
+// struct ScalarBinaryOpTraits<T1, Ref<T2/*, _Options, _StrideType*/> >
+// {
+//   enum {
+//     Defined = 1
+//   };
+//   typedef typename CwiseUnaryOp<scalar_multiple2_op<T1, typename T2::Scalar>, T2>::PlainObject ReturnType;
+// };
+
 template<typename SparseLhsType, typename DenseRhsType, typename DenseResType, typename AlphaType>
 struct sparse_time_dense_product_impl<SparseLhsType,DenseRhsType,DenseResType, AlphaType, ColMajor, true>
 {
@@ -95,7 +97,7 @@ struct sparse_time_dense_product_impl<SparseLhsType,DenseRhsType,DenseResType, A
       for(Index j=0; j<lhs.outerSize(); ++j)
       {
 //        typename Res::Scalar rhs_j = alpha * rhs.coeff(j,c);
-        typename internal::scalar_product_traits<AlphaType, typename Rhs::Scalar>::ReturnType rhs_j(alpha * rhs.coeff(j,c));
+        typename ScalarBinaryOpTraits<AlphaType, typename Rhs::Scalar>::ReturnType rhs_j(alpha * rhs.coeff(j,c));
         for(LhsInnerIterator it(lhsEval,j); it ;++it)
           res.coeffRef(it.index(),c) += it.value() * rhs_j;
       }

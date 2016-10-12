@@ -16,7 +16,21 @@
 #include <math_constants.h>
 #endif
 
+#if EIGEN_COMP_ICC>=1600 &&  __cplusplus >= 201103L
+#include <cstdint>
+#endif
+
 namespace Eigen {
+
+typedef EIGEN_DEFAULT_DENSE_INDEX_TYPE DenseIndex;
+
+/**
+ * \brief The Index type as used for the API.
+ * \details To change this, \c \#define the preprocessor symbol \c EIGEN_DEFAULT_DENSE_INDEX_TYPE.
+ * \sa \blank \ref TopicPreprocessorDirectives, StorageIndex.
+ */
+
+typedef EIGEN_DEFAULT_DENSE_INDEX_TYPE Index;
 
 namespace internal {
 
@@ -26,6 +40,16 @@ namespace internal {
   * \note In case you wonder, yes we're aware that Boost already provides all these features,
   * we however don't want to add a dependency to Boost.
   */
+
+// Only recent versions of ICC complain about using ptrdiff_t to hold pointers,
+// and older versions do not provide *intptr_t types.
+#if EIGEN_COMP_ICC>=1600 &&  __cplusplus >= 201103L
+typedef std::intptr_t  IntPtr;
+typedef std::uintptr_t UIntPtr;
+#else
+typedef std::ptrdiff_t IntPtr;
+typedef std::size_t UIntPtr;
+#endif
 
 struct true_type {  enum { value = 1 }; };
 struct false_type { enum { value = 0 }; };
@@ -115,7 +139,14 @@ private:
 
 public:
   static From ms_from;
+#ifdef __INTEL_COMPILER
+  #pragma warning push
+  #pragma warning ( disable : 2259 )
+#endif
   enum { value = sizeof(test(ms_from, 0))==sizeof(yes) };
+#ifdef __INTEL_COMPILER
+  #pragma warning pop
+#endif
 };
 
 template<typename From, typename To>
@@ -128,7 +159,7 @@ struct is_convertible
 /** \internal Allows to enable/disable an overload
   * according to a compile time condition.
   */
-template<bool Condition, typename T> struct enable_if;
+template<bool Condition, typename T=void> struct enable_if;
 
 template<typename T> struct enable_if<true,T>
 { typedef T type; };
@@ -147,6 +178,8 @@ template<typename T> struct numeric_limits
   static T epsilon() { return 0; }
   static T (max)() { assert(false && "Highest not supported for this type"); }
   static T (min)() { assert(false && "Lowest not supported for this type"); }
+  static T infinity() { assert(false && "Infinity not supported for this type"); }
+  static T quiet_NaN() { assert(false && "quiet_NaN not supported for this type"); }
 };
 template<> struct numeric_limits<float>
 {
@@ -156,6 +189,10 @@ template<> struct numeric_limits<float>
   static float (max)() { return CUDART_MAX_NORMAL_F; }
   EIGEN_DEVICE_FUNC
   static float (min)() { return FLT_MIN; }
+  EIGEN_DEVICE_FUNC
+  static float infinity() { return CUDART_INF_F; }
+  EIGEN_DEVICE_FUNC
+  static float quiet_NaN() { return CUDART_NAN_F; }
 };
 template<> struct numeric_limits<double>
 {
@@ -165,6 +202,10 @@ template<> struct numeric_limits<double>
   static double (max)() { return DBL_MAX; }
   EIGEN_DEVICE_FUNC
   static double (min)() { return DBL_MIN; }
+  EIGEN_DEVICE_FUNC
+  static double infinity() { return CUDART_INF; }
+  EIGEN_DEVICE_FUNC
+  static double quiet_NaN() { return CUDART_NAN; }
 };
 template<> struct numeric_limits<int>
 {
@@ -244,7 +285,7 @@ protected:
   * upcoming next STL generation (using a templated result member).
   * If none of these members is provided, then the type of the first argument is returned. FIXME, that behavior is a pretty bad hack.
   */
-#ifdef EIGEN_HAS_STD_RESULT_OF
+#if EIGEN_HAS_STD_RESULT_OF
 template<typename T> struct result_of {
   typedef typename std::result_of<T>::type type1;
   typedef typename remove_all<type1>::type type;
@@ -257,7 +298,7 @@ struct has_std_result_type {int a[2];};
 struct has_tr1_result {int a[3];};
 
 template<typename Func, typename ArgType, int SizeOf=sizeof(has_none)>
-struct unary_result_of_select {typedef ArgType type;};
+struct unary_result_of_select {typedef typename internal::remove_all<ArgType>::type type;};
 
 template<typename Func, typename ArgType>
 struct unary_result_of_select<Func, ArgType, sizeof(has_std_result_type)> {typedef typename Func::result_type type;};
@@ -279,7 +320,7 @@ struct result_of<Func(ArgType)> {
 };
 
 template<typename Func, typename ArgType0, typename ArgType1, int SizeOf=sizeof(has_none)>
-struct binary_result_of_select {typedef ArgType0 type;};
+struct binary_result_of_select {typedef typename internal::remove_all<ArgType0>::type type;};
 
 template<typename Func, typename ArgType0, typename ArgType1>
 struct binary_result_of_select<Func, ArgType0, ArgType1, sizeof(has_std_result_type)>
@@ -301,7 +342,73 @@ struct result_of<Func(ArgType0,ArgType1)> {
     enum {FunctorType = sizeof(testFunctor(static_cast<Func*>(0)))};
     typedef typename binary_result_of_select<Func, ArgType0, ArgType1, FunctorType>::type type;
 };
+
+template<typename Func, typename ArgType0, typename ArgType1, typename ArgType2, int SizeOf=sizeof(has_none)>
+struct ternary_result_of_select {typedef typename internal::remove_all<ArgType0>::type type;};
+
+template<typename Func, typename ArgType0, typename ArgType1, typename ArgType2>
+struct ternary_result_of_select<Func, ArgType0, ArgType1, ArgType2, sizeof(has_std_result_type)>
+{typedef typename Func::result_type type;};
+
+template<typename Func, typename ArgType0, typename ArgType1, typename ArgType2>
+struct ternary_result_of_select<Func, ArgType0, ArgType1, ArgType2, sizeof(has_tr1_result)>
+{typedef typename Func::template result<Func(ArgType0,ArgType1,ArgType2)>::type type;};
+
+template<typename Func, typename ArgType0, typename ArgType1, typename ArgType2>
+struct result_of<Func(ArgType0,ArgType1,ArgType2)> {
+    template<typename T>
+    static has_std_result_type    testFunctor(T const *, typename T::result_type const * = 0);
+    template<typename T>
+    static has_tr1_result         testFunctor(T const *, typename T::template result<T(ArgType0,ArgType1,ArgType2)>::type const * = 0);
+    static has_none               testFunctor(...);
+
+    // note that the following indirection is needed for gcc-3.3
+    enum {FunctorType = sizeof(testFunctor(static_cast<Func*>(0)))};
+    typedef typename ternary_result_of_select<Func, ArgType0, ArgType1, ArgType2, FunctorType>::type type;
+};
 #endif
+
+struct meta_yes { char a[1]; };
+struct meta_no  { char a[2]; };
+
+// Check whether T::ReturnType does exist
+template <typename T>
+struct has_ReturnType
+{
+  template <typename C> static meta_yes testFunctor(typename C::ReturnType const *);
+  template <typename C> static meta_no testFunctor(...);
+
+  enum { value = sizeof(testFunctor<T>(0)) == sizeof(meta_yes) };
+};
+
+template<typename T> const T& return_ref();
+
+template <typename T, typename IndexType=Index>
+struct has_nullary_operator
+{
+  template <typename C> static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()())>0)>::type * = 0);
+  static meta_no testFunctor(...);
+
+  enum { value = sizeof(testFunctor(static_cast<T*>(0))) == sizeof(meta_yes) };
+};
+
+template <typename T, typename IndexType=Index>
+struct has_unary_operator
+{
+  template <typename C> static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()(IndexType(0)))>0)>::type * = 0);
+  static meta_no testFunctor(...);
+
+  enum { value = sizeof(testFunctor(static_cast<T*>(0))) == sizeof(meta_yes) };
+};
+
+template <typename T, typename IndexType=Index>
+struct has_binary_operator
+{
+  template <typename C> static meta_yes testFunctor(C const *,typename enable_if<(sizeof(return_ref<C>().operator()(IndexType(0),IndexType(0)))>0)>::type * = 0);
+  static meta_no testFunctor(...);
+
+  enum { value = sizeof(testFunctor(static_cast<T*>(0))) == sizeof(meta_yes) };
+};
 
 /** \internal In short, it computes int(sqrt(\a Y)) with \a Y an integer.
   * Usage example: \code meta_sqrt<1023>::ret \endcode
@@ -326,37 +433,26 @@ class meta_sqrt
 template<int Y, int InfX, int SupX>
 class meta_sqrt<Y, InfX, SupX, true> { public:  enum { ret = (SupX*SupX <= Y) ? SupX : InfX }; };
 
+
+/** \internal Computes the least common multiple of two positive integer A and B
+  * at compile-time. It implements a naive algorithm testing all multiples of A.
+  * It thus works better if A>=B.
+  */
+template<int A, int B, int K=1, bool Done = ((A*K)%B)==0>
+struct meta_least_common_multiple
+{
+  enum { ret = meta_least_common_multiple<A,B,K+1>::ret };
+};
+template<int A, int B, int K>
+struct meta_least_common_multiple<A,B,K,true>
+{
+  enum { ret = A*K };
+};
+
 /** \internal determines whether the product of two numeric types is allowed and what the return type is */
 template<typename T, typename U> struct scalar_product_traits
 {
   enum { Defined = 0 };
-};
-
-template<typename T> struct scalar_product_traits<T,T>
-{
-  enum {
-    // Cost = NumTraits<T>::MulCost,
-    Defined = 1
-  };
-  typedef T ReturnType;
-};
-
-template<typename T> struct scalar_product_traits<T,std::complex<T> >
-{
-  enum {
-    // Cost = 2*NumTraits<T>::MulCost,
-    Defined = 1
-  };
-  typedef std::complex<T> ReturnType;
-};
-
-template<typename T> struct scalar_product_traits<std::complex<T>, T>
-{
-  enum {
-    // Cost = 2*NumTraits<T>::MulCost,
-    Defined = 1
-  };
-  typedef std::complex<T> ReturnType;
 };
 
 // FIXME quick workaround around current limitation of result_of
@@ -373,6 +469,12 @@ namespace numext {
 template<typename T> EIGEN_DEVICE_FUNC   void swap(T &a, T &b) { T tmp = b; b = a; a = tmp; }
 #else
 template<typename T> EIGEN_STRONG_INLINE void swap(T &a, T &b) { std::swap(a,b); }
+#endif
+
+#if defined(__CUDA_ARCH__)
+using internal::device::numeric_limits;
+#else
+using std::numeric_limits;
 #endif
 
 // Integer division with rounding up.

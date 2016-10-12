@@ -228,6 +228,7 @@ template<typename _MatrixType> class SelfAdjointEigenSolver
       *
       * \param[in] diag The vector containing the diagonal of the matrix.
       * \param[in] subdiag The subdiagonal of the matrix.
+      * \param[in] options Can be #ComputeEigenvectors (default) or #EigenvaluesOnly.
       * \returns Reference to \c *this
       *
       * This function assumes that the matrix has been reduced to tridiagonal form.
@@ -299,8 +300,7 @@ template<typename _MatrixType> class SelfAdjointEigenSolver
       * Example: \include SelfAdjointEigenSolver_operatorSqrt.cpp
       * Output: \verbinclude SelfAdjointEigenSolver_operatorSqrt.out
       *
-      * \sa operatorInverseSqrt(),
-      *     \ref MatrixFunctions_Module "MatrixFunctions Module"
+      * \sa operatorInverseSqrt(), <a href="unsupported/group__MatrixFunctions__Module.html">MatrixFunctions Module</a>
       */
     EIGEN_DEVICE_FUNC
     MatrixType operatorSqrt() const
@@ -325,8 +325,7 @@ template<typename _MatrixType> class SelfAdjointEigenSolver
       * Example: \include SelfAdjointEigenSolver_operatorInverseSqrt.cpp
       * Output: \verbinclude SelfAdjointEigenSolver_operatorInverseSqrt.out
       *
-      * \sa operatorSqrt(), MatrixBase::inverse(),
-      *     \ref MatrixFunctions_Module "MatrixFunctions Module"
+      * \sa operatorSqrt(), MatrixBase::inverse(), <a href="unsupported/group__MatrixFunctions__Module.html">MatrixFunctions Module</a>
       */
     EIGEN_DEVICE_FUNC
     MatrixType operatorInverseSqrt() const
@@ -376,8 +375,12 @@ namespace internal {
   * Performs a QR step on a tridiagonal symmetric matrix represented as a
   * pair of two vectors \a diag and \a subdiag.
   *
-  * \param matA the input selfadjoint matrix
-  * \param hCoeffs returned Householder coefficients
+  * \param diag the diagonal part of the input selfadjoint tridiagonal matrix
+  * \param subdiag the sub-diagonal part of the input selfadjoint tridiagonal matrix
+  * \param start starting index of the submatrix to work on
+  * \param end last+1 index of the submatrix to work on
+  * \param matrixQ pointer to the column-major matrix holding the eigenvectors, can be 0
+  * \param n size of the input matrix
   *
   * For compilation efficiency reasons, this procedure does not use eigen expression
   * for its arguments.
@@ -411,7 +414,7 @@ SelfAdjointEigenSolver<MatrixType>& SelfAdjointEigenSolver<MatrixType>
 
   if(n==1)
   {
-    m_eivalues.coeffRef(0,0) = numext::real(matrix(0,0));
+    m_eivalues.coeffRef(0,0) = numext::real(matrix.diagonal()[0]);
     if(computeEigenvectors)
       m_eivec.setOnes(n,n);
     m_info = Success;
@@ -455,7 +458,7 @@ SelfAdjointEigenSolver<MatrixType>& SelfAdjointEigenSolver<MatrixType>
   {
     m_eivec.setIdentity(diag.size(), diag.size());
   }
-  m_info = computeFromTridiagonal_impl(m_eivalues, m_subdiag, m_maxIterations, computeEigenvectors, m_eivec);
+  m_info = internal::computeFromTridiagonal_impl(m_eivalues, m_subdiag, m_maxIterations, computeEigenvectors, m_eivec);
 
   m_isInitialized = true;
   m_eigenvectorsOk = computeEigenvectors;
@@ -468,9 +471,10 @@ namespace internal {
   * \brief Compute the eigendecomposition from a tridiagonal matrix
   *
   * \param[in,out] diag : On input, the diagonal of the matrix, on output the eigenvalues
-  * \param[in] subdiag : The subdiagonal part of the matrix.
-  * \param[in,out] : On input, the maximum number of iterations, on output, the effective number of iterations.
-  * \param[out] eivec : The matrix to store the eigenvectors... if needed. allocated on input
+  * \param[in,out] subdiag : The subdiagonal part of the matrix (entries are modified during the decomposition)
+  * \param[in] maxIterations : the maximum number of iterations
+  * \param[in] computeEigenvectors : whether the eigenvectors have to be computed or not
+  * \param[out] eivec : The matrix to store the eigenvectors if computeEigenvectors==true. Must be allocated on input.
   * \returns \c Success or \c NoConvergence
   */
 template<typename MatrixType, typename DiagType, typename SubDiagType>
@@ -488,15 +492,16 @@ ComputationInfo computeFromTridiagonal_impl(DiagType& diag, SubDiagType& subdiag
   
   typedef typename DiagType::RealScalar RealScalar;
   const RealScalar considerAsZero = (std::numeric_limits<RealScalar>::min)();
+  const RealScalar precision = RealScalar(2)*NumTraits<RealScalar>::epsilon();
   
   while (end>0)
   {
     for (Index i = start; i<end; ++i)
-      if (internal::isMuchSmallerThan(abs(subdiag[i]),(abs(diag[i])+abs(diag[i+1]))) || abs(subdiag[i]) <= considerAsZero)
+      if (internal::isMuchSmallerThan(abs(subdiag[i]),(abs(diag[i])+abs(diag[i+1])),precision) || abs(subdiag[i]) <= considerAsZero)
         subdiag[i] = 0;
 
     // find the largest unreduced block
-    while (end>0 && subdiag[end-1]==0)
+    while (end>0 && subdiag[end-1]==RealScalar(0))
     {
       end--;
     }
@@ -564,8 +569,8 @@ template<typename SolverType> struct direct_selfadjoint_eigenvalues<SolverType,3
     EIGEN_USING_STD_MATH(atan2)
     EIGEN_USING_STD_MATH(cos)
     EIGEN_USING_STD_MATH(sin)
-    const Scalar s_inv3 = Scalar(1.0)/Scalar(3.0);
-    const Scalar s_sqrt3 = sqrt(Scalar(3.0));
+    const Scalar s_inv3 = Scalar(1)/Scalar(3);
+    const Scalar s_sqrt3 = sqrt(Scalar(3));
 
     // The characteristic equation is x^3 - c2*x^2 + c1*x - c0 = 0.  The
     // eigenvalues are the roots to this equation, all guaranteed to be
@@ -735,14 +740,18 @@ struct direct_selfadjoint_eigenvalues<SolverType,2,false>
     EigenvectorsType& eivecs = solver.m_eivec;
     VectorType& eivals = solver.m_eivalues;
   
-    // map the matrix coefficients to [-1:1] to avoid over- and underflow.
-    Scalar scale = mat.cwiseAbs().maxCoeff();
-    scale = numext::maxi(scale,Scalar(1));
-    MatrixType scaledMat = mat / scale;
-    
+    // Shift the matrix to the mean eigenvalue and map the matrix coefficients to [-1:1] to avoid over- and underflow.
+    Scalar shift = mat.trace() / Scalar(2);
+    MatrixType scaledMat = mat;
+    scaledMat.coeffRef(0,1) = mat.coeff(1,0);
+    scaledMat.diagonal().array() -= shift;
+    Scalar scale = scaledMat.cwiseAbs().maxCoeff();
+    if(scale > Scalar(0))
+      scaledMat /= scale;
+
     // Compute the eigenvalues
     computeRoots(scaledMat,eivals);
-    
+
     // compute the eigen vectors
     if(computeEigenvectors)
     {
@@ -770,10 +779,11 @@ struct direct_selfadjoint_eigenvalues<SolverType,2,false>
         eivecs.col(0) << eivecs.col(1).unitOrthogonal();
       }
     }
-    
+
     // Rescale back to the original size.
     eivals *= scale;
-    
+    eivals.array() += shift;
+
     solver.m_info = Success;
     solver.m_isInitialized = true;
     solver.m_eigenvectorsOk = computeEigenvectors;
@@ -805,14 +815,14 @@ static void tridiagonal_qr_step(RealScalar* diag, RealScalar* subdiag, Index sta
 //   RealScalar mu = diag[end] - e2 / (td + (td>0 ? 1 : -1) * sqrt(td*td + e2));
   // This explain the following, somewhat more complicated, version:
   RealScalar mu = diag[end];
-  if(td==0)
+  if(td==RealScalar(0))
     mu -= abs(e);
   else
   {
     RealScalar e2 = numext::abs2(subdiag[end-1]);
     RealScalar h = numext::hypot(td,e);
-    if(e2==0)  mu -= (e / (td + (td>0 ? 1 : -1))) * (e / h);
-    else       mu -= e2 / (td + (td>0 ? h : -h));
+    if(e2==RealScalar(0)) mu -= (e / (td + (td>RealScalar(0) ? RealScalar(1) : RealScalar(-1)))) * (e / h);
+    else                  mu -= e2 / (td + (td>RealScalar(0) ? h : -h));
   }
   
   RealScalar x = diag[start] - mu;

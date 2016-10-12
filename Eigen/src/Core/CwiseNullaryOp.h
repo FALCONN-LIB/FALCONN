@@ -12,24 +12,6 @@
 
 namespace Eigen {
 
-/** \class CwiseNullaryOp
-  * \ingroup Core_Module
-  *
-  * \brief Generic expression of a matrix where all coefficients are defined by a functor
-  *
-  * \param NullaryOp template functor implementing the operator
-  * \param PlainObjectType the underlying plain matrix/array type
-  *
-  * This class represents an expression of a generic nullary operator.
-  * It is the return type of the Ones(), Zero(), Constant(), Identity() and Random() methods,
-  * and most of the time this is the only way it is used.
-  *
-  * However, if you want to write a function returning such an expression, you
-  * will need to use this class.
-  *
-  * \sa class CwiseUnaryOp, class CwiseBinaryOp, DenseBase::NullaryExpr()
-  */
-
 namespace internal {
 template<typename NullaryOp, typename PlainObjectType>
 struct traits<CwiseNullaryOp<NullaryOp, PlainObjectType> > : traits<PlainObjectType>
@@ -38,8 +20,42 @@ struct traits<CwiseNullaryOp<NullaryOp, PlainObjectType> > : traits<PlainObjectT
     Flags = traits<PlainObjectType>::Flags & RowMajorBit
   };
 };
-}
 
+} // namespace internal
+
+/** \class CwiseNullaryOp
+  * \ingroup Core_Module
+  *
+  * \brief Generic expression of a matrix where all coefficients are defined by a functor
+  *
+  * \tparam NullaryOp template functor implementing the operator
+  * \tparam PlainObjectType the underlying plain matrix/array type
+  *
+  * This class represents an expression of a generic nullary operator.
+  * It is the return type of the Ones(), Zero(), Constant(), Identity() and Random() methods,
+  * and most of the time this is the only way it is used.
+  *
+  * However, if you want to write a function returning such an expression, you
+  * will need to use this class.
+  *
+  * The functor NullaryOp must expose one of the following method:
+    <table class="manual">
+    <tr            ><td>\c operator()() </td><td>if the procedural generation does not depend on the coefficient entries (e.g., random numbers)</td></tr>
+    <tr class="alt"><td>\c operator()(Index i)</td><td>if the procedural generation makes sense for vectors only and that it depends on the coefficient index \c i (e.g., linspace) </td></tr>
+    <tr            ><td>\c operator()(Index i,Index j)</td><td>if the procedural generation depends on the matrix coordinates \c i, \c j (e.g., to generate a checkerboard with 0 and 1)</td></tr>
+    </table>
+  * It is also possible to expose the last two operators if the generation makes sense for matrices but can be optimized for vectors.
+  *
+  * See DenseBase::NullaryExpr(Index,const CustomNullaryOp&) for an example binding
+  * C++11 random number generators.
+  *
+  * A nullary expression can also be used to implement custom sophisticated matrix manipulations
+  * that cannot be covered by the existing set of natively supported matrix manipulations.
+  * See this \ref TopicCustomizing_NullaryExpr "page" for some examples and additional explanations
+  * on the behavior of CwiseNullaryOp.
+  *
+  * \sa class CwiseUnaryOp, class CwiseBinaryOp, DenseBase::NullaryExpr
+  */
 template<typename NullaryOp, typename PlainObjectType>
 class CwiseNullaryOp : public internal::dense_xpr_base< CwiseNullaryOp<NullaryOp, PlainObjectType> >::type, internal::no_assignment_operator
 {
@@ -62,30 +78,6 @@ class CwiseNullaryOp : public internal::dense_xpr_base< CwiseNullaryOp<NullaryOp
     EIGEN_STRONG_INLINE Index rows() const { return m_rows.value(); }
     EIGEN_DEVICE_FUNC
     EIGEN_STRONG_INLINE Index cols() const { return m_cols.value(); }
-
-    EIGEN_DEVICE_FUNC
-    EIGEN_STRONG_INLINE const Scalar coeff(Index rowId, Index colId) const
-    {
-      return m_functor(rowId, colId);
-    }
-
-    template<int LoadMode>
-    EIGEN_STRONG_INLINE PacketScalar packet(Index rowId, Index colId) const
-    {
-      return m_functor.packetOp(rowId, colId);
-    }
-
-    EIGEN_DEVICE_FUNC
-    EIGEN_STRONG_INLINE const Scalar coeff(Index index) const
-    {
-      return m_functor(index);
-    }
-
-    template<int LoadMode>
-    EIGEN_STRONG_INLINE PacketScalar packet(Index index) const
-    {
-      return m_functor.packetOp(index);
-    }
 
     /** \returns the functor representing the nullary operation */
     EIGEN_DEVICE_FUNC
@@ -224,11 +216,11 @@ DenseBase<Derived>::Constant(const Scalar& value)
 }
 
 /**
-  * \brief Sets a linearly space vector.
+  * \brief Sets a linearly spaced vector.
   *
   * The function generates 'size' equally spaced values in the closed interval [low,high].
   * This particular version of LinSpaced() uses sequential access, i.e. vector access is
-  * assumed to be a(0), a(1), ..., a(size). This assumption allows for better vectorization
+  * assumed to be a(0), a(1), ..., a(size-1). This assumption allows for better vectorization
   * and yields faster code than the random access version.
   *
   * When size is set to 1, a vector of length 1 containing 'high' is returned.
@@ -262,7 +254,7 @@ DenseBase<Derived>::LinSpaced(Sequential_t, const Scalar& low, const Scalar& hig
 }
 
 /**
-  * \brief Sets a linearly space vector.
+  * \brief Sets a linearly spaced vector.
   *
   * The function generates 'size' equally spaced values in the closed interval [low,high].
   * When size is set to 1, a vector of length 1 containing 'high' is returned.
@@ -328,7 +320,7 @@ EIGEN_STRONG_INLINE void DenseBase<Derived>::fill(const Scalar& val)
   setConstant(val);
 }
 
-/** Sets all coefficients in this expression to \a value.
+/** Sets all coefficients in this expression to value \a val.
   *
   * \sa fill(), setConstant(Index,const Scalar&), setConstant(Index,Index,const Scalar&), setZero(), setOnes(), Constant(), class CwiseNullaryOp, setZero(), setOnes()
   */
@@ -338,7 +330,7 @@ EIGEN_STRONG_INLINE Derived& DenseBase<Derived>::setConstant(const Scalar& val)
   return derived() = Constant(rows(), cols(), val);
 }
 
-/** Resizes to the given \a size, and sets all coefficients in this expression to the given \a value.
+/** Resizes to the given \a size, and sets all coefficients in this expression to the given value \a val.
   *
   * \only_for_vectors
   *
@@ -355,7 +347,7 @@ PlainObjectBase<Derived>::setConstant(Index size, const Scalar& val)
   return setConstant(val);
 }
 
-/** Resizes to the given size, and sets all coefficients in this expression to the given \a value.
+/** Resizes to the given size, and sets all coefficients in this expression to the given value \a val.
   *
   * \param rows the new number of rows
   * \param cols the new number of columns
@@ -375,7 +367,7 @@ PlainObjectBase<Derived>::setConstant(Index rows, Index cols, const Scalar& val)
 }
 
 /**
-  * \brief Sets a linearly space vector.
+  * \brief Sets a linearly spaced vector.
   *
   * The function generates 'size' equally spaced values in the closed interval [low,high].
   * When size is set to 1, a vector of length 1 containing 'high' is returned.
@@ -395,9 +387,9 @@ EIGEN_STRONG_INLINE Derived& DenseBase<Derived>::setLinSpaced(Index newSize, con
 }
 
 /**
-  * \brief Sets a linearly space vector.
+  * \brief Sets a linearly spaced vector.
   *
-  * The function fill *this with equally spaced values in the closed interval [low,high].
+  * The function fills *this with equally spaced values in the closed interval [low,high].
   * When size is set to 1, a vector of length 1 containing 'high' is returned.
   *
   * \only_for_vectors

@@ -18,7 +18,7 @@ namespace Eigen {
   *
   * \brief Represents a generic uniform scaling transformation
   *
-  * \param _Scalar the scalar type, i.e., the type of the coefficients.
+  * \tparam _Scalar the scalar type, i.e., the type of the coefficients.
   *
   * This class represent a uniform scaling transformation. It is the return
   * type of Scaling(Scalar), and most of the time this is the only way it
@@ -104,12 +104,18 @@ public:
 
 };
 
-/** Concatenates a linear transformation matrix and a uniform scaling */
+/** \addtogroup Geometry_Module */
+//@{
+
+/** Concatenates a linear transformation matrix and a uniform scaling
+  * \relates UniformScaling
+  */
 // NOTE this operator is defiend in MatrixBase and not as a friend function
 // of UniformScaling to fix an internal crash of Intel's ICC
-template<typename Derived> typename MatrixBase<Derived>::ScalarMultipleReturnType
-MatrixBase<Derived>::operator*(const UniformScaling<Scalar>& s) const
-{ return derived() * s.factor(); }
+template<typename Derived,typename Scalar>
+EIGEN_EXPR_BINARYOP_SCALAR_RETURN_TYPE(Derived,Scalar,product)
+operator*(const MatrixBase<Derived>& matrix, const UniformScaling<Scalar>& s)
+{ return matrix.derived() * s.factor(); }
 
 /** Constructs a uniform scaling from scale factor \a s */
 static inline UniformScaling<float> Scaling(float s) { return UniformScaling<float>(s); }
@@ -136,8 +142,6 @@ template<typename Derived>
 static inline const DiagonalWrapper<const Derived> Scaling(const MatrixBase<Derived>& coeffs)
 { return coeffs.asDiagonal(); }
 
-/** \addtogroup Geometry_Module */
-//@{
 /** \deprecated */
 typedef DiagonalMatrix<float, 2> AlignedScaling2f;
 /** \deprecated */

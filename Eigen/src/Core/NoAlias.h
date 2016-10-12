@@ -17,7 +17,7 @@ namespace Eigen {
   *
   * \brief Pseudo expression providing an operator = assuming no aliasing
   *
-  * \param ExpressionType the type of the object on which to do the lazy assignment
+  * \tparam ExpressionType the type of the object on which to do the lazy assignment
   *
   * This class represents an expression with special assignment operators
   * assuming no aliasing between the target expression and the source expression.
@@ -39,7 +39,7 @@ class NoAlias
     EIGEN_DEVICE_FUNC
     EIGEN_STRONG_INLINE ExpressionType& operator=(const StorageBase<OtherDerived>& other)
     {
-      call_assignment_no_alias(m_expression, other.derived(), internal::assign_op<Scalar>());
+      call_assignment_no_alias(m_expression, other.derived(), internal::assign_op<Scalar,typename OtherDerived::Scalar>());
       return m_expression;
     }
     
@@ -47,7 +47,7 @@ class NoAlias
     EIGEN_DEVICE_FUNC
     EIGEN_STRONG_INLINE ExpressionType& operator+=(const StorageBase<OtherDerived>& other)
     {
-      call_assignment_no_alias(m_expression, other.derived(), internal::add_assign_op<Scalar>());
+      call_assignment_no_alias(m_expression, other.derived(), internal::add_assign_op<Scalar,typename OtherDerived::Scalar>());
       return m_expression;
     }
     
@@ -55,7 +55,7 @@ class NoAlias
     EIGEN_DEVICE_FUNC
     EIGEN_STRONG_INLINE ExpressionType& operator-=(const StorageBase<OtherDerived>& other)
     {
-      call_assignment_no_alias(m_expression, other.derived(), internal::sub_assign_op<Scalar>());
+      call_assignment_no_alias(m_expression, other.derived(), internal::sub_assign_op<Scalar,typename OtherDerived::Scalar>());
       return m_expression;
     }
 

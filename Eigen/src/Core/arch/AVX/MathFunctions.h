@@ -10,11 +10,6 @@
 #ifndef EIGEN_MATH_FUNCTIONS_AVX_H
 #define EIGEN_MATH_FUNCTIONS_AVX_H
 
-// For some reason, this function didn't make it into the avxintirn.h
-// used by the compiler, so we'll just wrap it.
-#define _mm256_setr_m128(lo, hi) \
-  _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 1)
-
 /* The sin, cos, exp, and log functions of this file are loosely derived from
  * Julien Pommier's sse math library: http://gruntthepeon.free.fr/ssemath/
  */
@@ -22,6 +17,28 @@
 namespace Eigen {
 
 namespace internal {
+
+inline Packet8i pshiftleft(Packet8i v, int n)
+{
+#ifdef EIGEN_VECTORIZE_AVX2
+  return _mm256_slli_epi32(v, n);
+#else
+  __m128i lo = _mm_slli_epi32(_mm256_extractf128_si256(v, 0), n);
+  __m128i hi = _mm_slli_epi32(_mm256_extractf128_si256(v, 1), n);
+  return _mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 1);
+#endif
+}
+
+inline Packet8f pshiftright(Packet8f v, int n)
+{
+#ifdef EIGEN_VECTORIZE_AVX2
+  return _mm256_cvtepi32_ps(_mm256_srli_epi32(_mm256_castps_si256(v), n));
+#else
+  __m128i lo = _mm_srli_epi32(_mm256_extractf128_si256(_mm256_castps_si256(v), 0), n);
+  __m128i hi = _mm_srli_epi32(_mm256_extractf128_si256(_mm256_castps_si256(v), 1), n);
+  return _mm256_cvtepi32_ps(_mm256_insertf128_si256(_mm256_castsi128_si256(lo), (hi), 1));
+#endif
+}
 
 // Sine function
 // Computes sin(x) by wrapping x to the interval [-Pi/4,3*Pi/4] and
@@ -54,17 +71,8 @@ psin<Packet8f>(const Packet8f& _x) {
   // Make a mask for the entries that need flipping, i.e. wherever the shift
   // is odd.
   Packet8i shift_ints = _mm256_cvtps_epi32(shift);
-  Packet8i shift_isodd =
-      _mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(shift_ints), _mm256_castsi256_ps(p8i_one)));
-#ifdef EIGEN_VECTORIZE_AVX2
-  Packet8i sign_flip_mask = _mm256_slli_epi32(shift_isodd, 31);
-#else
-  __m128i lo =
-      _mm_slli_epi32(_mm256_extractf128_si256(shift_isodd, 0), 31);
-  __m128i hi =
-      _mm_slli_epi32(_mm256_extractf128_si256(shift_isodd, 1), 31);
-  Packet8i sign_flip_mask = _mm256_setr_m128(lo, hi);
-#endif
+  Packet8i shift_isodd = _mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(shift_ints), _mm256_castsi256_ps(p8i_one)));
+  Packet8i sign_flip_mask = pshiftleft(shift_isodd, 31);
 
   // Create a mask for which interpolant to use, i.e. if z > 1, then the mask
   // is set to ones for that entry.
@@ -142,15 +150,7 @@ plog<Packet8f>(const Packet8f& _x) {
   // Truncate input values to the minimum positive normal.
   x = pmax(x, p8f_min_norm_pos);
 
-// Extract the shifted exponents (No bitwise shifting in regular AVX, so
-// convert to SSE and do it there).
-#ifdef EIGEN_VECTORIZE_AVX2
-  Packet8f emm0 = _mm256_cvtepi32_ps(_mm256_srli_epi32(_mm256_castps_si256(x), 23));
-#else
-  __m128i lo = _mm_srli_epi32(_mm256_extractf128_si256(_mm256_castps_si256(x), 0), 23);
-  __m128i hi = _mm_srli_epi32(_mm256_extractf128_si256(_mm256_castps_si256(x), 1), 23);
-  Packet8f emm0 = _mm256_cvtepi32_ps(_mm256_setr_m128(lo, hi));
-#endif
+  Packet8f emm0 = pshiftright(x,23);
   Packet8f e = _mm256_sub_ps(emm0, p8f_126f);
 
   // Set the exponents to -1, i.e. x are in the range [0.5,1).
@@ -259,16 +259,17 @@ pexp<Packet8f>(const Packet8f& _x) {
 
   // Build emm0 = 2^m.
   Packet8i emm0 = _mm256_cvttps_epi32(padd(m, p8f_127));
-#ifdef EIGEN_VECTORIZE_AVX2
-  emm0 = _mm256_slli_epi32(emm0, 23);
-#else
-  __m128i lo = _mm_slli_epi32(_mm256_extractf128_si256(emm0, 0), 23);
-  __m128i hi = _mm_slli_epi32(_mm256_extractf128_si256(emm0, 1), 23);
-  emm0 = _mm256_setr_m128(lo, hi);
-#endif
+  emm0 = pshiftleft(emm0, 23);
 
   // Return 2^m * exp(r).
   return pmax(pmul(y, _mm256_castsi256_ps(emm0)), _x);
+}
+
+// Hyperbolic Tangent function.
+template <>
+EIGEN_DEFINE_FUNCTION_ALLOWING_MULTIPLE_DEFINITIONS EIGEN_UNUSED Packet8f
+ptanh<Packet8f>(const Packet8f& x) {
+  return internal::generic_fast_tanh_float(x);
 }
 
 template <>
