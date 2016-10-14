@@ -10,7 +10,11 @@ and [Thijs Laarhoven](http://thijs.com/).
 We thank the following people who helped us with finding bugs and
 testing:
 * [Grey Ballard](http://www.sandia.gov/~gmballa/)
+* [Ranjit Chacko](https://github.com/rjchacko)
 * [Dhiraj Holden](http://toc.csail.mit.edu/user/237)
 * Ilya Kornakov
 * Weiwei Liu
+* [Piero Molino](https://github.com/w4nderlust)
+* [Marcel Ruegenberg](https://github.com/mruegenberg)
 * [Andrew Sabisch](http://www.jamoozy.com/index.html)
+* [Charlampos Tsourakakis](http://people.seas.harvard.edu/~babis/)
