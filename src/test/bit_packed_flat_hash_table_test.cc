@@ -50,3 +50,10 @@ TEST(BitPackedFlatHashTableTest, RetrieveTest4) {
   BitPackedFlatHashTable<uint32_t> table(num_buckets, num_items);
   ft::run_retrieve_test_5(&table);
 }
+
+TEST(BitPackedFlatHashTableTest, RetrieveTest5) {
+  int num_buckets = 8;
+  int num_items = 4;
+  BitPackedFlatHashTable<uint32_t> table(num_buckets, num_items);
+  ft::run_retrieve_test_6(&table);
+}

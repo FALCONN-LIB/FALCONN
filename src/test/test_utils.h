@@ -218,6 +218,37 @@ void run_retrieve_test_5(HashTable* table) {
   check_result(result10, expected_result10);
 }
 
+// Written to catch an earlier bug in the bit-packed flat hash table
+// num_buckets = 8
+// num_items = 4
+template <typename HashTable>
+void run_retrieve_test_6(HashTable* table) {
+  typedef std::pair<typename HashTable::Iterator, typename HashTable::Iterator>
+      IteratorPair;
+  std::vector<uint32_t> entries = {3, 5, 5, 1};
+  table->add_entries(entries);
+
+  std::vector<int32_t> expected_result1 = {3};
+  IteratorPair result1 = table->retrieve(1);
+  check_result(result1, expected_result1);
+
+  std::vector<int32_t> expected_result2 = {0};
+  IteratorPair result2 = table->retrieve(3);
+  check_result(result2, expected_result2);
+
+  std::vector<int32_t> expected_result3 = {1, 2};
+  IteratorPair result3 = table->retrieve(5);
+  check_result(result3, expected_result3);
+  
+  std::vector<int32_t> expected_result4 = {};
+  IteratorPair result4 = table->retrieve(6);
+  check_result(result4, expected_result4);
+  
+  std::vector<int32_t> expected_result5 = {};
+  IteratorPair result5 = table->retrieve(7);
+  check_result(result5, expected_result5);
+}
+
 template <typename HashTable>
 void run_dynamic_retrieve_test_1(HashTable* table) {
   typedef std::pair<typename HashTable::Iterator, typename HashTable::Iterator>
