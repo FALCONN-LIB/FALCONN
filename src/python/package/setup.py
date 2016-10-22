@@ -26,7 +26,7 @@ module = Extension('_falconn',
                                  np.get_include()])
 
 setup(name='FALCONN',
-      version='1.2.1',
+      version='1.2.2',
       author='Ilya Razenshteyn, Ludwig Schmidt',
       author_email='falconn.lib@gmail.com',
       url='http://falconn-lib.org/',
