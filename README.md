@@ -51,4 +51,4 @@ FALCONN is available under the [MIT License](https://opensource.org/licenses/MIT
 Note that the third-party libraries in the `external/` folder are distributed under other open source licenses.
 The Eigen library is licensed under the [MPL2](https://www.mozilla.org/en-US/MPL/2.0/).
 The googletest and googlemock libraries are licensed under the [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
-Furthermore, the file `src/python/module/numpy.i` is part of the [NumPy project](http://www.numpy.org/) and also licensed under the [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+Furthermore, the file `external/numpy.i` is part of the [NumPy project](http://www.numpy.org/) and also licensed under the [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).

@@ -27,15 +27,6 @@ clean:
 docs: $(ALL_HEADERS) $(DOC_DIR)/Doxyfile
 	doxygen $(DOC_DIR)/Doxyfile
 
-python_swig:
-	rm -rf $(PYTHON_SWIG_DIR)
-	mkdir -p $(PYTHON_SWIG_DIR)
-	$(SWIG) -c++ -python -builtin -outdir $(PYTHON_SWIG_DIR) -o $(PYTHON_SWIG_DIR)/falconn_wrap.cc -Isrc/include $(PYTHON_DIR)/wrapper/falconn.i
-	mkdir -p obj
-	$(CXX) $(CXXFLAGS) -fPIC `python-config --includes` -I $(NUMPY_INCLUDE_DIR) -I $(INC_DIR) -I $(PYTHON_DIR)/wrapper -c $(PYTHON_SWIG_DIR)/falconn_wrap.cc -o obj/falconn_wrap.o
-	$(CXX) -shared obj/falconn_wrap.o -o $(PYTHON_SWIG_DIR)/_falconn.so `python-config --ldflags` -lc++
-	rm -f $(PYTHON_SWIG_DIR)/falconn_wrap.cxx
-
 python_package:
 	rm -rf $(PYTHON_PKG_DIR)
 	mkdir -p $(PYTHON_PKG_DIR)
@@ -55,7 +46,7 @@ python_package:
 	cp $(PYTHON_DIR)/package/__init__.py $(PYTHON_PKG_DIR)/falconn/__init__.py
 	cp $(PYTHON_DIR)/package/setup.py $(PYTHON_PKG_DIR)
 	cp $(PYTHON_DIR)/package/MANIFEST.in $(PYTHON_PKG_DIR)
-	$(SWIG) -c++ -python -builtin -outdir $(PYTHON_PKG_DIR)/falconn -o $(PYTHON_PKG_DIR)/falconn/swig/falconn_wrap.cc -Iexternal/eigen -Isrc/include $(PYTHON_DIR)/wrapper/falconn.i
+	$(SWIG) -c++ -python -builtin -outdir $(PYTHON_PKG_DIR)/falconn -o $(PYTHON_PKG_DIR)/falconn/swig/falconn_wrap.cc -Iexternal/eigen -Isrc/include -Iexternal $(PYTHON_DIR)/wrapper/falconn.i
 	mv $(PYTHON_PKG_DIR)/falconn/falconn.py $(PYTHON_PKG_DIR)/falconn/internal.py
 	cd $(PYTHON_PKG_DIR); python setup.py sdist
 	cd $(PYTHON_PKG_DIR)/dist; tar -xzf *.tar.gz; cd FALCONN-*; python setup.py build
