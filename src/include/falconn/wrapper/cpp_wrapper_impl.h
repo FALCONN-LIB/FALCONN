@@ -315,6 +315,39 @@ struct GetDefaultParameters<SparseVector<CoordinateType>> {
   }
 };
 
+
+template <typename PointType, typename KeyType, typename LSHTable>
+class LSHNNQueryWrapper : public LSHNearestNeighborQuery<PointType,KeyType> {
+
+public:
+
+    LSHNNQueryWrapper(const LSHTable& parent, int _num_probes, int _max_candidates)
+        : num_probes(_num_probes),
+          max_num_candidates(_max_candidates) {
+        internal_query.reset(new typename LSHTable::Query(parent));
+    }
+
+    virtual void get_candidates_with_duplicates(const PointType& q,
+                                        std::vector<KeyType>* result) {
+        internal_query->get_candidates_with_duplicates(q, num_probes, max_num_candidates,
+                                             result);
+    }
+
+    virtual void get_unique_candidates(const PointType& q,
+                                       std::vector<KeyType>* result) {
+        return internal_query->get_unique_candidates(q, num_probes, max_num_candidates, result);
+    }
+
+    virtual ~LSHNNQueryWrapper() {}
+
+protected:
+    std::unique_ptr<typename LSHTable::Query> internal_query;
+    int num_probes;
+    int max_num_candidates;
+
+};
+
+
 template <typename PointType, typename KeyType, typename DistanceType,
           typename DistanceFunction, typename LSHTable, typename LSHFunction,
           typename HashTableFactory, typename CompositeHashTable,
@@ -336,6 +369,13 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
         nn_query_(std::move(nn_query)),
         data_storage_(std::move(data_storage)) {
     num_probes_ = lsh_->get_l();
+  }
+
+  std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>> construct_query() const
+  {
+      std::unique_ptr<LSHNNQueryWrapper<PointType, KeyType, LSHTable> > nn_query(
+          new LSHNNQueryWrapper<PointType, KeyType, LSHTable>(*lsh_table_, num_probes_, max_num_candidates_));
+      return std::move(nn_query);
   }
 
   void set_num_probes(int_fast64_t num_probes) {

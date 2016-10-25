@@ -24,6 +24,35 @@ class LSHNearestNeighborTableError : public FalconnError {
   LSHNearestNeighborTableError(const char* msg) : FalconnError(msg) {}
 };
 
+
+//Common interface for query
+//which doesn't change the state of LSHNearestNeighborTable
+//and can be quiqly created for each thread
+
+template <typename PointType, typename KeyType = int32_t>
+class LSHNearestNeighborQuery{
+ public:
+    ///
+    /// Returns the keys of all candidates in the probing sequence for q.
+    /// Every candidate key occurs only once in the result. The
+    /// candidates are returned in the order of their first occurrence in the
+    /// probing sequence.
+    ///
+    virtual void get_unique_candidates(const PointType& q,
+                                       std::vector<KeyType>* result) = 0;
+
+    ///
+    /// Returns the keys of all candidates in the probing sequence for q. If a
+    /// candidate key is found in multiple tables, it will appear multiple times
+    /// in the result. The candidates are returned in the order in which they
+    /// appear in the probing sequence.
+    ///
+    virtual void get_candidates_with_duplicates(const PointType& q,
+                                                std::vector<KeyType>* result) = 0;
+
+    virtual ~LSHNearestNeighborQuery() {}
+};
+
 ///
 /// Common interface shared by all LSH table wrappers.
 ///
@@ -36,6 +65,10 @@ class LSHNearestNeighborTableError : public FalconnError {
 template <typename PointType, typename KeyType = int32_t>
 class LSHNearestNeighborTable {
  public:
+
+  ///Create a new query that doesn't chage the parent object LSHNearestNeighborTable
+  virtual std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>> construct_query() const = 0;
+
   ///
   /// Sets the number of probes used for each query.
   /// The default setting is l (number of tables), which effectively disables
