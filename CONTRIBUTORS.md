@@ -7,14 +7,14 @@ FALCONN grew out of a joint research project with
 [Piotr Indyk](https://people.csail.mit.edu/indyk/),
 and [Thijs Laarhoven](http://thijs.com/).
 
-We thank the following people who helped us with finding bugs and
-testing:
+We thank the following people for their contributions:
 * [Grey Ballard](http://www.sandia.gov/~gmballa/)
 * [Ranjit Chacko](https://github.com/rjchacko)
 * [Dhiraj Holden](http://toc.csail.mit.edu/user/237)
 * Ilya Kornakov
 * Weiwei Liu
 * [Piero Molino](https://github.com/w4nderlust)
+* [Dima Pankratov](https://github.com/dpankrat)
 * [Marcel Ruegenberg](https://github.com/mruegenberg)
 * [Andrew Sabisch](http://www.jamoozy.com/index.html)
 * [Charlampos Tsourakakis](http://people.seas.harvard.edu/~babis/)
