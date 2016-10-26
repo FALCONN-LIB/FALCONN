@@ -86,7 +86,7 @@ template <typename PointType, typename KeyType = int32_t>
 class LSHNearestNeighborTable {
  public:
   virtual std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>>
-  construct_query() const = 0;
+  construct_query_processor() const = 0;
   ///
   /// Sets the number of probes used for each query.
   /// The default setting is l (number of tables), which effectively disables
