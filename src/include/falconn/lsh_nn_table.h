@@ -24,9 +24,8 @@ class LSHNearestNeighborTableError : public FalconnError {
   LSHNearestNeighborTableError(const char* msg) : FalconnError(msg) {}
 };
 
-// Common interface for query
-// which doesn't change the state of LSHNearestNeighborTable
-// and can be quiqly created for each thread
+// A common interface for query objects that do not change the state of
+// LSHNearestNeighborTable and can be quickly created for each thread.
 
 template <typename PointType, typename KeyType = int32_t>
 class LSHNearestNeighborQuery {
