@@ -393,7 +393,7 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
     num_probes_ = lsh_->get_l();
   }
 
-  std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>> construct_query_processor()
+  std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>> construct_query_object()
       const {
     typedef typename PointTypeTraits<PointType>::ScalarType ScalarType;
     std::unique_ptr<
