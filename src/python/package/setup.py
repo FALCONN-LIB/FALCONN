@@ -1,3 +1,4 @@
+import os
 import sys
 
 try:
@@ -18,9 +19,14 @@ except ImportError:
     sys.stderr.write('NumPy not found!\n')
     raise
 
+extra_args = ['-std=c++11', '-march=native', '-O3']
+if sys.platform == 'darwin':
+    extra_args += ['-mmacosx-version-min=10.9', '-stdlib=libc++']
+    os.environ['LDFLAGS'] = '-mmacosx-version-min=10.9'
+
 module = Extension('_falconn',
                    sources=['falconn/swig/falconn_wrap.cc'],
-                   extra_compile_args=['-std=c++11', '-march=native', '-O3'],
+                   extra_compile_args=extra_args,
                    include_dirs=['falconn/src/include',
                                  'falconn/external/eigen',
                                  np.get_include()])
