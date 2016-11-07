@@ -9,6 +9,7 @@ and [Thijs Laarhoven](http://thijs.com/).
 
 We thank the following people for their contributions:
 * [Grey Ballard](http://www.sandia.gov/~gmballa/)
+* [Davis Blalock](http://www.csail.mit.edu/user/4035)
 * [Ranjit Chacko](https://github.com/rjchacko)
 * [Dhiraj Holden](http://toc.csail.mit.edu/user/237)
 * Ilya Kornakov
