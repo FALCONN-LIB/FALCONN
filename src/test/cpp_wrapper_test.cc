@@ -48,12 +48,14 @@ void basic_test_dense_1(const LSHConstructionParameters& params) {
 
   unique_ptr<LSHNearestNeighborTable<Point>> table(
       std::move(construct_table<Point>(points, params)));
+  unique_ptr<LSHNearestNeighborQuery<Point>> query(
+      std::move(table->construct_query_object()));
 
-  int32_t res1 = table->find_nearest_neighbor(p1);
+  int32_t res1 = query->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
-  int32_t res2 = table->find_nearest_neighbor(p2);
+  int32_t res2 = query->find_nearest_neighbor(p2);
   EXPECT_EQ(1, res2);
-  int32_t res3 = table->find_nearest_neighbor(p3);
+  int32_t res3 = query->find_nearest_neighbor(p3);
   EXPECT_EQ(2, res3);
 
   Point p4(dim);
@@ -61,7 +63,7 @@ void basic_test_dense_1(const LSHConstructionParameters& params) {
   p4[1] = 1.0;
   p4[2] = 0.0;
   p4[3] = 0.0;
-  int32_t res4 = table->find_nearest_neighbor(p4);
+  int32_t res4 = query->find_nearest_neighbor(p4);
   EXPECT_EQ(1, res4);
 }
 
@@ -81,51 +83,19 @@ void basic_test_sparse_1(const LSHConstructionParameters& params) {
 
   unique_ptr<LSHNearestNeighborTable<Point>> table(
       std::move(construct_table<Point>(points, params)));
+  unique_ptr<LSHNearestNeighborQuery<Point>> query(
+      std::move(table->construct_query_object()));
 
-  int32_t res1 = table->find_nearest_neighbor(p1);
+  int32_t res1 = query->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
-  int32_t res2 = table->find_nearest_neighbor(p2);
+  int32_t res2 = query->find_nearest_neighbor(p2);
   EXPECT_EQ(1, res2);
-  int32_t res3 = table->find_nearest_neighbor(p3);
+  int32_t res3 = query->find_nearest_neighbor(p3);
   EXPECT_EQ(2, res3);
 
   Point p4;
   p4.push_back(make_pair(7, 1.0));
-  int32_t res4 = table->find_nearest_neighbor(p4);
-  EXPECT_EQ(1, res4);
-}
-
-void basic_test_query_object_1(const LSHConstructionParameters& params) {
-  typedef SparseVector<float> Point;
-  Point p1;
-  p1.push_back(make_pair(24, 1.0));
-  Point p2;
-  p2.push_back(make_pair(7, 0.8));
-  p2.push_back(make_pair(24, 0.6));
-  Point p3;
-  p3.push_back(make_pair(50, 1.0));
-  vector<Point> points;
-  points.push_back(p1);
-  points.push_back(p2);
-  points.push_back(p3);
-
-  unique_ptr<LSHNearestNeighborTable<Point>> table(
-      std::move(construct_table<Point>(points, params)));
-
-  unique_ptr<LSHNearestNeighborQuery<Point>> nn_query(
-          std::move(table->construct_query_object()));
-
-
-  int32_t res1 = nn_query->find_nearest_neighbor(p1);
-  EXPECT_EQ(0, res1);
-  int32_t res2 = nn_query->find_nearest_neighbor(p2);
-  EXPECT_EQ(1, res2);
-  int32_t res3 = nn_query->find_nearest_neighbor(p3);
-  EXPECT_EQ(2, res3);
-
-  Point p4;
-  p4.push_back(make_pair(7, 1.0));
-  int32_t res4 = nn_query->find_nearest_neighbor(p4);
+  int32_t res4 = query->find_nearest_neighbor(p4);
   EXPECT_EQ(1, res4);
 }
 
@@ -172,21 +142,6 @@ TEST(WrapperTest, SparseHPTest1) {
 
   basic_test_sparse_1(params);
 }
-
-TEST(WrapperTest, LSHNNQueryTest1) {
-  int dim = 100;
-  LSHConstructionParameters params;
-  params.dimension = dim;
-  params.lsh_family = LSHFamily::Hyperplane;
-  params.distance_function = DistanceFunction::NegativeInnerProduct;
-  params.storage_hash_table = StorageHashTable::BitPackedFlatHashTable;
-  params.k = 2;
-  params.l = 4;
-  params.num_setup_threads = 0;
-
-  basic_test_query_object_1(params);
-}
-
 
 TEST(WrapperTest, SparseCPTest1) {
   int dim = 100;

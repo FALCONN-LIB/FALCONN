@@ -18,41 +18,32 @@ class PyLSHNearestNeighborTableError : public FalconnError {
   PyLSHNearestNeighborTableError(const char* msg) : FalconnError(msg) {}
 };
 
-class PyLSHNearestNeighborTableDenseDouble {
+class PyLSHNearestNeighborQueryDenseDouble {
  public:
+  typedef LSHNearestNeighborQuery<DenseVector<double>, int32_t> InnerQuery;
   typedef LSHNearestNeighborTable<DenseVector<double>, int32_t> InnerTable;
   typedef Eigen::Map<const DenseVector<double>> ConstVectorMap;
-
-  PyLSHNearestNeighborTableDenseDouble(InnerTable* table) : table_(table) {}
-
-  void set_num_probes(int num_probes) { table_->set_num_probes(num_probes); }
-
-  int32_t get_num_probes() { return table_->get_num_probes(); }
-
-  void set_max_num_candidates(int32_t max_num_candidates) {
-    table_->set_max_num_candidates(max_num_candidates);
-  }
-
-  int32_t get_max_num_candidates() { return table_->get_max_num_candidates(); }
+  
+  PyLSHNearestNeighborQueryDenseDouble(InnerQuery* query) : query_(query) {}
 
   int find_nearest_neighbor(const double* vec, int len) {
     ConstVectorMap q(vec, len);
-    return table_->find_nearest_neighbor(q);
+    return query_->find_nearest_neighbor(q);
   }
 
   std::vector<int32_t> find_k_nearest_neighbors(const double* vec, int len,
                                                 int32_t k) {
     ConstVectorMap q(vec, len);
     std::vector<int32_t> result;
-    table_->find_k_nearest_neighbors(q, k, &result);
+    query_->find_k_nearest_neighbors(q, k, &result);
     return result;
   }
-
+  
   std::vector<int32_t> find_near_neighbors(const double* vec, int len,
                                            double threshold) {
     ConstVectorMap q(vec, len);
     std::vector<int32_t> result;
-    table_->find_near_neighbors(q, threshold, &result);
+    query_->find_near_neighbors(q, threshold, &result);
     return result;
   }
 
@@ -60,33 +51,134 @@ class PyLSHNearestNeighborTableDenseDouble {
                                                       int len) {
     ConstVectorMap q(vec, len);
     std::vector<int32_t> result;
-    table_->get_candidates_with_duplicates(q, &result);
+    query_->get_candidates_with_duplicates(q, &result);
     return result;
   }
 
   std::vector<int32_t> get_unique_candidates(const double* vec, int len) {
     ConstVectorMap q(vec, len);
     std::vector<int32_t> result;
-    table_->get_unique_candidates(q, &result);
+    query_->get_unique_candidates(q, &result);
     return result;
   }
 
-  /*std::vector<int32_t> get_unique_sorted_candidates(const double* vec,
-      int len) {
-    ConstVectorMap q(vec, len);
-    std::vector<int32_t> result;
-    table_->get_unique_sorted_candidates(q, &result);
-    return result;
-  }*/
+  int_fast32_t get_num_probes() {
+    return query_->get_num_probes();
+  }
+  
+  void set_num_probes(int_fast32_t new_num_probes) {
+    query_->set_num_probes(new_num_probes);
+  }
 
-  void reset_query_statistics() { table_->reset_query_statistics(); }
+  int_fast32_t get_max_num_candidates() {
+    return query_->get_max_num_candidates();
+  }
+
+  void set_max_num_candidates(int_fast32_t new_max_num_candidates) {
+    query_->set_max_num_candidates(new_max_num_candidates);
+  }
+  
+  void reset_query_statistics() {
+    return query_->reset_query_statistics();
+  }
 
   falconn::QueryStatistics get_query_statistics() {
-    return table_->get_query_statistics();
+    return query_->get_query_statistics();
+  }
+ 
+ private:
+  std::shared_ptr<InnerQuery> query_ = nullptr;
+};
+
+class PyLSHNearestNeighborTableDenseDouble {
+ public:
+  typedef LSHNearestNeighborTable<DenseVector<double>, int32_t> InnerTable;
+  typedef Eigen::Map<const DenseVector<double>> ConstVectorMap;
+
+  PyLSHNearestNeighborTableDenseDouble(InnerTable* table) : table_(table) {}
+
+  PyLSHNearestNeighborQueryDenseDouble construct_query_object(
+      int_fast32_t num_probes, int_fast32_t max_num_candidates) {
+    std::unique_ptr<LSHNearestNeighborQuery<DenseVector<double>, int32_t>>
+        query(std::move(table_->construct_query_object(num_probes,
+                                                       max_num_candidates)));
+    return PyLSHNearestNeighborQueryDenseDouble(query.release());
   }
 
  private:
   std::shared_ptr<InnerTable> table_ = nullptr;
+};
+
+class PyLSHNearestNeighborQueryDenseFloat {
+ public:
+  typedef LSHNearestNeighborQuery<DenseVector<float>, int32_t> InnerQuery;
+  typedef LSHNearestNeighborTable<DenseVector<float>, int32_t> InnerTable;
+  typedef Eigen::Map<const DenseVector<float>> ConstVectorMap;
+  
+  PyLSHNearestNeighborQueryDenseFloat(InnerQuery* query) : query_(query) {}
+
+  int find_nearest_neighbor(const float* vec, int len) {
+    ConstVectorMap q(vec, len);
+    return query_->find_nearest_neighbor(q);
+  }
+
+  std::vector<int32_t> find_k_nearest_neighbors(const float* vec, int len,
+                                                int32_t k) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    query_->find_k_nearest_neighbors(q, k, &result);
+    return result;
+  }
+  
+  std::vector<int32_t> find_near_neighbors(const float* vec, int len,
+                                           float threshold) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    query_->find_near_neighbors(q, threshold, &result);
+    return result;
+  }
+
+  std::vector<int32_t> get_candidates_with_duplicates(const float* vec,
+                                                      int len) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    query_->get_candidates_with_duplicates(q, &result);
+    return result;
+  }
+
+  std::vector<int32_t> get_unique_candidates(const float* vec, int len) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    query_->get_unique_candidates(q, &result);
+    return result;
+  }
+
+  int_fast32_t get_num_probes() {
+    return query_->get_num_probes();
+  }
+  
+  void set_num_probes(int_fast32_t new_num_probes) {
+    query_->set_num_probes(new_num_probes);
+  }
+
+  int_fast32_t get_max_num_candidates() {
+    return query_->get_max_num_candidates();
+  }
+
+  void set_max_num_candidates(int_fast32_t new_max_num_candidates) {
+    query_->set_max_num_candidates(new_max_num_candidates);
+  }
+  
+  void reset_query_statistics() {
+    return query_->reset_query_statistics();
+  }
+
+  falconn::QueryStatistics get_query_statistics() {
+    return query_->get_query_statistics();
+  }
+ 
+ private:
+  std::shared_ptr<InnerQuery> query_ = nullptr;
 };
 
 class PyLSHNearestNeighborTableDenseFloat {
@@ -95,65 +187,13 @@ class PyLSHNearestNeighborTableDenseFloat {
   typedef Eigen::Map<const DenseVector<float>> ConstVectorMap;
 
   PyLSHNearestNeighborTableDenseFloat(InnerTable* table) : table_(table) {}
-
-  void set_num_probes(int num_probes) { table_->set_num_probes(num_probes); }
-
-  int32_t get_num_probes() { return table_->get_num_probes(); }
-
-  void set_max_num_candidates(int32_t max_num_candidates) {
-    table_->set_max_num_candidates(max_num_candidates);
-  }
-
-  int32_t get_max_num_candidates() { return table_->get_max_num_candidates(); }
-
-  int find_nearest_neighbor(const float* vec, int len) {
-    ConstVectorMap q(vec, len);
-    return table_->find_nearest_neighbor(q);
-  }
-
-  std::vector<int32_t> find_k_nearest_neighbors(const float* vec, int len,
-                                                int32_t k) {
-    ConstVectorMap q(vec, len);
-    std::vector<int32_t> result;
-    table_->find_k_nearest_neighbors(q, k, &result);
-    return result;
-  }
-
-  std::vector<int32_t> find_near_neighbors(const float* vec, int len,
-                                           float threshold) {
-    ConstVectorMap q(vec, len);
-    std::vector<int32_t> result;
-    table_->find_near_neighbors(q, threshold, &result);
-    return result;
-  }
-
-  std::vector<int32_t> get_candidates_with_duplicates(const float* vec,
-                                                      int len) {
-    ConstVectorMap q(vec, len);
-    std::vector<int32_t> result;
-    table_->get_candidates_with_duplicates(q, &result);
-    return result;
-  }
-
-  std::vector<int32_t> get_unique_candidates(const float* vec, int len) {
-    ConstVectorMap q(vec, len);
-    std::vector<int32_t> result;
-    table_->get_unique_candidates(q, &result);
-    return result;
-  }
-
-  /*std::vector<int32_t> get_unique_sorted_candidates(const float* vec,
-      int len) {
-    ConstVectorMap q(vec, len);
-    std::vector<int32_t> result;
-    table_->get_unique_sorted_candidates(q, &result);
-    return result;
-  }*/
-
-  void reset_query_statistics() { table_->reset_query_statistics(); }
-
-  falconn::QueryStatistics get_query_statistics() {
-    return table_->get_query_statistics();
+  
+  PyLSHNearestNeighborQueryDenseFloat construct_query_object(
+      int_fast32_t num_probes, int_fast32_t max_num_candidates) {
+    std::unique_ptr<LSHNearestNeighborQuery<DenseVector<float>, int32_t>>
+        query(std::move(table_->construct_query_object(num_probes,
+                                                       max_num_candidates)));
+    return PyLSHNearestNeighborQueryDenseFloat(query.release());
   }
 
  private:

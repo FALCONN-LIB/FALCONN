@@ -11,13 +11,13 @@ sys.path.append('python_swig')
 
 import falconn
 
-def run_experiment(table, queries, true_nns):
+def run_experiment(query_obj, queries, true_nns):
   average_query_time_outside = 0.0
   num_correct = 0
 
   for query, true_nn in zip(queries, true_nns):
     start = timeit.default_timer()
-    res = table.find_nearest_neighbor(query)
+    res = query_obj.find_nearest_neighbor(query)
     end = timeit.default_timer()
     average_query_time_outside += (end - start)
     if res == true_nn:
@@ -29,7 +29,7 @@ def run_experiment(table, queries, true_nns):
       average_query_time_outside))
   print('Empirical success probability: {}\n'.format(success_probability))
   print('Query statistics:')
-  stats = table.get_query_statistics()
+  stats = query_obj.get_query_statistics()
   print('Average total query time: {:e} seconds'.format(
       stats.average_total_query_time))
   print('Average LSH time:         {:e} seconds'.format(stats.average_lsh_time))
@@ -137,18 +137,18 @@ params_hp.seed = seed ^ 833840234
 print('Hyperplane hash\n')
 
 start = timeit.default_timer()
-hp_table = falconn.LSHIndex(params_hp)
-hp_table.setup(data)
-hp_table.set_num_probes(2464)
+hp_table = falconn.construct_table_dense_float(data, params_hp)
+hp_query_obj = hp_table.construct_query_object(-1, -1)
+hp_query_obj.set_num_probes(2464)
 stop = timeit.default_timer()
 hp_construction_time = stop - start
 
 print('k = {}'.format(params_hp.k))
 print('l = {}'.format(params_hp.l))
-print('Number of probes = {}'.format(hp_table.get_num_probes()))
+print('Number of probes = {}'.format(hp_query_obj.get_num_probes()))
 print('Construction time: {} seconds\n'.format(hp_construction_time))
 
-hp_avg_time, hp_success_prob = run_experiment(hp_table, queries, true_nns)
+hp_avg_time, hp_success_prob = run_experiment(hp_query_obj, queries, true_nns)
 del hp_table
 print(sepline)
 
@@ -168,9 +168,9 @@ params_cp.seed = seed ^ 833840234
 print('Cross polytope hash\n')
 
 start = timeit.default_timer()
-cp_table = falconn.LSHIndex(params_cp)
-cp_table.setup(data)
-cp_table.set_num_probes(896)
+cp_table = falconn.construct_table_dense_float(data, params_cp)
+cp_query_obj = cp_table.construct_query_object(-1, -1)
+cp_query_obj.set_num_probes(896)
 stop = timeit.default_timer()
 cp_construction_time = stop - start
 
@@ -178,10 +178,10 @@ print('k = {}'.format(params_cp.k))
 print('last_cp_dim = {}'.format(params_cp.last_cp_dimension))
 print('num_rotations = {}'.format(params_cp.num_rotations))
 print('l = {}'.format(params_cp.l))
-print('Number of probes = {}'.format(cp_table.get_num_probes()))
+print('Number of probes = {}'.format(cp_query_obj.get_num_probes()))
 print('Construction time: {} seconds\n'.format(cp_construction_time))
 
-cp_avg_time, cp_success_prob = run_experiment(cp_table, queries, true_nns)
+cp_avg_time, cp_success_prob = run_experiment(cp_query_obj, queries, true_nns)
 
 print(sepline)
 print('Summary:')

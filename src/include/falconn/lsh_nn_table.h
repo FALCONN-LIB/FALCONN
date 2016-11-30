@@ -24,68 +24,15 @@ class LSHNearestNeighborTableError : public FalconnError {
   LSHNearestNeighborTableError(const char* msg) : FalconnError(msg) {}
 };
 
-// A common interface for query objects that do not change the state of
-// LSHNearestNeighborTable and can be quickly created for each thread.
+///
+/// A common interface for query objects that execute table lookups such as
+/// nearest neighbor queries. A query object does not change the state of the
+/// parent LSHNearestNeighborTable.
+///
 
 template <typename PointType, typename KeyType = int32_t>
 class LSHNearestNeighborQuery {
  public:
-  ///
-  /// Finds the key of the closest candidate in the probing sequence for q.
-  ///
-  virtual KeyType find_nearest_neighbor(const PointType& q) = 0;
-
-  ///
-  /// Find the keys of the k closest candidates in the probing sequence for q.
-  /// The keys are returned in order of increasing distance to q.
-  ///
-  virtual void find_k_nearest_neighbors(const PointType& q, int_fast64_t k,
-                                        std::vector<KeyType>* result) = 0;
-
-  ///
-  /// Returns the keys corresponding to candidates in the probing sequence for q
-  /// that have distance at most threshold.
-  ///
-  virtual void find_near_neighbors(
-      const PointType& q,
-      typename PointTypeTraits<PointType>::ScalarType threshold,
-      std::vector<KeyType>* result) = 0;
-
-  ///
-  /// Returns the keys of all candidates in the probing sequence for q.
-  /// Every candidate key occurs only once in the result. The
-  /// candidates are returned in the order of their first occurrence in the
-  /// probing sequence.
-  ///
-  virtual void get_unique_candidates(const PointType& q,
-                                     std::vector<KeyType>* result) = 0;
-
-  ///
-  /// Returns the keys of all candidates in the probing sequence for q. If a
-  /// candidate key is found in multiple tables, it will appear multiple times
-  /// in the result. The candidates are returned in the order in which they
-  /// appear in the probing sequence.
-  ///
-  virtual void get_candidates_with_duplicates(const PointType& q,
-                                              std::vector<KeyType>* result) = 0;
-
-  virtual ~LSHNearestNeighborQuery() {}
-};
-
-///
-/// Common interface shared by all LSH table wrappers.
-///
-/// The template parameter PointType should be one of the two point types
-/// introduced above (DenseVector and SparseVector), e.g., DenseVector<float>.
-///
-/// The KeyType template parameter is optional and the default int32_t is
-/// sufficient for up to 10^9 points.
-///
-template <typename PointType, typename KeyType = int32_t>
-class LSHNearestNeighborTable {
- public:
-  virtual std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>>
-  construct_query_object() const = 0;
   ///
   /// Sets the number of probes used for each query.
   /// The default setting is l (number of tables), which effectively disables
@@ -110,12 +57,7 @@ class LSHNearestNeighborTable {
   /// Returns the maximum number of candidates considered in each query.
   ///
   virtual int_fast64_t get_max_num_candidates() = 0;
-  ///
-  /// A special constant for set_max_num_candidates which is effectively
-  /// equivalent to the infinity.
-  ///
-  static const int_fast64_t kNoMaxNumCandidates = -1;
-
+  
   ///
   /// Finds the key of the closest candidate in the probing sequence for q.
   ///
@@ -138,15 +80,6 @@ class LSHNearestNeighborTable {
       std::vector<KeyType>* result) = 0;
 
   ///
-  /// Returns the keys of all candidates in the probing sequence for q. If a
-  /// candidate key is found in multiple tables, it will appear multiple times
-  /// in the result. The candidates are returned in the order in which they
-  /// appear in the probing sequence.
-  ///
-  virtual void get_candidates_with_duplicates(const PointType& q,
-                                              std::vector<KeyType>* result) = 0;
-
-  ///
   /// Returns the keys of all candidates in the probing sequence for q.
   /// Every candidate key occurs only once in the result. The
   /// candidates are returned in the order of their first occurrence in the
@@ -155,6 +88,15 @@ class LSHNearestNeighborTable {
   virtual void get_unique_candidates(const PointType& q,
                                      std::vector<KeyType>* result) = 0;
 
+  ///
+  /// Returns the keys of all candidates in the probing sequence for q. If a
+  /// candidate key is found in multiple tables, it will appear multiple times
+  /// in the result. The candidates are returned in the order in which they
+  /// appear in the probing sequence.
+  ///
+  virtual void get_candidates_with_duplicates(const PointType& q,
+                                              std::vector<KeyType>* result) = 0;
+  
   ///
   /// Resets the query statistics.
   ///
@@ -167,6 +109,36 @@ class LSHNearestNeighborTable {
   /// time be averaged over all queries or only the near(est) neighbor queries?
   ///
   virtual QueryStatistics get_query_statistics() = 0;
+
+
+  virtual ~LSHNearestNeighborQuery() {}
+};
+
+///
+/// Common interface shared by all LSH table wrappers.
+///
+/// The template parameter PointType should be one of the two point types
+/// introduced above (DenseVector and SparseVector), e.g., DenseVector<float>.
+///
+/// The KeyType template parameter is optional and the default int32_t is
+/// sufficient for up to 10^9 points.
+///
+template <typename PointType, typename KeyType = int32_t>
+class LSHNearestNeighborTable {
+ public:
+  ///
+  /// A special constant for set_max_num_candidates which is effectively
+  /// equivalent to infinity.
+  ///
+  static const int_fast64_t kNoMaxNumCandidates = -1;
+ 
+  ///
+  /// This function constructs a new query object. The query object holds
+  /// all per-query state and executes table lookups.
+  ///
+  virtual std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>>
+  construct_query_object(int_fast64_t num_probes = -1,
+                         int_fast64_t max_num_candidates = -1) const = 0;
 
   ///
   /// Virtual destructor.

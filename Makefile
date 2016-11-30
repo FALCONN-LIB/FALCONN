@@ -27,6 +27,15 @@ clean:
 docs: $(ALL_HEADERS) $(DOC_DIR)/Doxyfile
 	doxygen $(DOC_DIR)/Doxyfile
 
+python_swig_only:
+	rm -rf $(PYTHON_SWIG_DIR)
+	mkdir -p $(PYTHON_SWIG_DIR)
+	$(SWIG) -c++ -python -builtin -outdir $(PYTHON_SWIG_DIR) -o $(PYTHON_SWIG_DIR)/falconn_wrap.cc -Iexternal -Isrc/include $(PYTHON_DIR)/wrapper/falconn.i
+	mkdir -p obj
+	$(CXX) $(CXXFLAGS) -fPIC `python-config --includes` -I $(NUMPY_INCLUDE_DIR) -I $(INC_DIR) -I $(PYTHON_DIR)/wrapper -c $(PYTHON_SWIG_DIR)/falconn_wrap.cc -o obj/falconn_wrap.o
+	$(CXX) -shared obj/falconn_wrap.o -o $(PYTHON_SWIG_DIR)/_falconn.so `python-config --ldflags` -lc++
+	rm -f $(PYTHON_SWIG_DIR)/falconn_wrap.cxx
+
 python_package:
 	rm -rf $(PYTHON_PKG_DIR)
 	mkdir -p $(PYTHON_PKG_DIR)
