@@ -450,7 +450,7 @@ class CrossPolytopeHashBase {
           b *= sqrt2;
         }
         sorting_block_size =
-            std::min(1, static_cast<int>(std::round(b * sqrt2)));
+            std::max(1, static_cast<int>(std::round(b * sqrt2)));
       } else {
         sorting_block_size = 8;
       }
