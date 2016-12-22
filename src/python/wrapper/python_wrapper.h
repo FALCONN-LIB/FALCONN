@@ -90,6 +90,80 @@ class PyLSHNearestNeighborQueryDenseDouble {
   std::shared_ptr<InnerQuery> query_ = nullptr;
 };
 
+class PyLSHNearestNeighborQueryPoolDenseDouble {
+ public:
+  typedef LSHNearestNeighborQueryPool<DenseVector<double>, int32_t>
+      InnerQueryPool;
+  typedef LSHNearestNeighborTable<DenseVector<double>, int32_t> InnerTable;
+  typedef Eigen::Map<const DenseVector<double>> ConstVectorMap;
+  
+  PyLSHNearestNeighborQueryPoolDenseDouble(InnerQueryPool* query_pool)
+    : query_pool_(query_pool) {}
+
+  int find_nearest_neighbor(const double* vec, int len) {
+    ConstVectorMap q(vec, len);
+    return query_pool_->find_nearest_neighbor(q);
+  }
+
+  std::vector<int32_t> find_k_nearest_neighbors(const double* vec, int len,
+                                                int32_t k) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    query_pool_->find_k_nearest_neighbors(q, k, &result);
+    return result;
+  }
+  
+  std::vector<int32_t> find_near_neighbors(const double* vec, int len,
+                                           double threshold) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    query_pool_->find_near_neighbors(q, threshold, &result);
+    return result;
+  }
+
+  std::vector<int32_t> get_candidates_with_duplicates(const double* vec,
+                                                      int len) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    query_pool_->get_candidates_with_duplicates(q, &result);
+    return result;
+  }
+
+  std::vector<int32_t> get_unique_candidates(const double* vec, int len) {
+    ConstVectorMap q(vec, len);
+    std::vector<int32_t> result;
+    query_pool_->get_unique_candidates(q, &result);
+    return result;
+  }
+
+  int_fast32_t get_num_probes() {
+    return query_pool_->get_num_probes();
+  }
+  
+  void set_num_probes(int_fast32_t new_num_probes) {
+    query_pool_->set_num_probes(new_num_probes);
+  }
+
+  int_fast32_t get_max_num_candidates() {
+    return query_pool_->get_max_num_candidates();
+  }
+
+  void set_max_num_candidates(int_fast32_t new_max_num_candidates) {
+    query_pool_->set_max_num_candidates(new_max_num_candidates);
+  }
+  
+  void reset_query_statistics() {
+    return query_pool_->reset_query_statistics();
+  }
+
+  falconn::QueryStatistics get_query_statistics() {
+    return query_pool_->get_query_statistics();
+  }
+ 
+ private:
+  std::shared_ptr<InnerQueryPool> query_pool_ = nullptr;
+};
+
 class PyLSHNearestNeighborTableDenseDouble {
  public:
   typedef LSHNearestNeighborTable<DenseVector<double>, int32_t> InnerTable;
@@ -103,6 +177,17 @@ class PyLSHNearestNeighborTableDenseDouble {
         query(std::move(table_->construct_query_object(num_probes,
                                                        max_num_candidates)));
     return PyLSHNearestNeighborQueryDenseDouble(query.release());
+  }
+  
+  PyLSHNearestNeighborQueryPoolDenseDouble construct_query_pool(
+      int_fast32_t num_probes,
+      int_fast32_t max_num_candidates,
+      int_fast32_t num_query_objects) {
+    std::unique_ptr<LSHNearestNeighborQueryPool<DenseVector<double>, int32_t>>
+        query_pool(std::move(table_->construct_query_pool(num_probes,
+                                                          max_num_candidates,
+                                                          num_query_objects)));
+    return PyLSHNearestNeighborQueryPoolDenseDouble(query_pool.release());
   }
 
  private:

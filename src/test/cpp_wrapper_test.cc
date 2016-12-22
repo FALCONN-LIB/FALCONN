@@ -14,6 +14,7 @@ using falconn::LSHConstructionParameters;
 using falconn::LSHFamily;
 using falconn::LSHNearestNeighborTable;
 using falconn::LSHNearestNeighborQuery;
+using falconn::LSHNearestNeighborQueryPool;
 using falconn::get_default_parameters;
 using falconn::SparseVector;
 using falconn::StorageHashTable;
@@ -47,9 +48,9 @@ void basic_test_dense_1(const LSHConstructionParameters& params) {
   points.push_back(p3);
 
   unique_ptr<LSHNearestNeighborTable<Point>> table(
-      std::move(construct_table<Point>(points, params)));
+      construct_table<Point>(points, params));
   unique_ptr<LSHNearestNeighborQuery<Point>> query(
-      std::move(table->construct_query_object()));
+      table->construct_query_object());
 
   int32_t res1 = query->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
@@ -64,6 +65,20 @@ void basic_test_dense_1(const LSHConstructionParameters& params) {
   p4[2] = 0.0;
   p4[3] = 0.0;
   int32_t res4 = query->find_nearest_neighbor(p4);
+  EXPECT_EQ(1, res4);
+  
+  unique_ptr<LSHNearestNeighborQueryPool<Point>> query_pool(
+      table->construct_query_pool());
+ 
+  // Same queries as above but now through a query pool
+  res1 = query_pool->find_nearest_neighbor(p1);
+  EXPECT_EQ(0, res1);
+  res2 = query_pool->find_nearest_neighbor(p2);
+  EXPECT_EQ(1, res2);
+  res3 = query_pool->find_nearest_neighbor(p3);
+  EXPECT_EQ(2, res3);
+
+  res4 = query_pool->find_nearest_neighbor(p4);
   EXPECT_EQ(1, res4);
 }
 
@@ -82,9 +97,9 @@ void basic_test_sparse_1(const LSHConstructionParameters& params) {
   points.push_back(p3);
 
   unique_ptr<LSHNearestNeighborTable<Point>> table(
-      std::move(construct_table<Point>(points, params)));
+      construct_table<Point>(points, params));
   unique_ptr<LSHNearestNeighborQuery<Point>> query(
-      std::move(table->construct_query_object()));
+      table->construct_query_object());
 
   int32_t res1 = query->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);
