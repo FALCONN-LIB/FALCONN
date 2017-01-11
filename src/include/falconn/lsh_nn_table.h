@@ -217,6 +217,13 @@ class LSHNearestNeighborTable {
   /// This function constructs a new query object. The query object holds
   /// all per-query state and executes table lookups.
   ///
+  /// num_probes == -1 (the default value) indicates that the number of probes
+  /// should equal the number of tables. This corresponds to no multiprobe.
+  ///
+  /// max_num_candidates == -1 (the default value) indicates that the number of
+  /// candidates should not be limited. This means that the entire probing
+  /// sequence is used.
+  ///
   virtual std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>>
   construct_query_object(int_fast64_t num_probes = -1,
                          int_fast64_t max_num_candidates = -1) const = 0;
@@ -226,10 +233,23 @@ class LSHNearestNeighborTable {
   /// a set of query objects and supports an interface that can be safely
   /// called from multiple threads.
   ///
+  /// num_probes == -1 (the default value) indicates that the number of probes
+  /// should equal the number of tables. This corresponds to no multiprobe.
+  ///
+  /// max_num_candidates == -1 (the default value) indicates that the number of
+  /// candidates should not be limited. This means that the entire probing
+  /// sequence is used.
+  ///
+  /// num_query_objects <= 0 (the default value) indicates that the number of
+  /// query objects should be 2 times the number of hardware threads (as
+  /// indicated by std::thread:hardware_concurrency()). This is a reasonable
+  /// default for thread pools etc. that do not use an excessive number of
+  /// threads.
+  ///
   virtual std::unique_ptr<LSHNearestNeighborQueryPool<PointType, KeyType>>
   construct_query_pool(int_fast64_t num_probes = -1,
                        int_fast64_t max_num_candidates = -1,
-                       int_fast64_t num_query_objects = -1) const = 0;
+                       int_fast64_t num_query_objects = 0) const = 0;
 
   ///
   /// Virtual destructor.
