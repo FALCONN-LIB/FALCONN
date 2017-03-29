@@ -1,5 +1,3 @@
-#include "immintrin.h"
-
 #include <iostream>
 #include <Eigen/Dense>
 
