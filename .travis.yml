@@ -10,7 +10,6 @@ python:
 
 os:
   - linux
-  - osx
 dist: trusty
 
 notifications:
@@ -28,6 +27,7 @@ before_install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y swig3.0 ; fi
 
 install:
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then alias swig="swig3.0" ; fi
   - make python_package
   - cd python_pkg/dist/FALCONN-* && pip install .
 
