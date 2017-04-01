@@ -28,7 +28,7 @@ before_install:
 
 install:
   - make python_package
-  - cd python_pkg/dist/FALCONN-* && pip install .
+  - cd python_pkg/dist/FALCONN-* && pip install . && cd ../../..
 
 script:
   - make run_all_cpp_tests
