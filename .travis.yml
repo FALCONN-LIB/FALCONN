@@ -20,6 +20,12 @@ notifications:
     on_success: never
     on_failure: always
 
+before_install:
+  - if [[ "$travis_os_name" == "osx" ]]; then brew update ; fi
+  - if [[ "$travis_os_name" == "osx" ]]; then brew install swig ; fi
+  - if [[ "$travis_os_name" == "linux" ]]; then sudo apt-get -qq update ; fi
+  - if [[ "$travis_os_name" == "linux" ]]; then sudo apt-get install -y swig3.0 ; fi
+
 install:
   - make python_package
   - cd python_pkg/dist/FALCONN-* && pip install .
