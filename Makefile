@@ -12,7 +12,7 @@ ALL_HEADERS = $(INC_DIR)/core/lsh_table.h $(INC_DIR)/core/cosine_distance.h $(IN
 
 CXX=g++
 CXXFLAGS=-std=gnu++11 -DNDEBUG -Wall -Wextra -march=native -O3 -I external/eigen -I src/include
-SWIG=swig
+SWIG=swig3.0
 NUMPY_INCLUDE_DIR= $(shell python -c "import numpy; print(numpy.get_include())")
 
 clean:
