@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/FALCONN-LIB/FALCONN.svg?branch=master)](https://travis-ci.org/FALCONN-LIB/FALCONN)
+
 ### FALCONN - FAst Lookups of Cosine and Other Nearest Neighbors
 
 FALCONN is a library with algorithms for the nearest neighbor search problem. The algorithms in FALCONN are based on

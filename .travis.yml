@@ -1,0 +1,49 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+  - "3.3"
+  - "3.4"
+  - "3.5"
+  - "3.6"
+
+os:
+  - linux
+dist: trusty
+
+notifications:
+  email:
+    recipients:
+      - falconn.lib@gmail.com
+    on_success: never
+    on_failure: always
+
+before_install:
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+    brew update;
+    brew install swig;
+    pip install pytest;
+    fi
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+    wget http://prdownloads.sourceforge.net/swig/swig-3.0.12.tar.gz;
+    tar -xzf swig-3.0.12.tar.gz;
+    cd swig-3.0.12;
+    ./configure;
+    make;
+    sudo make install;
+    cd ..;
+    fi
+
+install:
+  - make python_package
+  - cd python_pkg/dist/FALCONN-* && pip install . && cd ../../..
+
+script:
+  - make run_all_cpp_tests
+  - make run_all_python_tests
+
+matrix:
+  include:
+    - language: generic
+      python: "OS X Python"
+      os: osx
