@@ -1,6 +1,6 @@
 # nlohmann/json Release
 
-![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif)](https://github.com/nlohmann/json/releases)
+[![JSON for Modern C++](https://raw.githubusercontent.com/nlohmann/json/master/doc/json.gif)](https://github.com/nlohmann/json/releases)
 
 
 this repository just keeps the single header file (`json.hpp`) of each release
