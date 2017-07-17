@@ -47,3 +47,4 @@ matrix:
     - language: generic
       python: "OS X Python"
       os: osx
+      osx_image: xcode9
