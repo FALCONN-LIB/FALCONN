@@ -61,7 +61,11 @@ performance of our LSH families.
 import numpy as _numpy
 from . import internal as _internal
 
-def get_default_parameters(num_points, dimension, distance='euclidean_squared', is_sufficiently_random=False):
+
+def get_default_parameters(num_points,
+                           dimension,
+                           distance='euclidean_squared',
+                           is_sufficiently_random=False):
     """Get parameters for `LSHIndex` for _reasonable_ datasets.
 
     This function returns an instance of `LSHConstructionParameters` that
@@ -88,7 +92,9 @@ def get_default_parameters(num_points, dimension, distance='euclidean_squared', 
     very few coordinates are zeros; in this case one is able to speed
     things up a little bit.
     """
-    return _internal.get_default_parameters(num_points, dimension, distance, is_sufficiently_random)
+    return _internal.get_default_parameters(num_points, dimension, distance,
+                                            is_sufficiently_random)
+
 
 def compute_number_of_hash_functions(num_bits, params):
     """Modify `params` such that each hash table has `2^num_bits` bins.
@@ -114,6 +120,7 @@ def compute_number_of_hash_functions(num_bits, params):
     fields partially set as described above
     """
     _internal.compute_number_of_hash_functions(num_bits, params)
+
 
 class LSHConstructionParameters(_internal.LSHConstructionParameters):
     """ Construction parameters for the LSH data structure.
@@ -159,6 +166,7 @@ class LSHConstructionParameters(_internal.LSHConstructionParameters):
     """
     pass
 
+
 class QueryStatistics(_internal.QueryStatistics):
     """Query statistics of the LSH data structure.
 
@@ -175,6 +183,7 @@ class QueryStatistics(_internal.QueryStatistics):
     * `average_total_query_time`: average overall query time.
     """
     pass
+
 
 class LSHIndex:
     """The main class that represents the LSH data structure.
@@ -277,13 +286,18 @@ class LSHIndex:
         if dataset.dtype != _numpy.float32 and dataset.dtype != _numpy.float64:
             raise ValueError('dataset must consist of floats or doubles')
         if dataset.shape[1] != self._params.dimension:
-            raise ValueError('dataset dimension mismatch: {} expected, but {} found'.format(self._params.dimension, dataset.shape[1]))
+            raise ValueError(
+                'dataset dimension mismatch: {} expected, but {} found'.format(
+                    self._params.dimension, dataset.shape[1]))
         self._dataset = dataset
         if dataset.dtype == _numpy.float32:
-            self._table = _internal.construct_table_dense_float(dataset, self._params)
+            self._table = _internal.construct_table_dense_float(
+                dataset, self._params)
         else:
-            self._table = _internal.construct_table_dense_double(dataset, self._params)
-        self._query_object = self._table.construct_query_object(self._params.l, -1)
+            self._table = _internal.construct_table_dense_double(
+                dataset, self._params)
+        self._query_object = self._table.construct_query_object(
+            self._params.l, -1)
 
     def _check_built(self):
         if self._dataset is None or self._table is None:
@@ -297,7 +311,9 @@ class LSHIndex:
         if self._dataset.dtype != query.dtype:
             raise ValueError('dataset and query must have the same dtype')
         if query.shape[0] != self._params.dimension:
-            raise ValueError('query dimension mismatch: {} expected, but {} found'.format(self._params.dimension, query.shape[0]))
+            raise ValueError(
+                'query dimension mismatch: {} expected, but {} found'.format(
+                    self._params.dimension, query.shape[0]))
 
     def find_k_nearest_neighbors(self, query, k):
         """Retrieve the closest `k` neighbors to `query`.
@@ -432,7 +448,8 @@ class LSHIndex:
         """
         self._check_built()
         if max_num_candidates < -1:
-            raise ValueError('invalid max_num_candidates: {}'.format(max_num_candidates))
+            raise ValueError(
+                'invalid max_num_candidates: {}'.format(max_num_candidates))
         self._query_object.set_max_num_candidates(max_num_candidates)
 
     def set_num_probes(self, num_probes):
@@ -449,5 +466,7 @@ class LSHIndex:
         """
         self._check_built()
         if num_probes < self._params.l:
-            raise ValueError('number of probes must be at least the number of tables ({})'.format(self._params.l))
+            raise ValueError(
+                'number of probes must be at least the number of tables ({})'.
+                format(self._params.l))
         self._query_object.set_num_probes(num_probes)
