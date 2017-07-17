@@ -187,26 +187,26 @@ class NearestNeighborQuery {
                                       int_fast64_t max_num_candidates,
                                       std::vector<LSHTableKeyType>* result) {
     auto start_time = std::chrono::high_resolution_clock::now();
-    
+
     table_query_->get_candidates_with_duplicates(q, num_probes,
                                                  max_num_candidates, result);
-    
+
     auto end_time = std::chrono::high_resolution_clock::now();
     auto elapsed_total =
         std::chrono::duration_cast<std::chrono::duration<double>>(end_time -
                                                                   start_time);
     stats_.average_total_query_time += elapsed_total.count();
   }
-  
+
   void get_unique_candidates(const LSHTablePointType& q,
                              int_fast64_t num_probes,
                              int_fast64_t max_num_candidates,
                              std::vector<LSHTableKeyType>* result) {
     auto start_time = std::chrono::high_resolution_clock::now();
-    
+
     table_query_->get_unique_candidates(q, num_probes, max_num_candidates,
                                         result);
-    
+
     auto end_time = std::chrono::high_resolution_clock::now();
     auto elapsed_total =
         std::chrono::duration_cast<std::chrono::duration<double>>(end_time -

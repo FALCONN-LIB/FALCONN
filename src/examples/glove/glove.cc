@@ -172,7 +172,8 @@ void gen_answers(const vector<Point> &dataset, const vector<Point> &queries,
 double evaluate_num_probes(LSHNearestNeighborTable<Point> *table,
                            const vector<Point> &queries,
                            const vector<int> &answers, int num_probes) {
-  unique_ptr<LSHNearestNeighborQuery<Point>> query_object = table->construct_query_object(num_probes);
+  unique_ptr<LSHNearestNeighborQuery<Point>> query_object =
+      table->construct_query_object(num_probes);
   int outer_counter = 0;
   int num_matches = 0;
   vector<int32_t> candidates;
@@ -194,10 +195,11 @@ double evaluate_num_probes(LSHNearestNeighborTable<Point> *table,
  * It is much slower than 'evaluate_num_probes' and should be used to
  * measure the time.
  */
-pair<double, QueryStatistics> evaluate_query_time(LSHNearestNeighborTable<Point> *table,
-                           const vector<Point> &queries,
-                           const vector<int> &answers, int num_probes) {
-  unique_ptr<LSHNearestNeighborQuery<Point>> query_object = table->construct_query_object(num_probes);
+pair<double, QueryStatistics> evaluate_query_time(
+    LSHNearestNeighborTable<Point> *table, const vector<Point> &queries,
+    const vector<int> &answers, int num_probes) {
+  unique_ptr<LSHNearestNeighborQuery<Point>> query_object =
+      table->construct_query_object(num_probes);
   query_object->reset_query_statistics();
   int outer_counter = 0;
   int num_matches = 0;
@@ -207,7 +209,8 @@ pair<double, QueryStatistics> evaluate_query_time(LSHNearestNeighborTable<Point>
     }
     ++outer_counter;
   }
-  return make_pair((num_matches + 0.0) / (queries.size() + 0.0), query_object->get_query_statistics());
+  return make_pair((num_matches + 0.0) / (queries.size() + 0.0),
+                   query_object->get_query_statistics());
 }
 
 /*

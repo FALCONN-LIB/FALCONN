@@ -62,9 +62,7 @@ class PyLSHNearestNeighborQueryDenseDouble {
     return result;
   }
 
-  int_fast32_t get_num_probes() {
-    return query_->get_num_probes();
-  }
+  int_fast32_t get_num_probes() { return query_->get_num_probes(); }
 
   void set_num_probes(int_fast32_t new_num_probes) {
     query_->set_num_probes(new_num_probes);
@@ -78,9 +76,7 @@ class PyLSHNearestNeighborQueryDenseDouble {
     query_->set_max_num_candidates(new_max_num_candidates);
   }
 
-  void reset_query_statistics() {
-    return query_->reset_query_statistics();
-  }
+  void reset_query_statistics() { return query_->reset_query_statistics(); }
 
   falconn::QueryStatistics get_query_statistics() {
     return query_->get_query_statistics();
@@ -98,7 +94,7 @@ class PyLSHNearestNeighborQueryPoolDenseDouble {
   typedef Eigen::Map<const DenseVector<double>> ConstVectorMap;
 
   PyLSHNearestNeighborQueryPoolDenseDouble(InnerQueryPool* query_pool)
-    : query_pool_(query_pool) {}
+      : query_pool_(query_pool) {}
 
   int find_nearest_neighbor(const double* vec, int len) {
     ConstVectorMap q(vec, len);
@@ -136,9 +132,7 @@ class PyLSHNearestNeighborQueryPoolDenseDouble {
     return result;
   }
 
-  int_fast32_t get_num_probes() {
-    return query_pool_->get_num_probes();
-  }
+  int_fast32_t get_num_probes() { return query_pool_->get_num_probes(); }
 
   void set_num_probes(int_fast32_t new_num_probes) {
     query_pool_->set_num_probes(new_num_probes);
@@ -174,19 +168,17 @@ class PyLSHNearestNeighborTableDenseDouble {
   PyLSHNearestNeighborQueryDenseDouble construct_query_object(
       int_fast32_t num_probes, int_fast32_t max_num_candidates) {
     std::unique_ptr<LSHNearestNeighborQuery<DenseVector<double>, int32_t>>
-        query(std::move(table_->construct_query_object(num_probes,
-                                                       max_num_candidates)));
+        query(std::move(
+            table_->construct_query_object(num_probes, max_num_candidates)));
     return PyLSHNearestNeighborQueryDenseDouble(query.release());
   }
 
   PyLSHNearestNeighborQueryPoolDenseDouble construct_query_pool(
-      int_fast32_t num_probes,
-      int_fast32_t max_num_candidates,
+      int_fast32_t num_probes, int_fast32_t max_num_candidates,
       int_fast32_t num_query_objects) {
     std::unique_ptr<LSHNearestNeighborQueryPool<DenseVector<double>, int32_t>>
-        query_pool(std::move(table_->construct_query_pool(num_probes,
-                                                          max_num_candidates,
-                                                          num_query_objects)));
+        query_pool(std::move(table_->construct_query_pool(
+            num_probes, max_num_candidates, num_query_objects)));
     return PyLSHNearestNeighborQueryPoolDenseDouble(query_pool.release());
   }
 
@@ -238,9 +230,7 @@ class PyLSHNearestNeighborQueryDenseFloat {
     return result;
   }
 
-  int_fast32_t get_num_probes() {
-    return query_->get_num_probes();
-  }
+  int_fast32_t get_num_probes() { return query_->get_num_probes(); }
 
   void set_num_probes(int_fast32_t new_num_probes) {
     query_->set_num_probes(new_num_probes);
@@ -254,9 +244,7 @@ class PyLSHNearestNeighborQueryDenseFloat {
     query_->set_max_num_candidates(new_max_num_candidates);
   }
 
-  void reset_query_statistics() {
-    return query_->reset_query_statistics();
-  }
+  void reset_query_statistics() { return query_->reset_query_statistics(); }
 
   falconn::QueryStatistics get_query_statistics() {
     return query_->get_query_statistics();
@@ -275,9 +263,9 @@ class PyLSHNearestNeighborTableDenseFloat {
 
   PyLSHNearestNeighborQueryDenseFloat construct_query_object(
       int_fast32_t num_probes, int_fast32_t max_num_candidates) {
-    std::unique_ptr<LSHNearestNeighborQuery<DenseVector<float>, int32_t>>
-        query(std::move(table_->construct_query_object(num_probes,
-                                                       max_num_candidates)));
+    std::unique_ptr<LSHNearestNeighborQuery<DenseVector<float>, int32_t>> query(
+        std::move(
+            table_->construct_query_object(num_probes, max_num_candidates)));
     return PyLSHNearestNeighborQueryDenseFloat(query.release());
   }
 

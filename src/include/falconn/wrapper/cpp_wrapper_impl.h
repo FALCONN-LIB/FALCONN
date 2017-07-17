@@ -360,9 +360,8 @@ class LSHNNQueryWrapper : public LSHNearestNeighborQuery<PointType, KeyType> {
 
   void get_candidates_with_duplicates(const PointType& q,
                                       std::vector<KeyType>* result) {
-    internal_nn_query_->get_candidates_with_duplicates(q, num_probes_,
-                                                       max_num_candidates_,
-                                                       result);
+    internal_nn_query_->get_candidates_with_duplicates(
+        q, num_probes_, max_num_candidates_, result);
   }
 
   void get_unique_candidates(const PointType& q, std::vector<KeyType>* result) {
@@ -370,9 +369,7 @@ class LSHNNQueryWrapper : public LSHNearestNeighborQuery<PointType, KeyType> {
                                               max_num_candidates_, result);
   }
 
-  int_fast64_t get_num_probes() {
-    return num_probes_;
-  }
+  int_fast64_t get_num_probes() { return num_probes_; }
 
   void set_num_probes(int_fast64_t new_num_probes) {
     if (new_num_probes <= 0) {
@@ -382,14 +379,12 @@ class LSHNNQueryWrapper : public LSHNearestNeighborQuery<PointType, KeyType> {
     num_probes_ = new_num_probes;
   }
 
-  int_fast64_t get_max_num_candidates() {
-    return max_num_candidates_;
-  }
+  int_fast64_t get_max_num_candidates() { return max_num_candidates_; }
 
   void set_max_num_candidates(int_fast64_t new_max_num_candidates) {
     max_num_candidates_ = new_max_num_candidates;
   }
-  
+
   void reset_query_statistics() {
     internal_nn_query_->reset_query_statistics();
   }
@@ -410,15 +405,14 @@ class LSHNNQueryWrapper : public LSHNearestNeighborQuery<PointType, KeyType> {
 template <typename PointType, typename KeyType, typename DistanceType,
           typename LSHTable, typename ScalarType, typename DistanceFunction,
           typename DataStorage>
-class LSHNNQueryPool: public LSHNearestNeighborQueryPool<PointType, KeyType> {
+class LSHNNQueryPool : public LSHNearestNeighborQueryPool<PointType, KeyType> {
   typedef core::NearestNeighborQuery<typename LSHTable::Query, PointType,
                                      KeyType, PointType, ScalarType,
                                      DistanceFunction, DataStorage>
       NNQueryType;
 
  public:
-  LSHNNQueryPool(const LSHTable& parent,
-                 int_fast64_t num_probes,
+  LSHNNQueryPool(const LSHTable& parent, int_fast64_t num_probes,
                  int_fast64_t max_num_candidates,
                  const DataStorage& data_storage,
                  int_fast64_t num_query_objects)
@@ -483,9 +477,7 @@ class LSHNNQueryPool: public LSHNearestNeighborQueryPool<PointType, KeyType> {
     unlock_query(query_index);
   }
 
-  int_fast64_t get_num_probes() {
-    return num_probes_;
-  }
+  int_fast64_t get_num_probes() { return num_probes_; }
 
   void set_num_probes(int_fast64_t new_num_probes) {
     if (new_num_probes <= 0) {
@@ -495,18 +487,17 @@ class LSHNNQueryPool: public LSHNearestNeighborQueryPool<PointType, KeyType> {
     num_probes_ = new_num_probes;
   }
 
-  int_fast64_t get_max_num_candidates() {
-    return max_num_candidates_;
-  }
+  int_fast64_t get_max_num_candidates() { return max_num_candidates_; }
 
   void set_max_num_candidates(int_fast64_t new_max_num_candidates) {
     max_num_candidates_ = new_max_num_candidates;
   }
-  
+
   void reset_query_statistics() {
-    for (int_fast64_t ii = 0; ii < static_cast<int_fast64_t>(
-         internal_nn_queries_.size()); ++ii) {
-      while (locks_[ii].test_and_set(std::memory_order_acquire)) ;
+    for (int_fast64_t ii = 0;
+         ii < static_cast<int_fast64_t>(internal_nn_queries_.size()); ++ii) {
+      while (locks_[ii].test_and_set(std::memory_order_acquire))
+        ;
       internal_nn_queries_[ii]->reset_query_statistics();
       locks_[ii].clear(std::memory_order_release);
     }
@@ -514,9 +505,10 @@ class LSHNNQueryPool: public LSHNearestNeighborQueryPool<PointType, KeyType> {
 
   QueryStatistics get_query_statistics() {
     QueryStatistics res;
-    for (int_fast64_t ii = 0; ii < static_cast<int_fast64_t>(
-         internal_nn_queries_.size()); ++ii) {
-      while (locks_[ii].test_and_set(std::memory_order_acquire)) ;
+    for (int_fast64_t ii = 0;
+         ii < static_cast<int_fast64_t>(internal_nn_queries_.size()); ++ii) {
+      while (locks_[ii].test_and_set(std::memory_order_acquire))
+        ;
       QueryStatistics cur_stats =
           internal_nn_queries_[ii]->get_query_statistics();
       cur_stats.convert_to_totals();
@@ -574,8 +566,9 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
         composite_hash_table_(std::move(composite_hash_table)),
         data_storage_(std::move(data_storage)) {}
 
-  std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>> construct_query_object(int_fast64_t num_probes = -1,
-      int_fast64_t max_num_candidates = -1) const {
+  std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>>
+  construct_query_object(int_fast64_t num_probes = -1,
+                         int_fast64_t max_num_candidates = -1) const {
     if (num_probes <= 0) {
       num_probes = lsh_->get_l();
     }
@@ -589,11 +582,11 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
                 *lsh_table_, num_probes, max_num_candidates, *data_storage_));
     return std::move(nn_query);
   }
-  
+
   std::unique_ptr<LSHNearestNeighborQueryPool<PointType, KeyType>>
-      construct_query_pool(int_fast64_t num_probes = -1,
-                           int_fast64_t max_num_candidates = -1,
-                           int_fast64_t num_query_objects = -1) const {
+  construct_query_pool(int_fast64_t num_probes = -1,
+                       int_fast64_t max_num_candidates = -1,
+                       int_fast64_t num_query_objects = -1) const {
     if (num_probes <= 0) {
       num_probes = lsh_->get_l();
     }
@@ -601,9 +594,8 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
       num_query_objects = std::max(1u, 2 * std::thread::hardware_concurrency());
     }
     typedef typename PointTypeTraits<PointType>::ScalarType ScalarType;
-    std::unique_ptr<
-        LSHNNQueryPool<PointType, KeyType, DistanceType, LSHTable,
-                       ScalarType, DistanceFunction, DataStorage>>
+    std::unique_ptr<LSHNNQueryPool<PointType, KeyType, DistanceType, LSHTable,
+                                   ScalarType, DistanceFunction, DataStorage>>
         nn_query_pool(
             new LSHNNQueryPool<PointType, KeyType, DistanceType, LSHTable,
                                ScalarType, DistanceFunction, DataStorage>(
@@ -853,13 +845,12 @@ class StaticTableFactory {
         new LSHTableType(lsh.get(), composite_table.get(), *data_storage_,
                          params_.num_setup_threads));
 
-    table_.reset(
-        new LSHNNTableWrapper<PointType, KeyType, ScalarType,
-                              DistanceFunctionType, LSHTableType, LSHType,
-                              HashTableFactoryType, CompositeHashTableType,
-                              DataStorageType>(
-            std::move(lsh), std::move(lsh_table), std::move(factory),
-            std::move(composite_table), std::move(data_storage_)));
+    table_.reset(new LSHNNTableWrapper<PointType, KeyType, ScalarType,
+                                       DistanceFunctionType, LSHTableType,
+                                       LSHType, HashTableFactoryType,
+                                       CompositeHashTableType, DataStorageType>(
+        std::move(lsh), std::move(lsh_table), std::move(factory),
+        std::move(composite_table), std::move(data_storage_)));
   }
 
   const static int_fast32_t kHashTypeIndex = 0;

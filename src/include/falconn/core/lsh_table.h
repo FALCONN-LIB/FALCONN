@@ -181,9 +181,7 @@ class StaticLSHTable
       stats_.average_total_query_time += elapsed_total.count();
     }
 
-    void reset_query_statistics() {
-      stats_.reset();
-    }
+    void reset_query_statistics() { stats_.reset(); }
 
     QueryStatistics get_query_statistics() {
       QueryStatistics res = stats_;

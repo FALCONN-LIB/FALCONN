@@ -66,10 +66,10 @@ void basic_test_dense_1(const LSHConstructionParameters& params) {
   p4[3] = 0.0;
   int32_t res4 = query->find_nearest_neighbor(p4);
   EXPECT_EQ(1, res4);
-  
+
   unique_ptr<LSHNearestNeighborQueryPool<Point>> query_pool(
       table->construct_query_pool());
- 
+
   // Same queries as above but now through a query pool
   res1 = query_pool->find_nearest_neighbor(p1);
   EXPECT_EQ(0, res1);

@@ -40,7 +40,7 @@ using falconn::StorageHashTable;
 typedef falconn::DenseVector<float> Vec;
 
 class Timer {
-public:
+ public:
   Timer() { start_time = high_resolution_clock::now(); }
 
   double elapsed_seconds() {
@@ -49,17 +49,15 @@ public:
     return elapsed.count();
   }
 
-private:
+ private:
   high_resolution_clock::time_point start_time;
 };
 
 template <typename PointType>
 void thread_function(LSHNearestNeighborQueryPool<PointType>* query_pool,
                      const vector<PointType>& queries,
-                     const vector<int>& true_nns,
-                     int query_index_start,
-                     int query_index_end,
-                     int* num_correct_in_thread,
+                     const vector<int>& true_nns, int query_index_start,
+                     int query_index_end, int* num_correct_in_thread,
                      double* total_query_time_outside_in_thread) {
   for (int ii = query_index_start; ii < query_index_end; ++ii) {
     Timer query_time;
@@ -76,10 +74,8 @@ void thread_function(LSHNearestNeighborQueryPool<PointType>* query_pool,
 template <typename PointType>
 void run_experiment(LSHNearestNeighborTable<PointType>* table,
                     const vector<PointType>& queries,
-                    const vector<int>& true_nns,
-                    int num_probes,
-                    int num_threads,
-                    double* avg_query_time,
+                    const vector<int>& true_nns, int num_probes,
+                    int num_threads, double* avg_query_time,
                     double* success_probability) {
   unique_ptr<LSHNearestNeighborQueryPool<PointType>> query_pool(
       table->construct_query_pool(num_probes));
@@ -104,13 +100,9 @@ void run_experiment(LSHNearestNeighborTable<PointType>* table,
   Timer total_time;
 
   for (int ii = 0; ii < num_threads; ++ii) {
-    threads.push_back(thread(thread_function<PointType>,
-                             query_pool.get(),
-                             cref(queries),
-                             cref(true_nns),
-                             index_start[ii],
-                             index_end[ii],
-                             &(num_correct_per_thread[ii]),
+    threads.push_back(thread(thread_function<PointType>, query_pool.get(),
+                             cref(queries), cref(true_nns), index_start[ii],
+                             index_end[ii], &(num_correct_per_thread[ii]),
                              &(total_query_time_outside_per_thread[ii])));
   }
   for (int ii = 0; ii < num_threads; ++ii) {
@@ -152,9 +144,9 @@ void run_experiment(LSHNearestNeighborTable<PointType>* table,
        << stats.average_num_unique_candidates << endl
        << endl;
   cout << "Diagnostics:" << endl;
-  double threading_imbalance = total_computation_time
-                                  - average_query_time_outside * queries.size()
-                                      / num_threads;
+  double threading_imbalance =
+      total_computation_time -
+      average_query_time_outside * queries.size() / num_threads;
   cout << "Threading imbalance (total_wall_clock_time - sum of query times "
        << "outside / num_threads): " << threading_imbalance << " seconds ("
        << 100.0 * threading_imbalance / total_computation_time
@@ -178,9 +170,9 @@ int main() {
         "-";
 
     // Data set parameters
-    int n = 1000000;                  // number of data points
-    int d = 128;                      // dimension
-    int num_queries = 1000;           // number of query points
+    int n = 1000000;             // number of data points
+    int d = 128;                 // dimension
+    int num_queries = 1000;      // number of query points
     double r = sqrt(2.0) / 2.0;  // distance to planted query
     uint64_t seed = 119417657;
 

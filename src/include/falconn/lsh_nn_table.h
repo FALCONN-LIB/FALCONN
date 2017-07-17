@@ -56,7 +56,7 @@ class LSHNearestNeighborQuery {
   /// Returns the maximum number of candidates considered in each query.
   ///
   virtual int_fast64_t get_max_num_candidates() = 0;
-  
+
   ///
   /// Finds the key of the closest candidate in the probing sequence for q.
   ///
@@ -95,7 +95,7 @@ class LSHNearestNeighborQuery {
   ///
   virtual void get_candidates_with_duplicates(const PointType& q,
                                               std::vector<KeyType>* result) = 0;
-  
+
   ///
   /// Resets the query statistics.
   ///
@@ -108,7 +108,6 @@ class LSHNearestNeighborQuery {
   /// time be averaged over all queries or only the near(est) neighbor queries?
   ///
   virtual QueryStatistics get_query_statistics() = 0;
-
 
   virtual ~LSHNearestNeighborQuery() {}
 };
@@ -144,7 +143,7 @@ class LSHNearestNeighborQueryPool {
   /// Returns the maximum number of candidates considered in each query.
   ///
   virtual int_fast64_t get_max_num_candidates() = 0;
-  
+
   ///
   /// Finds the key of the closest candidate in the probing sequence for q.
   ///
@@ -179,7 +178,7 @@ class LSHNearestNeighborQueryPool {
   ///
   virtual void get_candidates_with_duplicates(const PointType& q,
                                               std::vector<KeyType>* result) = 0;
-  
+
   ///
   /// Resets the query statistics.
   ///
@@ -190,7 +189,6 @@ class LSHNearestNeighborQueryPool {
   /// See the documentation for LSHNearestNeighborQuery.
   ///
   virtual QueryStatistics get_query_statistics() = 0;
-
 
   virtual ~LSHNearestNeighborQueryPool() {}
 };
@@ -212,7 +210,7 @@ class LSHNearestNeighborTable {
   /// equivalent to infinity.
   ///
   static const int_fast64_t kNoMaxNumCandidates = -1;
- 
+
   ///
   /// This function constructs a new query object. The query object holds
   /// all per-query state and executes table lookups.
@@ -227,7 +225,7 @@ class LSHNearestNeighborTable {
   virtual std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>>
   construct_query_object(int_fast64_t num_probes = -1,
                          int_fast64_t max_num_candidates = -1) const = 0;
-  
+
   ///
   /// This function constructs a new query pool. The query pool holds
   /// a set of query objects and supports an interface that can be safely
