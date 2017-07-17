@@ -230,7 +230,7 @@ pload1(const typename unpacket_traits<Packet>::type  *a) { return pset1<Packet>(
   * duplicated to form: {from[0],from[0],from[1],from[1],from[2],from[2],from[3],from[3]}
   * Currently, this function is only used for scalar * complex products.
   */
-template<typename Packet> EIGEN_DEVICE_FUNC inline Packet
+template<typename Packet> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet
 ploaddup(const typename unpacket_traits<Packet>::type* from) { return *from; }
 
 /** \internal \returns a packet with elements of \a *from quadrupled.
@@ -278,7 +278,7 @@ inline void pbroadcast2(const typename unpacket_traits<Packet>::type *a,
 }
 
 /** \internal \brief Returns a packet with coefficients (a,a+1,...,a+packet_size-1). */
-template<typename Packet> inline Packet
+template<typename Packet> EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE Packet
 plset(const typename unpacket_traits<Packet>::type& a) { return a; }
 
 /** \internal copy the packet \a from to \a *to, \a to must be 16 bytes aligned */
@@ -329,7 +329,7 @@ template<typename Packet> EIGEN_DEVICE_FUNC inline typename unpacket_traits<Pack
   */
 template<typename Packet> EIGEN_DEVICE_FUNC inline
 typename conditional<(unpacket_traits<Packet>::size%8)==0,typename unpacket_traits<Packet>::half,Packet>::type
-predux4(const Packet& a)
+predux_downto4(const Packet& a)
 { return a; }
 
 /** \internal \returns the product of the elements of \a a*/
@@ -482,7 +482,7 @@ EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE void pstoret(Scalar* to, const Packet& fro
   * by the current computation.
   */
 template<typename Packet, int LoadMode>
-inline Packet ploadt_ro(const typename unpacket_traits<Packet>::type* from)
+EIGEN_DEVICE_FUNC EIGEN_ALWAYS_INLINE Packet ploadt_ro(const typename unpacket_traits<Packet>::type* from)
 {
   return ploadt<Packet, LoadMode>(from);
 }
@@ -556,6 +556,34 @@ template <size_t N> struct Selector {
 template<typename Packet> EIGEN_DEVICE_FUNC inline Packet
 pblend(const Selector<unpacket_traits<Packet>::size>& ifPacket, const Packet& thenPacket, const Packet& elsePacket) {
   return ifPacket.select[0] ? thenPacket : elsePacket;
+}
+
+/** \internal \returns \a a with the first coefficient replaced by the scalar b */
+template<typename Packet> EIGEN_DEVICE_FUNC inline Packet
+pinsertfirst(const Packet& a, typename unpacket_traits<Packet>::type b)
+{
+  // Default implementation based on pblend.
+  // It must be specialized for higher performance.
+  Selector<unpacket_traits<Packet>::size> mask;
+  mask.select[0] = true;
+  // This for loop should be optimized away by the compiler.
+  for(Index i=1; i<unpacket_traits<Packet>::size; ++i)
+    mask.select[i] = false;
+  return pblend(mask, pset1<Packet>(b), a);
+}
+
+/** \internal \returns \a a with the last coefficient replaced by the scalar b */
+template<typename Packet> EIGEN_DEVICE_FUNC inline Packet
+pinsertlast(const Packet& a, typename unpacket_traits<Packet>::type b)
+{
+  // Default implementation based on pblend.
+  // It must be specialized for higher performance.
+  Selector<unpacket_traits<Packet>::size> mask;
+  // This for loop should be optimized away by the compiler.
+  for(Index i=0; i<unpacket_traits<Packet>::size-1; ++i)
+    mask.select[i] = false;
+  mask.select[unpacket_traits<Packet>::size-1] = true;
+  return pblend(mask, pset1<Packet>(b), a);
 }
 
 } // end namespace internal

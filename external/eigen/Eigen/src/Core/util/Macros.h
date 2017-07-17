@@ -12,8 +12,8 @@
 #define EIGEN_MACROS_H
 
 #define EIGEN_WORLD_VERSION 3
-#define EIGEN_MAJOR_VERSION 2
-#define EIGEN_MINOR_VERSION 94
+#define EIGEN_MAJOR_VERSION 3
+#define EIGEN_MINOR_VERSION 4
 
 #define EIGEN_VERSION_AT_LEAST(x,y,z) (EIGEN_WORLD_VERSION>x || (EIGEN_WORLD_VERSION>=x && \
                                       (EIGEN_MAJOR_VERSION>y || (EIGEN_MAJOR_VERSION>=y && \
@@ -80,8 +80,8 @@
 //  2015   14      1900
 //  "15"   15      1900
 
-/// \internal EIGEN_COMP_MSVC_STRICT set to 1 if the compiler is really Microsoft Visual C++ and not ,e.g., ICC
-#if EIGEN_COMP_MSVC && !(EIGEN_COMP_ICC)
+/// \internal EIGEN_COMP_MSVC_STRICT set to 1 if the compiler is really Microsoft Visual C++ and not ,e.g., ICC or clang-cl
+#if EIGEN_COMP_MSVC && !(EIGEN_COMP_ICC || EIGEN_COMP_LLVM || EIGEN_COMP_CLANG)
   #define EIGEN_COMP_MSVC_STRICT _MSC_VER
 #else
   #define EIGEN_COMP_MSVC_STRICT 0
@@ -356,6 +356,13 @@
 #define EIGEN_MAX_CPP_VER 99
 #endif
 
+#if EIGEN_MAX_CPP_VER>=11 && (defined(__cplusplus) && (__cplusplus >= 201103L) || EIGEN_COMP_MSVC >= 1900)
+#define EIGEN_HAS_CXX11 1
+#else
+#define EIGEN_HAS_CXX11 0
+#endif
+
+
 // Do we support r-value references?
 #ifndef EIGEN_HAS_RVALUE_REFERENCES
 #if EIGEN_MAX_CPP_VER>=11 && \
@@ -392,8 +399,8 @@
 // Does the compiler support variadic templates?
 #ifndef EIGEN_HAS_VARIADIC_TEMPLATES
 #if EIGEN_MAX_CPP_VER>=11 && (__cplusplus > 199711L || EIGEN_COMP_MSVC >= 1900) \
-    && ( !defined(__NVCC__) || !EIGEN_ARCH_ARM_OR_ARM64 )
-    // ^^ Disable the use of variadic templates when compiling with nvcc on ARM devices:
+  && ( !defined(__NVCC__) || !EIGEN_ARCH_ARM_OR_ARM64 || (defined __CUDACC_VER__ && __CUDACC_VER__ >= 80000) )
+    // ^^ Disable the use of variadic templates when compiling with versions of nvcc older than 8.0 on ARM devices:
     //    this prevents nvcc from crashing when compiling Eigen on Tegra X1
 #define EIGEN_HAS_VARIADIC_TEMPLATES 1
 #else
@@ -490,10 +497,11 @@
 // attribute to maximize inlining. This should only be used when really necessary: in particular,
 // it uses __attribute__((always_inline)) on GCC, which most of the time is useless and can severely harm compile times.
 // FIXME with the always_inline attribute,
-// gcc 3.4.x reports the following compilation error:
+// gcc 3.4.x and 4.1 reports the following compilation error:
 //   Eval.h:91: sorry, unimplemented: inlining failed in call to 'const Eigen::Eval<Derived> Eigen::MatrixBase<Scalar, Derived>::eval() const'
 //    : function body not available
-#if EIGEN_GNUC_AT_LEAST(4,0)
+//   See also bug 1367
+#if EIGEN_GNUC_AT_LEAST(4,2)
 #define EIGEN_ALWAYS_INLINE __attribute__((always_inline)) inline
 #else
 #define EIGEN_ALWAYS_INLINE EIGEN_STRONG_INLINE
@@ -652,6 +660,9 @@ namespace Eigen {
 // If the user explicitly disable vectorization, then we also disable alignment
 #if defined(EIGEN_DONT_VECTORIZE)
   #define EIGEN_IDEAL_MAX_ALIGN_BYTES 0
+#elif defined(EIGEN_VECTORIZE_AVX512)
+  // 64 bytes static alignmeent is preferred only if really required
+  #define EIGEN_IDEAL_MAX_ALIGN_BYTES 64
 #elif defined(__AVX__)
   // 32 bytes static alignmeent is preferred only if really required
   #define EIGEN_IDEAL_MAX_ALIGN_BYTES 32
@@ -801,7 +812,7 @@ namespace Eigen {
 // just an empty macro !
 #define EIGEN_EMPTY
 
-#if EIGEN_COMP_MSVC_STRICT && EIGEN_COMP_MSVC < 1900 // for older MSVC versions using the base operator is sufficient (cf Bug 1000)
+#if EIGEN_COMP_MSVC_STRICT && (EIGEN_COMP_MSVC < 1900 ||  defined(__CUDACC_VER__)) // for older MSVC versions, as well as 1900 && CUDA 8, using the base operator is sufficient (cf Bugs 1000, 1324)
   #define EIGEN_INHERIT_ASSIGNMENT_EQUAL_OPERATOR(Derived) \
     using Base::operator =;
 #elif EIGEN_COMP_CLANG // workaround clang bug (see http://forum.kde.org/viewtopic.php?f=74&t=102653)

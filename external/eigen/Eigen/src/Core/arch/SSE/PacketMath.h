@@ -28,7 +28,7 @@ namespace internal {
 #endif
 #endif
 
-#if (defined EIGEN_VECTORIZE_AVX) && EIGEN_COMP_GNUC_STRICT && (__GXX_ABI_VERSION < 1004)
+#if (defined EIGEN_VECTORIZE_AVX) && (EIGEN_COMP_GNUC_STRICT || EIGEN_COMP_MINGW) && (__GXX_ABI_VERSION < 1004)
 // With GCC's default ABI version, a __m128 or __m256 are the same types and therefore we cannot
 // have overloads for both types without linking error.
 // One solution is to increase ABI version using -fabi-version=4 (or greater).
@@ -504,30 +504,13 @@ template<> EIGEN_STRONG_INLINE Packet4f preduxp<Packet4f>(const Packet4f* vecs)
 {
   return _mm_hadd_ps(_mm_hadd_ps(vecs[0], vecs[1]),_mm_hadd_ps(vecs[2], vecs[3]));
 }
+
 template<> EIGEN_STRONG_INLINE Packet2d preduxp<Packet2d>(const Packet2d* vecs)
 {
   return _mm_hadd_pd(vecs[0], vecs[1]);
 }
 
-template<> EIGEN_STRONG_INLINE float predux<Packet4f>(const Packet4f& a)
-{
-  Packet4f tmp0 = _mm_hadd_ps(a,a);
-  return pfirst<Packet4f>(_mm_hadd_ps(tmp0, tmp0));
-}
-
-template<> EIGEN_STRONG_INLINE double predux<Packet2d>(const Packet2d& a) { return pfirst<Packet2d>(_mm_hadd_pd(a, a)); }
 #else
-// SSE2 versions
-template<> EIGEN_STRONG_INLINE float predux<Packet4f>(const Packet4f& a)
-{
-  Packet4f tmp = _mm_add_ps(a, _mm_movehl_ps(a,a));
-  return pfirst<Packet4f>(_mm_add_ss(tmp, _mm_shuffle_ps(tmp,tmp, 1)));
-}
-template<> EIGEN_STRONG_INLINE double predux<Packet2d>(const Packet2d& a)
-{
-  return pfirst<Packet2d>(_mm_add_sd(a, _mm_unpackhi_pd(a,a)));
-}
-
 template<> EIGEN_STRONG_INLINE Packet4f preduxp<Packet4f>(const Packet4f* vecs)
 {
   Packet4f tmp0, tmp1, tmp2;
@@ -548,6 +531,29 @@ template<> EIGEN_STRONG_INLINE Packet2d preduxp<Packet2d>(const Packet2d* vecs)
 }
 #endif  // SSE3
 
+template<> EIGEN_STRONG_INLINE float predux<Packet4f>(const Packet4f& a)
+{
+  // Disable SSE3 _mm_hadd_pd that is extremely slow on all existing Intel's architectures
+  // (from Nehalem to Haswell)
+// #ifdef EIGEN_VECTORIZE_SSE3
+//   Packet4f tmp = _mm_add_ps(a, vec4f_swizzle1(a,2,3,2,3));
+//   return pfirst<Packet4f>(_mm_hadd_ps(tmp, tmp));
+// #else
+  Packet4f tmp = _mm_add_ps(a, _mm_movehl_ps(a,a));
+  return pfirst<Packet4f>(_mm_add_ss(tmp, _mm_shuffle_ps(tmp,tmp, 1)));
+// #endif
+}
+
+template<> EIGEN_STRONG_INLINE double predux<Packet2d>(const Packet2d& a)
+{
+  // Disable SSE3 _mm_hadd_pd that is extremely slow on all existing Intel's architectures
+  // (from Nehalem to Haswell)
+// #ifdef EIGEN_VECTORIZE_SSE3
+//   return pfirst<Packet2d>(_mm_hadd_pd(a, a));
+// #else
+  return pfirst<Packet2d>(_mm_add_sd(a, _mm_unpackhi_pd(a,a)));
+// #endif
+}
 
 #ifdef EIGEN_VECTORIZE_SSSE3
 template<> EIGEN_STRONG_INLINE Packet4i preduxp<Packet4i>(const Packet4i* vecs)
@@ -815,6 +821,44 @@ template<> EIGEN_STRONG_INLINE Packet2d pblend(const Selector<2>& ifPacket, cons
   return _mm_blendv_pd(thenPacket, elsePacket, false_mask);
 #else
   return _mm_or_pd(_mm_andnot_pd(false_mask, thenPacket), _mm_and_pd(false_mask, elsePacket));
+#endif
+}
+
+template<> EIGEN_STRONG_INLINE Packet4f pinsertfirst(const Packet4f& a, float b)
+{
+#ifdef EIGEN_VECTORIZE_SSE4_1
+  return _mm_blend_ps(a,pset1<Packet4f>(b),1);
+#else
+  return _mm_move_ss(a, _mm_load_ss(&b));
+#endif
+}
+
+template<> EIGEN_STRONG_INLINE Packet2d pinsertfirst(const Packet2d& a, double b)
+{
+#ifdef EIGEN_VECTORIZE_SSE4_1
+  return _mm_blend_pd(a,pset1<Packet2d>(b),1);
+#else
+  return _mm_move_sd(a, _mm_load_sd(&b));
+#endif
+}
+
+template<> EIGEN_STRONG_INLINE Packet4f pinsertlast(const Packet4f& a, float b)
+{
+#ifdef EIGEN_VECTORIZE_SSE4_1
+  return _mm_blend_ps(a,pset1<Packet4f>(b),(1<<3));
+#else
+  const Packet4f mask = _mm_castsi128_ps(_mm_setr_epi32(0x0,0x0,0x0,0xFFFFFFFF));
+  return _mm_or_ps(_mm_andnot_ps(mask, a), _mm_and_ps(mask, pset1<Packet4f>(b)));
+#endif
+}
+
+template<> EIGEN_STRONG_INLINE Packet2d pinsertlast(const Packet2d& a, double b)
+{
+#ifdef EIGEN_VECTORIZE_SSE4_1
+  return _mm_blend_pd(a,pset1<Packet2d>(b),(1<<1));
+#else
+  const Packet2d mask = _mm_castsi128_pd(_mm_setr_epi32(0x0,0x0,0xFFFFFFFF,0xFFFFFFFF));
+  return _mm_or_pd(_mm_andnot_pd(mask, a), _mm_and_pd(mask, pset1<Packet2d>(b)));
 #endif
 }
 

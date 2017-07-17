@@ -14,9 +14,9 @@
 // first thing Eigen does: stop the compiler from committing suicide
 #include "src/Core/util/DisableStupidWarnings.h"
 
-// Handle NVCC/CUDA
-#ifdef __CUDACC__
-  // Do not try asserts on CUDA!
+// Handle NVCC/CUDA/SYCL
+#if defined(__CUDACC__) || defined(__SYCL_DEVICE_ONLY__)
+  // Do not try asserts on CUDA and SYCL!
   #ifndef EIGEN_NO_DEBUG
   #define EIGEN_NO_DEBUG
   #endif
@@ -25,17 +25,24 @@
   #undef EIGEN_INTERNAL_DEBUGGING
   #endif
 
-  // Do not try to vectorize on CUDA!
-  #ifndef EIGEN_DONT_VECTORIZE
-  #define EIGEN_DONT_VECTORIZE
-  #endif
-
   #ifdef EIGEN_EXCEPTIONS
   #undef EIGEN_EXCEPTIONS
   #endif
 
   // All functions callable from CUDA code must be qualified with __device__
-  #define EIGEN_DEVICE_FUNC __host__ __device__
+  #ifdef __CUDACC__
+    // Do not try to vectorize on CUDA and SYCL!
+    #ifndef EIGEN_DONT_VECTORIZE
+    #define EIGEN_DONT_VECTORIZE
+    #endif
+
+    #define EIGEN_DEVICE_FUNC __host__ __device__
+    // We need math_functions.hpp to ensure that that EIGEN_USING_STD_MATH macro
+    // works properly on the device side
+    #include <math_functions.hpp>
+  #else
+    #define EIGEN_DEVICE_FUNC
+  #endif
 
 #else
   #define EIGEN_DEVICE_FUNC
@@ -51,7 +58,7 @@
   #define EIGEN_USING_STD_MATH(FUNC) using std::FUNC;
 #endif
 
-#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && !defined(__CUDA_ARCH__) && !defined(EIGEN_EXCEPTIONS)
+#if (defined(_CPPUNWIND) || defined(__EXCEPTIONS)) && !defined(__CUDA_ARCH__) && !defined(EIGEN_EXCEPTIONS) && !defined(EIGEN_USE_SYCL)
   #define EIGEN_EXCEPTIONS
 #endif
 
@@ -140,6 +147,15 @@
     #ifdef __FMA__
       #define EIGEN_VECTORIZE_FMA
     #endif
+    #if defined(__AVX512F__) && defined(EIGEN_ENABLE_AVX512)
+      #define EIGEN_VECTORIZE_AVX512
+      #define EIGEN_VECTORIZE_AVX2
+      #define EIGEN_VECTORIZE_AVX
+      #define EIGEN_VECTORIZE_FMA
+      #ifdef __AVX512DQ__
+        #define EIGEN_VECTORIZE_AVX512DQ
+      #endif
+    #endif
 
     // include files
 
@@ -171,7 +187,7 @@
         #ifdef EIGEN_VECTORIZE_SSE4_2
         #include <nmmintrin.h>
         #endif
-        #ifdef EIGEN_VECTORIZE_AVX
+        #if defined(EIGEN_VECTORIZE_AVX) || defined(EIGEN_VECTORIZE_AVX512)
         #include <immintrin.h>
         #endif
       #endif
@@ -271,7 +287,9 @@
 namespace Eigen {
 
 inline static const char *SimdInstructionSetsInUse(void) {
-#if defined(EIGEN_VECTORIZE_AVX)
+#if defined(EIGEN_VECTORIZE_AVX512)
+  return "AVX512, FMA, AVX2, AVX, SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2";
+#elif defined(EIGEN_VECTORIZE_AVX)
   return "AVX SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2";
 #elif defined(EIGEN_VECTORIZE_SSE4_2)
   return "SSE, SSE2, SSE3, SSSE3, SSE4.1, SSE4.2";
@@ -303,11 +321,15 @@ inline static const char *SimdInstructionSetsInUse(void) {
 #error Eigen2-support is only available up to version 3.2. Please go to "http://eigen.tuxfamily.org/index.php?title=Eigen2" for further information
 #endif
 
+namespace Eigen {
+
 // we use size_t frequently and we'll never remember to prepend it with std:: everytime just to
 // ensure QNX/QCC support
 using std::size_t;
 // gcc 4.6.0 wants std:: for ptrdiff_t
 using std::ptrdiff_t;
+
+}
 
 /** \defgroup Core_Module Core module
   * This is the main module of Eigen providing dense matrix and vector support
@@ -331,7 +353,12 @@ using std::ptrdiff_t;
 #include "src/Core/GenericPacketMath.h"
 #include "src/Core/MathFunctionsImpl.h"
 
-#if defined EIGEN_VECTORIZE_AVX
+#if defined EIGEN_VECTORIZE_AVX512
+  #include "src/Core/arch/SSE/PacketMath.h"
+  #include "src/Core/arch/AVX/PacketMath.h"
+  #include "src/Core/arch/AVX512/PacketMath.h"
+  #include "src/Core/arch/AVX512/MathFunctions.h"
+#elif defined EIGEN_VECTORIZE_AVX
   // Use AVX for floats and doubles, SSE for integers
   #include "src/Core/arch/SSE/PacketMath.h"
   #include "src/Core/arch/SSE/Complex.h"
@@ -359,7 +386,6 @@ using std::ptrdiff_t;
   #include "src/Core/arch/ZVector/Complex.h"
 #endif
 
-#include "src/Core/arch/CUDA/Complex.h"
 // Half float support
 #include "src/Core/arch/CUDA/Half.h"
 #include "src/Core/arch/CUDA/PacketMathHalf.h"
@@ -379,6 +405,11 @@ using std::ptrdiff_t;
 #include "src/Core/functors/StlFunctors.h"
 #include "src/Core/functors/AssignmentFunctors.h"
 
+// Specialized functors to enable the processing of complex numbers
+// on CUDA devices
+#include "src/Core/arch/CUDA/Complex.h"
+
+#include "src/Core/IO.h"
 #include "src/Core/DenseCoeffsBase.h"
 #include "src/Core/DenseBase.h"
 #include "src/Core/MatrixBase.h"
@@ -426,7 +457,6 @@ using std::ptrdiff_t;
 #include "src/Core/Redux.h"
 #include "src/Core/Visitor.h"
 #include "src/Core/Fuzzy.h"
-#include "src/Core/IO.h"
 #include "src/Core/Swap.h"
 #include "src/Core/CommaInitializer.h"
 #include "src/Core/GeneralProduct.h"
