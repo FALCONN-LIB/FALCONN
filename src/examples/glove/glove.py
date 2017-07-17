@@ -15,7 +15,7 @@ if __name__ == '__main__':
     print('Reading the dataset')
     dataset = np.load(dataset_file)
     print('Done')
-    
+
     # It's important not to use doubles, unless they are strictly necessary.
     # If your dataset consists of doubles, convert it to floats using `astype`.
     assert dataset.dtype == np.float32
@@ -39,7 +39,7 @@ if __name__ == '__main__':
     answers = []
     for query in queries:
         answers.append(np.dot(dataset, query).argmax())
-    t2 = timeit.default_timer()    
+    t2 = timeit.default_timer()
     print('Done')
     print('Linear scan time: {} per query'.format((t2 - t1) / float(len(queries))))
 

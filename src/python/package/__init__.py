@@ -7,7 +7,8 @@ helper functions `get_default_parameters()` and
 `compute_number_of_hash_functions()`.
 
 For now, the Python wrapper supports only _static dense_ datasets,
-but more to come. Also, note that FALCONN is currently not thread-safe.
+but more to come. Also, note that the Python wrapper of FALCONN is
+currently not thread-safe.
 
 FALCONN is based on Locality-Sensitive Hashing (LSH), which is briefly
 covered [here](https://github.com/FALCONN-LIB/FALCONN/wiki/LSH-Primer)
@@ -68,7 +69,7 @@ def get_default_parameters(num_points, dimension, distance='euclidean_squared', 
     preprocessing, so if you are willing to build index for longer
     (and spend more memory) while reducing the query time, you need to
     increase the number of tables (`l`) in the resulting object.
-    
+
     The parameters returned are especially well-suited for _centered_
     datasets (when the mean is zero).
 
@@ -121,7 +122,7 @@ class LSHConstructionParameters(_internal.LSHConstructionParameters):
     Not all fields are necessary for all types of LSH. One can
     use `get_default_parameters()` and `computer_number_of_hash_functions()`
     to build an instance of `LSHConstructionParameters`.
-    
+
     Required parameters:
 
     * `dimension`: dimension of the points. Required for all the hash families;
@@ -231,7 +232,7 @@ class LSHIndex:
 
     See their respective documentation for help.
     """
-    
+
     def __init__(self, params):
         """Initialize with an instance of `LSHConstructionParameters`.
 
@@ -243,10 +244,11 @@ class LSHIndex:
         self._params = params
         self._dataset = None
         self._table = None
+        self._query_object = None
 
     def setup(self, dataset):
         """Build the LSH data structure from a given dataset.
-        
+
         The method builds the LSH data structure using the parameters
         passed during the construction and a given dataset (stored as
         `self._params`).
@@ -281,6 +283,7 @@ class LSHIndex:
             self._table = _internal.construct_table_dense_float(dataset, self._params)
         else:
             self._table = _internal.construct_table_dense_double(dataset, self._params)
+        self._query_object = self._table.construct_query_object(self._params.l, -1)
 
     def _check_built(self):
         if self._dataset is None or self._table is None:
@@ -314,8 +317,8 @@ class LSHIndex:
         self._check_query(query)
         if k <= 0:
             raise ValueError('k must be positive rather than {}'.format(k))
-        return self._table.find_k_nearest_neighbors(query, k)
-        
+        return self._query_object.find_k_nearest_neighbors(query, k)
+
     def find_near_neighbors(self, query, threshold):
         """Find all the points within `threshold` distance from `query`.
 
@@ -333,11 +336,11 @@ class LSHIndex:
         """
         self._check_built()
         self._check_query(query)
-        return self._table.find_near_neighbors(query, threshold)
-        
+        return self._query_object.find_near_neighbors(query, threshold)
+
     def find_nearest_neighbor(self, query):
         """Find the key of the closest candidate.
-        
+
         Finds the key of the closest candidate in the probing sequence
         for a query.
 
@@ -349,8 +352,8 @@ class LSHIndex:
         """
         self._check_built()
         self._check_query(query)
-        return self._table.find_nearest_neighbor(query)
-        
+        return self._query_object.find_nearest_neighbor(query)
+
     def get_candidates_with_duplicates(self, query):
         """Retrieve all the candidates for a given query.
 
@@ -368,18 +371,18 @@ class LSHIndex:
         """
         self._check_built()
         self._check_query(query)
-        return self._table.get_candidates_with_duplicates(query)
-        
+        return self._query_object.get_candidates_with_duplicates(query)
+
     def get_max_num_candidates(self):
         """Get the maximum number of candidates considered in each query."""
         self._check_built()
-        return self._table.get_max_num_candidates()
-        
+        return self._query_object.get_max_num_candidates()
+
     def get_num_probes(self):
         """Get the number of probes used for each query."""
         self._check_built()
-        return self._table.get_num_probes()
-        
+        return self._query_object.get_num_probes()
+
     def get_query_statistics(self):
         """Return the query statistics.
 
@@ -389,8 +392,8 @@ class LSHIndex:
         or the construction).
         """
         self._check_built()
-        return self._table.get_query_statistics()
-        
+        return self._query_object.get_query_statistics()
+
     def get_unique_candidates(self, query):
         """Retrieve all the candidates (each at most once) for a query.
 
@@ -406,13 +409,13 @@ class LSHIndex:
         """
         self._check_built()
         self._check_query(query)
-        return self._table.get_unique_candidates(query)
-                
+        return self._query_object.get_unique_candidates(query)
+
     def reset_query_statistics(self):
         """Reset the query statistics."""
         self._check_built()
-        self._table.reset_query_statistics()
-        
+        self._query_object.reset_query_statistics()
+
     def set_max_num_candidates(self, max_num_candidates=-1):
         """Set the maximum number of candidates considered in each query.
 
@@ -430,8 +433,8 @@ class LSHIndex:
         self._check_built()
         if max_num_candidates < -1:
             raise ValueError('invalid max_num_candidates: {}'.format(max_num_candidates))
-        self._table.set_max_num_candidates(max_num_candidates)
-        
+        self._query_object.set_max_num_candidates(max_num_candidates)
+
     def set_num_probes(self, num_probes):
         """Set the number of probes used for each query.
 
@@ -447,4 +450,4 @@ class LSHIndex:
         self._check_built()
         if num_probes < self._params.l:
             raise ValueError('number of probes must be at least the number of tables ({})'.format(self._params.l))
-        self._table.set_num_probes(num_probes)
+        self._query_object.set_num_probes(num_probes)

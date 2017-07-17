@@ -1,23 +1,31 @@
+#include "falconn/eigen_wrapper.h"
+#include "falconn/lsh_nn_table.h"
+
 #include <chrono>
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <random>
 #include <stdexcept>
+#include <thread>
 
-#include "falconn/eigen_wrapper.h"
-#include "falconn/lsh_nn_table.h"
-
-using std::chrono::duration;
-using std::chrono::duration_cast;
-using std::chrono::high_resolution_clock;
 using std::cerr;
 using std::cout;
 using std::endl;
 using std::exception;
 using std::fixed;
+using std::mt19937_64;
+using std::normal_distribution;
 using std::scientific;
+using std::sqrt;
+using std::thread;
+using std::uniform_int_distribution;
 using std::unique_ptr;
 using std::vector;
+
+using std::chrono::duration;
+using std::chrono::duration_cast;
+using std::chrono::high_resolution_clock;
 
 using falconn::construct_table;
 using falconn::DenseVector;
@@ -32,7 +40,7 @@ using falconn::StorageHashTable;
 typedef falconn::DenseVector<float> Vec;
 
 class Timer {
- public:
+public:
   Timer() { start_time = high_resolution_clock::now(); }
 
   double elapsed_seconds() {
@@ -41,14 +49,14 @@ class Timer {
     return elapsed.count();
   }
 
- private:
-  decltype(high_resolution_clock::now()) start_time;
+private:
+  high_resolution_clock::time_point start_time;
 };
 
 template <typename PointType>
 void thread_function(LSHNearestNeighborQueryPool<PointType>* query_pool,
-                     const std::vector<PointType>& queries,
-                     const std::vector<int>& true_nns,
+                     const vector<PointType>& queries,
+                     const vector<int>& true_nns,
                      int query_index_start,
                      int query_index_end,
                      int* num_correct_in_thread,
@@ -67,18 +75,18 @@ void thread_function(LSHNearestNeighborQueryPool<PointType>* query_pool,
 
 template <typename PointType>
 void run_experiment(LSHNearestNeighborTable<PointType>* table,
-                    const std::vector<PointType>& queries,
-                    const std::vector<int>& true_nns,
+                    const vector<PointType>& queries,
+                    const vector<int>& true_nns,
                     int num_probes,
                     int num_threads,
                     double* avg_query_time,
                     double* success_probability) {
-  std::unique_ptr<LSHNearestNeighborQueryPool<PointType>> query_pool(
+  unique_ptr<LSHNearestNeighborQueryPool<PointType>> query_pool(
       table->construct_query_pool(num_probes));
-  std::vector<int> num_correct_per_thread(num_threads, 0);
-  std::vector<double> total_query_time_outside_per_thread(num_threads, 0.0);
-  std::vector<int> index_start(num_threads, 0);
-  std::vector<int> index_end(num_threads, 0);
+  vector<int> num_correct_per_thread(num_threads, 0);
+  vector<double> total_query_time_outside_per_thread(num_threads, 0.0);
+  vector<int> index_start(num_threads, 0);
+  vector<int> index_end(num_threads, 0);
 
   int queries_per_thread = queries.size() / num_threads;
   int remainder = queries.size() % num_threads;
@@ -92,25 +100,25 @@ void run_experiment(LSHNearestNeighborTable<PointType>* table,
     last_end = index_end[ii];
   }
 
-  std::vector<std::thread> threads;
+  vector<thread> threads;
   Timer total_time;
 
   for (int ii = 0; ii < num_threads; ++ii) {
-    threads.push_back(std::thread(thread_function<PointType>,
-                                  query_pool.get(),
-                                  std::cref(queries),
-                                  std::cref(true_nns),
-                                  index_start[ii],
-                                  index_end[ii],
-                                  &(num_correct_per_thread[ii]),
-                                  &(total_query_time_outside_per_thread[ii])));
+    threads.push_back(thread(thread_function<PointType>,
+                             query_pool.get(),
+                             cref(queries),
+                             cref(true_nns),
+                             index_start[ii],
+                             index_end[ii],
+                             &(num_correct_per_thread[ii]),
+                             &(total_query_time_outside_per_thread[ii])));
   }
   for (int ii = 0; ii < num_threads; ++ii) {
     threads[ii].join();
   }
 
   double total_computation_time = total_time.elapsed_seconds();
-  
+
   double average_query_time_outside = 0.0;
   *success_probability = 0.0;
   for (int ii = 0; ii < num_threads; ++ii) {
@@ -120,7 +128,7 @@ void run_experiment(LSHNearestNeighborTable<PointType>* table,
   *success_probability /= queries.size();
   average_query_time_outside /= queries.size();
   *avg_query_time = average_query_time_outside;
- 
+
   cout << "Total experiment wall clock time: " << scientific
        << total_computation_time << " seconds" << endl;
   cout << "Average query time (measured outside): " << scientific
@@ -173,7 +181,7 @@ int main() {
     int n = 1000000;                  // number of data points
     int d = 128;                      // dimension
     int num_queries = 1000;           // number of query points
-    double r = std::sqrt(2.0) / 2.0;  // distance to planted query
+    double r = sqrt(2.0) / 2.0;  // distance to planted query
     uint64_t seed = 119417657;
 
     // Common LSH parameters
@@ -187,7 +195,7 @@ int main() {
     cout << sepline << endl;
     cout << "FALCONN C++ random data benchmark" << endl << endl;
     cout << "std::thread::hardware_concurrency(): "
-         << std::thread::hardware_concurrency() << endl;
+         << thread::hardware_concurrency() << endl;
     cout << "num_query_threads = " << num_query_threads << endl << endl;
     cout << "Data set parameters: " << endl;
     cout << "n = " << n << endl;
@@ -196,13 +204,13 @@ int main() {
     cout << "r = " << r << endl;
     cout << "seed = " << seed << endl << sepline << endl;
 
-    std::mt19937_64 gen(seed);
-    std::normal_distribution<float> dist_normal(0.0, 1.0);
-    std::uniform_int_distribution<int> dist_uniform(0, n - 1);
+    mt19937_64 gen(seed);
+    normal_distribution<float> dist_normal(0.0, 1.0);
+    uniform_int_distribution<int> dist_uniform(0, n - 1);
 
     // Generate random data
     cout << "Generating data set ..." << endl;
-    std::vector<Vec> data;
+    vector<Vec> data;
     for (int ii = 0; ii < n; ++ii) {
       Vec v(d);
       for (int jj = 0; jj < d; ++jj) {
@@ -214,7 +222,7 @@ int main() {
 
     // Generate queries
     cout << "Generating queries ..." << endl << endl;
-    std::vector<Vec> queries;
+    vector<Vec> queries;
     for (int ii = 0; ii < num_queries; ++ii) {
       Vec q(d);
       q = data[dist_uniform(gen)];
@@ -227,7 +235,7 @@ int main() {
       dir = dir - dir.dot(q) * q;
       dir.normalize();
       double alpha = 1.0 - r * r / 2.0;
-      double beta = std::sqrt(1.0 - alpha * alpha);
+      double beta = sqrt(1.0 - alpha * alpha);
       q = alpha * q + beta * dir;
 
       queries.push_back(q);
@@ -235,7 +243,7 @@ int main() {
 
     // Compute true nearest neighbors
     cout << "Computing true nearest neighbors via a linear scan ..." << endl;
-    std::vector<int> true_nn(num_queries);
+    vector<int> true_nn(num_queries);
     double average_scan_time = 0.0;
     for (int ii = 0; ii < num_queries; ++ii) {
       const Vec& q = queries[ii];
@@ -312,7 +320,7 @@ int main() {
     Timer cp_construction;
 
     unique_ptr<LSHNearestNeighborTable<Vec>> cptable(
-        std::move(construct_table<Vec>(data, params_cp)));
+        move(construct_table<Vec>(data, params_cp)));
 
     double cp_construction_time = cp_construction.elapsed_seconds();
 
@@ -343,7 +351,7 @@ int main() {
     cout << "  CP vs linear scan: " << fixed << average_scan_time / cp_avg_time
          << endl;
     cout << "  CP vs HP: " << fixed << hp_avg_time / cp_avg_time << endl;
-  } catch (std::exception& e) {
+  } catch (exception& e) {
     cerr << "exception: " << e.what() << endl;
     return 1;
   } catch (...) {
