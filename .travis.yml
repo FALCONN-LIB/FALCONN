@@ -35,8 +35,7 @@ before_install:
     fi
 
 install:
-  - make python_package
-  - cd python_pkg/dist/FALCONN-* && pip install . && cd ../../..
+  - make python_package_install
 
 script:
   - make run_all_cpp_tests
