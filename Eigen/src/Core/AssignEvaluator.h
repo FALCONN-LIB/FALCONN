@@ -407,7 +407,7 @@ struct dense_assignment_loop<Kernel, LinearVectorizedTraversal, NoUnrolling>
                                                             : int(Kernel::AssignmentTraits::DstAlignment),
       srcAlignment = Kernel::AssignmentTraits::JointAlignment
     };
-    const Index alignedStart = dstIsAligned ? 0 : internal::first_aligned<requestedAlignment>(&kernel.dstEvaluator().coeffRef(0), size);
+    const Index alignedStart = dstIsAligned ? 0 : internal::first_aligned<requestedAlignment>(kernel.dstDataPtr(), size);
     const Index alignedEnd = alignedStart + ((size-alignedStart)/packetSize)*packetSize;
 
     unaligned_dense_assignment_loop<dstIsAligned!=0>::run(kernel, 0, alignedStart);
@@ -515,7 +515,7 @@ struct dense_assignment_loop<Kernel, LinearTraversal, CompleteUnrolling>
 template<typename Kernel>
 struct dense_assignment_loop<Kernel, SliceVectorizedTraversal, NoUnrolling>
 {
-  EIGEN_DEVICE_FUNC static inline void run(Kernel &kernel)
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(Kernel &kernel)
   {
     typedef typename Kernel::Scalar Scalar;
     typedef typename Kernel::PacketType PacketType;
@@ -527,7 +527,7 @@ struct dense_assignment_loop<Kernel, SliceVectorizedTraversal, NoUnrolling>
       dstAlignment = alignable ? int(requestedAlignment)
                                : int(Kernel::AssignmentTraits::DstAlignment)
     };
-    const Scalar *dst_ptr = &kernel.dstEvaluator().coeffRef(0,0);
+    const Scalar *dst_ptr = kernel.dstDataPtr();
     if((!bool(dstIsAligned)) && (UIntPtr(dst_ptr) % sizeof(Scalar))>0)
     {
       // the pointer is not aligend-on scalar, so alignment is not possible
@@ -554,7 +554,7 @@ struct dense_assignment_loop<Kernel, SliceVectorizedTraversal, NoUnrolling>
       for(Index inner = alignedEnd; inner<innerSize ; ++inner)
         kernel.assignCoeffByOuterInner(outer, inner);
 
-      alignedStart = std::min<Index>((alignedStart+alignedStep)%packetSize, innerSize);
+      alignedStart = numext::mini((alignedStart+alignedStep)%packetSize, innerSize);
     }
   }
 };
@@ -563,7 +563,7 @@ struct dense_assignment_loop<Kernel, SliceVectorizedTraversal, NoUnrolling>
 template<typename Kernel>
 struct dense_assignment_loop<Kernel, SliceVectorizedTraversal, InnerUnrolling>
 {
-  EIGEN_DEVICE_FUNC static inline void run(Kernel &kernel)
+  EIGEN_DEVICE_FUNC static EIGEN_STRONG_INLINE void run(Kernel &kernel)
   {
     typedef typename Kernel::DstEvaluatorType::XprType DstXprType;
     typedef typename Kernel::PacketType PacketType;
@@ -683,6 +683,11 @@ public:
       : int(DstEvaluatorType::Flags)&RowMajorBit ? inner
       : outer;
   }
+
+  EIGEN_DEVICE_FUNC const Scalar* dstDataPtr() const
+  {
+    return m_dstExpr.data();
+  }
   
 protected:
   DstEvaluatorType& m_dst;
@@ -696,16 +701,39 @@ protected:
 * Part 5 : Entry point for dense rectangular assignment
 ***************************************************************************/
 
-template<typename DstXprType, typename SrcXprType, typename Functor>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(const DstXprType& dst, const SrcXprType& src, const Functor &func)
+template<typename DstXprType,typename SrcXprType, typename Functor>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+void resize_if_allowed(DstXprType &dst, const SrcXprType& src, const Functor &/*func*/)
 {
+  EIGEN_ONLY_USED_FOR_DEBUG(dst);
+  EIGEN_ONLY_USED_FOR_DEBUG(src);
   eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
-  
+}
+
+template<typename DstXprType,typename SrcXprType, typename T1, typename T2>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
+void resize_if_allowed(DstXprType &dst, const SrcXprType& src, const internal::assign_op<T1,T2> &/*func*/)
+{
+  Index dstRows = src.rows();
+  Index dstCols = src.cols();
+  if(((dst.rows()!=dstRows) || (dst.cols()!=dstCols)))
+    dst.resize(dstRows, dstCols);
+  eigen_assert(dst.rows() == dstRows && dst.cols() == dstCols);
+}
+
+template<typename DstXprType, typename SrcXprType, typename Functor>
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(DstXprType& dst, const SrcXprType& src, const Functor &func)
+{
   typedef evaluator<DstXprType> DstEvaluatorType;
   typedef evaluator<SrcXprType> SrcEvaluatorType;
 
-  DstEvaluatorType dstEvaluator(dst);
   SrcEvaluatorType srcEvaluator(src);
+
+  // NOTE To properly handle A = (A*A.transpose())/s with A rectangular,
+  // we need to resize the destination after the source evaluator has been created.
+  resize_if_allowed(dst, src, func);
+
+  DstEvaluatorType dstEvaluator(dst);
     
   typedef generic_dense_assignment_kernel<DstEvaluatorType,SrcEvaluatorType,Functor> Kernel;
   Kernel kernel(dstEvaluator, srcEvaluator, func, dst.const_cast_derived());
@@ -714,7 +742,7 @@ EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(const DstX
 }
 
 template<typename DstXprType, typename SrcXprType>
-EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(const DstXprType& dst, const SrcXprType& src)
+EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE void call_dense_assignment_loop(DstXprType& dst, const SrcXprType& src)
 {
   call_dense_assignment_loop(dst, src, internal::assign_op<typename DstXprType::Scalar,typename SrcXprType::Scalar>());
 }
@@ -796,11 +824,6 @@ void call_assignment_no_alias(Dst& dst, const Src& src, const Func& func)
                       ) && int(Dst::SizeAtCompileTime) != 1
   };
 
-  Index dstRows = NeedToTranspose ? src.cols() : src.rows();
-  Index dstCols = NeedToTranspose ? src.rows() : src.cols();
-  if((dst.rows()!=dstRows) || (dst.cols()!=dstCols))
-    dst.resize(dstRows, dstCols);
-  
   typedef typename internal::conditional<NeedToTranspose, Transpose<Dst>, Dst>::type ActualDstTypeCleaned;
   typedef typename internal::conditional<NeedToTranspose, Transpose<Dst>, Dst&>::type ActualDstType;
   ActualDstType actualDst(dst);
@@ -823,15 +846,11 @@ template<typename Dst, typename Src, typename Func>
 EIGEN_DEVICE_FUNC EIGEN_STRONG_INLINE
 void call_assignment_no_alias_no_transpose(Dst& dst, const Src& src, const Func& func)
 {
-  Index dstRows = src.rows();
-  Index dstCols = src.cols();
-  if((dst.rows()!=dstRows) || (dst.cols()!=dstCols))
-    dst.resize(dstRows, dstCols);
-  
   // TODO check whether this is the right place to perform these checks:
   EIGEN_STATIC_ASSERT_LVALUE(Dst)
   EIGEN_STATIC_ASSERT_SAME_MATRIX_SIZE(Dst,Src)
-  
+  EIGEN_CHECK_BINARY_COMPATIBILIY(Func,typename Dst::Scalar,typename Src::Scalar);
+
   Assignment<Dst,Src,Func>::run(dst, src, func);
 }
 template<typename Dst, typename Src>
@@ -853,8 +872,6 @@ struct Assignment<DstXprType, SrcXprType, Functor, Dense2Dense, Weak>
   EIGEN_DEVICE_FUNC
   static EIGEN_STRONG_INLINE void run(DstXprType &dst, const SrcXprType &src, const Functor &func)
   {
-    eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
-    
 #ifndef EIGEN_NO_DEBUG
     internal::check_for_aliasing(dst, src);
 #endif
@@ -873,8 +890,41 @@ struct Assignment<DstXprType, SrcXprType, Functor, EigenBase2EigenBase, Weak>
   EIGEN_DEVICE_FUNC
   static EIGEN_STRONG_INLINE void run(DstXprType &dst, const SrcXprType &src, const internal::assign_op<typename DstXprType::Scalar,typename SrcXprType::Scalar> &/*func*/)
   {
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
+    if((dst.rows()!=dstRows) || (dst.cols()!=dstCols))
+      dst.resize(dstRows, dstCols);
+
     eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
     src.evalTo(dst);
+  }
+
+  // NOTE The following two functions are templated to avoid their instanciation if not needed
+  //      This is needed because some expressions supports evalTo only and/or have 'void' as scalar type.
+  template<typename SrcScalarType>
+  EIGEN_DEVICE_FUNC
+  static EIGEN_STRONG_INLINE void run(DstXprType &dst, const SrcXprType &src, const internal::add_assign_op<typename DstXprType::Scalar,SrcScalarType> &/*func*/)
+  {
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
+    if((dst.rows()!=dstRows) || (dst.cols()!=dstCols))
+      dst.resize(dstRows, dstCols);
+
+    eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
+    src.addTo(dst);
+  }
+
+  template<typename SrcScalarType>
+  EIGEN_DEVICE_FUNC
+  static EIGEN_STRONG_INLINE void run(DstXprType &dst, const SrcXprType &src, const internal::sub_assign_op<typename DstXprType::Scalar,SrcScalarType> &/*func*/)
+  {
+    Index dstRows = src.rows();
+    Index dstCols = src.cols();
+    if((dst.rows()!=dstRows) || (dst.cols()!=dstCols))
+      dst.resize(dstRows, dstCols);
+
+    eigen_assert(dst.rows() == src.rows() && dst.cols() == src.cols());
+    src.subTo(dst);
   }
 };
 
