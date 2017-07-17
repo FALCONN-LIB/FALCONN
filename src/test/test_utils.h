@@ -239,11 +239,11 @@ void run_retrieve_test_6(HashTable* table) {
   std::vector<int32_t> expected_result3 = {1, 2};
   IteratorPair result3 = table->retrieve(5);
   check_result(result3, expected_result3);
-  
+
   std::vector<int32_t> expected_result4 = {};
   IteratorPair result4 = table->retrieve(6);
   check_result(result4, expected_result4);
-  
+
   std::vector<int32_t> expected_result5 = {};
   IteratorPair result5 = table->retrieve(7);
   check_result(result5, expected_result5);

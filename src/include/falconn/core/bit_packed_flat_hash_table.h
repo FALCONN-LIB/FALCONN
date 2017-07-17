@@ -99,7 +99,7 @@ class BitPackedFlatHashTable {
           "Incorrect number of items in add_entries.");
     }
 
-    std::vector<IndexType> bucket_counts(num_buckets_,  0);
+    std::vector<IndexType> bucket_counts(num_buckets_, 0);
     for (IndexType ii = 0; ii < static_cast<IndexType>(keys.size()); ++ii) {
       if (static_cast<IndexType>(keys[ii]) >= num_buckets_ || keys[ii] < 0) {
         throw BitPackedFlatHashTableError("Key value out of range.");
@@ -111,12 +111,11 @@ class BitPackedFlatHashTable {
     for (IndexType ii = 1; ii < num_buckets_; ++ii) {
       bucket_start_.set(ii, bucket_start_.get(ii - 1) + bucket_counts[ii - 1]);
     }
-    
+
     for (IndexType ii = static_cast<IndexType>(keys.size()) - 1; ii >= 0;
-        --ii) {
+         --ii) {
       KeyType cur_key = keys[ii];
-      indices_.set(bucket_start_.get(cur_key) + bucket_counts[cur_key] - 1,
-                   ii);
+      indices_.set(bucket_start_.get(cur_key) + bucket_counts[cur_key] - 1, ii);
       bucket_counts[cur_key] -= 1;
     }
   }

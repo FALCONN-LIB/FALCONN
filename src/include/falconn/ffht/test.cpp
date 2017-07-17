@@ -6,7 +6,8 @@
 
 #include <cstdlib>
 
-template<typename T> void referenceFHTHelper(T *buffer, int len) {
+template <typename T>
+void referenceFHTHelper(T *buffer, int len) {
   if (len == 1) {
     return;
   }
@@ -21,7 +22,8 @@ template<typename T> void referenceFHTHelper(T *buffer, int len) {
   }
 }
 
-template<typename T> void referenceFHT(T *buffer, int len) {
+template <typename T>
+void referenceFHT(T *buffer, int len) {
   if (len < 1 || (len & (len - 1))) {
     throw std::runtime_error("invalid length in the model FFT");
   }
@@ -40,7 +42,7 @@ void testFloat(int n, int chunk) {
   if (res) {
     throw std::runtime_error("error in posix_memalign");
   }
-  a = (float*)aux;
+  a = (float *)aux;
   for (int i = 0; i < n; ++i) {
     a[i] = sqrt(i + 0.0);
   }
@@ -64,7 +66,7 @@ void testDouble(int n, int chunk) {
   if (res) {
     throw std::runtime_error("error in posix_memalign");
   }
-  a = (double*)aux;
+  a = (double *)aux;
   for (int i = 0; i < n; ++i) {
     a[i] = sqrt(i + 0.0);
   }
@@ -85,20 +87,18 @@ int main() {
     for (int n = 1; n <= (1 << 20); n *= 2) {
       int chunk = 8;
       for (;;) {
-	testFloat(n, chunk);
-	testDouble(n, chunk);
-	if (chunk > n) {
-	  break;
-	}
-	chunk *= 2;
+        testFloat(n, chunk);
+        testDouble(n, chunk);
+        if (chunk > n) {
+          break;
+        }
+        chunk *= 2;
       }
     }
-  }
-  catch (std::exception &e) {
+  } catch (std::exception &e) {
     std::cerr << e.what() << std::endl;
     return 1;
-  }
-  catch (...) {
+  } catch (...) {
     std::cerr << "ERROR" << std::endl;
     return 1;
   }

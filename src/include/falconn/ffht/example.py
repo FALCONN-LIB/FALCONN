@@ -13,4 +13,4 @@ t1 = timeit.default_timer()
 for i in range(reps):
     ffht.fht(a, chunk_size)
 t2 = timeit.default_timer()
-print (t2 - t1 + 0.0) / (reps + 0.0)
+print(t2 - t1 + 0.0) / (reps + 0.0)

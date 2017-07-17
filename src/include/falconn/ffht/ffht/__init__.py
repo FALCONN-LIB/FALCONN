@@ -13,6 +13,7 @@ implementation of *any* Fourier-like transform.
 from _ffht import fht
 import numpy as _numpy
 
+
 def create_aligned(n, dtype, alignment=32):
     """ Create an aligned one-dimensional NumPy array.
 
@@ -28,4 +29,4 @@ def create_aligned(n, dtype, alignment=32):
     shift = 0
     if off != 0:
         shift = (alignment - off) / buf.itemsize
-    return buf[shift : shift + n]
+    return buf[shift:shift + n]

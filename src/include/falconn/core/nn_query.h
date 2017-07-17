@@ -36,7 +36,6 @@ class NearestNeighborQuery {
                                         int_fast64_t num_probes,
                                         int_fast64_t max_num_candidates) {
     auto start_time = std::chrono::high_resolution_clock::now();
-    stats_num_queries_ += 1;
 
     table_query_->get_unique_candidates(q, num_probes, max_num_candidates,
                                         &candidates_);
@@ -90,7 +89,6 @@ class NearestNeighborQuery {
     }
 
     auto start_time = std::chrono::high_resolution_clock::now();
-    stats_num_queries_ += 1;
 
     std::vector<LSHTableKeyType>& res = *result;
     res.clear();
@@ -155,7 +153,6 @@ class NearestNeighborQuery {
     }
 
     auto start_time = std::chrono::high_resolution_clock::now();
-    stats_num_queries_ += 1;
 
     std::vector<LSHTableKeyType>& res = *result;
     res.clear();
@@ -185,15 +182,41 @@ class NearestNeighborQuery {
     stats_.average_total_query_time += elapsed_total.count();
   }
 
+  void get_candidates_with_duplicates(const LSHTablePointType& q,
+                                      int_fast64_t num_probes,
+                                      int_fast64_t max_num_candidates,
+                                      std::vector<LSHTableKeyType>* result) {
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    table_query_->get_candidates_with_duplicates(q, num_probes,
+                                                 max_num_candidates, result);
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto elapsed_total =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time -
+                                                                  start_time);
+    stats_.average_total_query_time += elapsed_total.count();
+  }
+
+  void get_unique_candidates(const LSHTablePointType& q,
+                             int_fast64_t num_probes,
+                             int_fast64_t max_num_candidates,
+                             std::vector<LSHTableKeyType>* result) {
+    auto start_time = std::chrono::high_resolution_clock::now();
+
+    table_query_->get_unique_candidates(q, num_probes, max_num_candidates,
+                                        result);
+
+    auto end_time = std::chrono::high_resolution_clock::now();
+    auto elapsed_total =
+        std::chrono::duration_cast<std::chrono::duration<double>>(end_time -
+                                                                  start_time);
+    stats_.average_total_query_time += elapsed_total.count();
+  }
+
   void reset_query_statistics() {
     table_query_->reset_query_statistics();
-    stats_num_queries_ = 0;
-    stats_.average_total_query_time = 0.0;
-    stats_.average_lsh_time = 0.0;
-    stats_.average_hash_table_time = 0.0;
-    stats_.average_distance_time = 0.0;
-    stats_.average_num_candidates = 0.0;
-    stats_.average_num_unique_candidates = 0.0;
+    stats_.reset();
   }
 
   QueryStatistics get_query_statistics() {
@@ -201,9 +224,9 @@ class NearestNeighborQuery {
     res.average_total_query_time = stats_.average_total_query_time;
     res.average_distance_time = stats_.average_distance_time;
 
-    if (stats_num_queries_ > 0) {
-      res.average_total_query_time /= stats_num_queries_;
-      res.average_distance_time /= stats_num_queries_;
+    if (res.num_queries > 0) {
+      res.average_total_query_time /= res.num_queries;
+      res.average_distance_time /= res.num_queries;
     }
     return res;
   }
@@ -216,7 +239,6 @@ class NearestNeighborQuery {
   SimpleHeap<DistanceType, LSHTableKeyType> heap_;
 
   QueryStatistics stats_;
-  int_fast64_t stats_num_queries_ = 0;
 };
 
 }  // namespace core

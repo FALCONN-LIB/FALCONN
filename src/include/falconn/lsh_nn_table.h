@@ -25,16 +25,12 @@ class LSHNearestNeighborTableError : public FalconnError {
 };
 
 ///
-/// Common interface shared by all LSH table wrappers.
-///
-/// The template parameter PointType should be one of the two point types
-/// introduced above (DenseVector and SparseVector), e.g., DenseVector<float>.
-///
-/// The KeyType template parameter is optional and the default int32_t is
-/// sufficient for up to 10^9 points.
+/// A common interface for query objects that execute table lookups such as
+/// nearest neighbor queries. A query object does not change the state of the
+/// parent LSHNearestNeighborTable.
 ///
 template <typename PointType, typename KeyType = int32_t>
-class LSHNearestNeighborTable {
+class LSHNearestNeighborQuery {
  public:
   ///
   /// Sets the number of probes used for each query.
@@ -60,11 +56,6 @@ class LSHNearestNeighborTable {
   /// Returns the maximum number of candidates considered in each query.
   ///
   virtual int_fast64_t get_max_num_candidates() = 0;
-  ///
-  /// A special constant for set_max_num_candidates which is effectively
-  /// equivalent to the infinity.
-  ///
-  static const int_fast64_t kNoMaxNumCandidates = -1;
 
   ///
   /// Finds the key of the closest candidate in the probing sequence for q.
@@ -88,15 +79,6 @@ class LSHNearestNeighborTable {
       std::vector<KeyType>* result) = 0;
 
   ///
-  /// Returns the keys of all candidates in the probing sequence for q. If a
-  /// candidate key is found in multiple tables, it will appear multiple times
-  /// in the result. The candidates are returned in the order in which they
-  /// appear in the probing sequence.
-  ///
-  virtual void get_candidates_with_duplicates(const PointType& q,
-                                              std::vector<KeyType>* result) = 0;
-
-  ///
   /// Returns the keys of all candidates in the probing sequence for q.
   /// Every candidate key occurs only once in the result. The
   /// candidates are returned in the order of their first occurrence in the
@@ -104,6 +86,15 @@ class LSHNearestNeighborTable {
   ///
   virtual void get_unique_candidates(const PointType& q,
                                      std::vector<KeyType>* result) = 0;
+
+  ///
+  /// Returns the keys of all candidates in the probing sequence for q. If a
+  /// candidate key is found in multiple tables, it will appear multiple times
+  /// in the result. The candidates are returned in the order in which they
+  /// appear in the probing sequence.
+  ///
+  virtual void get_candidates_with_duplicates(const PointType& q,
+                                              std::vector<KeyType>* result) = 0;
 
   ///
   /// Resets the query statistics.
@@ -117,6 +108,146 @@ class LSHNearestNeighborTable {
   /// time be averaged over all queries or only the near(est) neighbor queries?
   ///
   virtual QueryStatistics get_query_statistics() = 0;
+
+  virtual ~LSHNearestNeighborQuery() {}
+};
+
+///
+/// A common interface for query pools. Query pools offer mostly the
+/// same interface as an individual query object. The difference is that a
+/// query pool keeps an internal set of query objects to execute the queries
+/// potentially in parallel. The query pool is thread safe. This enables using
+/// the query pool in combination with thread pools or parallel map
+/// implementations where allocating a per-thread object is inconvenient or
+/// impossible.
+///
+template <typename PointType, typename KeyType = int32_t>
+class LSHNearestNeighborQueryPool {
+ public:
+  ///
+  /// Sets the number of probes used for each query.
+  /// See the documentation for LSHNearestNeighborQuery.
+  ///
+  virtual void set_num_probes(int_fast64_t num_probes) = 0;
+  ///
+  /// Returns the number of probes used for each query.
+  ///
+  virtual int_fast64_t get_num_probes() = 0;
+
+  ///
+  /// Sets the maximum number of candidates considered in each query.
+  /// See the documentation for LSHNearestNeighborQuery.
+  ///
+  virtual void set_max_num_candidates(int_fast64_t max_num_candidates) = 0;
+  ///
+  /// Returns the maximum number of candidates considered in each query.
+  ///
+  virtual int_fast64_t get_max_num_candidates() = 0;
+
+  ///
+  /// Finds the key of the closest candidate in the probing sequence for q.
+  ///
+  virtual KeyType find_nearest_neighbor(const PointType& q) = 0;
+
+  ///
+  /// Find the keys of the k closest candidates in the probing sequence for q.
+  /// See the documentation for LSHNearestNeighborQuery.
+  ///
+  virtual void find_k_nearest_neighbors(const PointType& q, int_fast64_t k,
+                                        std::vector<KeyType>* result) = 0;
+
+  ///
+  /// Returns the keys corresponding to candidates in the probing sequence for q
+  /// that have distance at most threshold.
+  ///
+  virtual void find_near_neighbors(
+      const PointType& q,
+      typename PointTypeTraits<PointType>::ScalarType threshold,
+      std::vector<KeyType>* result) = 0;
+
+  ///
+  /// Returns the keys of all candidates in the probing sequence for q.
+  /// See the documentation for LSHNearestNeighborQuery.
+  ///
+  virtual void get_unique_candidates(const PointType& q,
+                                     std::vector<KeyType>* result) = 0;
+
+  ///
+  /// Returns the multiset of all candidate keys in the probing sequence for q.
+  /// See the documentation for LSHNearestNeighborQuery.
+  ///
+  virtual void get_candidates_with_duplicates(const PointType& q,
+                                              std::vector<KeyType>* result) = 0;
+
+  ///
+  /// Resets the query statistics.
+  ///
+  virtual void reset_query_statistics() = 0;
+
+  ///
+  /// Returns the current query statistics.
+  /// See the documentation for LSHNearestNeighborQuery.
+  ///
+  virtual QueryStatistics get_query_statistics() = 0;
+
+  virtual ~LSHNearestNeighborQueryPool() {}
+};
+
+///
+/// Common interface shared by all LSH table wrappers.
+///
+/// The template parameter PointType should be one of the two point types
+/// introduced above (DenseVector and SparseVector), e.g., DenseVector<float>.
+///
+/// The KeyType template parameter is optional and the default int32_t is
+/// sufficient for up to 10^9 points.
+///
+template <typename PointType, typename KeyType = int32_t>
+class LSHNearestNeighborTable {
+ public:
+  ///
+  /// A special constant for set_max_num_candidates which is effectively
+  /// equivalent to infinity.
+  ///
+  static const int_fast64_t kNoMaxNumCandidates = -1;
+
+  ///
+  /// This function constructs a new query object. The query object holds
+  /// all per-query state and executes table lookups.
+  ///
+  /// num_probes == -1 (the default value) indicates that the number of probes
+  /// should equal the number of tables. This corresponds to no multiprobe.
+  ///
+  /// max_num_candidates == -1 (the default value) indicates that the number of
+  /// candidates should not be limited. This means that the entire probing
+  /// sequence is used.
+  ///
+  virtual std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>>
+  construct_query_object(int_fast64_t num_probes = -1,
+                         int_fast64_t max_num_candidates = -1) const = 0;
+
+  ///
+  /// This function constructs a new query pool. The query pool holds
+  /// a set of query objects and supports an interface that can be safely
+  /// called from multiple threads.
+  ///
+  /// num_probes == -1 (the default value) indicates that the number of probes
+  /// should equal the number of tables. This corresponds to no multiprobe.
+  ///
+  /// max_num_candidates == -1 (the default value) indicates that the number of
+  /// candidates should not be limited. This means that the entire probing
+  /// sequence is used.
+  ///
+  /// num_query_objects <= 0 (the default value) indicates that the number of
+  /// query objects should be 2 times the number of hardware threads (as
+  /// indicated by std::thread:hardware_concurrency()). This is a reasonable
+  /// default for thread pools etc. that do not use an excessive number of
+  /// threads.
+  ///
+  virtual std::unique_ptr<LSHNearestNeighborQueryPool<PointType, KeyType>>
+  construct_query_pool(int_fast64_t num_probes = -1,
+                       int_fast64_t max_num_candidates = -1,
+                       int_fast64_t num_query_objects = 0) const = 0;
 
   ///
   /// Virtual destructor.

@@ -31,9 +31,11 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <memory>
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include <cstdio>
@@ -42,11 +44,14 @@ using std::cerr;
 using std::cout;
 using std::endl;
 using std::exception;
+using std::make_pair;
 using std::max;
 using std::mt19937_64;
+using std::pair;
 using std::runtime_error;
 using std::string;
 using std::uniform_int_distribution;
+using std::unique_ptr;
 using std::vector;
 
 using std::chrono::duration;
@@ -60,6 +65,8 @@ using falconn::DistanceFunction;
 using falconn::LSHConstructionParameters;
 using falconn::LSHFamily;
 using falconn::LSHNearestNeighborTable;
+using falconn::LSHNearestNeighborQuery;
+using falconn::QueryStatistics;
 using falconn::StorageHashTable;
 using falconn::get_default_parameters;
 
@@ -165,12 +172,13 @@ void gen_answers(const vector<Point> &dataset, const vector<Point> &queries,
 double evaluate_num_probes(LSHNearestNeighborTable<Point> *table,
                            const vector<Point> &queries,
                            const vector<int> &answers, int num_probes) {
-  table->set_num_probes(num_probes);
+  unique_ptr<LSHNearestNeighborQuery<Point>> query_object =
+      table->construct_query_object(num_probes);
   int outer_counter = 0;
   int num_matches = 0;
   vector<int32_t> candidates;
   for (const auto &query : queries) {
-    table->get_candidates_with_duplicates(query, &candidates);
+    query_object->get_candidates_with_duplicates(query, &candidates);
     for (auto x : candidates) {
       if (x == answers[outer_counter]) {
         ++num_matches;
@@ -187,19 +195,22 @@ double evaluate_num_probes(LSHNearestNeighborTable<Point> *table,
  * It is much slower than 'evaluate_num_probes' and should be used to
  * measure the time.
  */
-double evaluate_query_time(LSHNearestNeighborTable<Point> *table,
-                           const vector<Point> &queries,
-                           const vector<int> &answers, int num_probes) {
-  table->set_num_probes(num_probes);
+pair<double, QueryStatistics> evaluate_query_time(
+    LSHNearestNeighborTable<Point> *table, const vector<Point> &queries,
+    const vector<int> &answers, int num_probes) {
+  unique_ptr<LSHNearestNeighborQuery<Point>> query_object =
+      table->construct_query_object(num_probes);
+  query_object->reset_query_statistics();
   int outer_counter = 0;
   int num_matches = 0;
   for (const auto &query : queries) {
-    if (table->find_nearest_neighbor(query) == answers[outer_counter]) {
+    if (query_object->find_nearest_neighbor(query) == answers[outer_counter]) {
       ++num_matches;
     }
     ++outer_counter;
   }
-  return (num_matches + 0.0) / (queries.size() + 0.0);
+  return make_pair((num_matches + 0.0) / (queries.size() + 0.0),
+                   query_object->get_query_statistics());
 }
 
 /*
@@ -318,9 +329,9 @@ int main() {
 
     // executing the queries using the found number of probes to gather
     // statistics
-    table->reset_query_statistics();
-    double score = evaluate_query_time(&*table, queries, answers, num_probes);
-    auto statistics = table->get_query_statistics();
+    auto tmp = evaluate_query_time(&*table, queries, answers, num_probes);
+    auto score = tmp.first;
+    auto statistics = tmp.second;
     cout << "average total query time: " << statistics.average_total_query_time
          << endl;
     cout << "average lsh time: " << statistics.average_lsh_time << endl;

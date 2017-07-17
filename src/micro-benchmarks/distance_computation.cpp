@@ -1,5 +1,5 @@
-#include <iostream>
 #include <Eigen/Dense>
+#include <iostream>
 
 #include <chrono>
 #include <random>
@@ -26,12 +26,12 @@ using std::chrono::duration_cast;
 using Eigen::VectorXf;
 using Eigen::Map;
 
-void worker(float *dataset,
-	    float *query,
-	    const vector<int> &candidates, int d, int u, int v, float *dummy) {
+void worker(float *dataset, float *query, const vector<int> &candidates, int d,
+            int u, int v, float *dummy) {
   *dummy = 0.0;
   for (int i = u; i < v; ++i) {
-    *dummy += Map<VectorXf>(dataset + candidates[i] * d, d).dot(Map<VectorXf>(query, d));
+    *dummy += Map<VectorXf>(dataset + candidates[i] * d, d)
+                  .dot(Map<VectorXf>(query, d));
   }
 }
 
@@ -45,7 +45,7 @@ int main() {
   int max_num_threads = thread::hardware_concurrency();
   cout << max_num_threads << " threads are supported" << endl;
   float *dataset;
-  if (posix_memalign((void**)&dataset, 32, sizeof(float) * N * D)) {
+  if (posix_memalign((void **)&dataset, 32, sizeof(float) * N * D)) {
     throw runtime_error("can't allocate memory for dataset");
   }
   random_device rd;
@@ -61,7 +61,8 @@ int main() {
   }
   for (int num_threads = 1; num_threads <= max_num_threads; ++num_threads) {
     float *queries;
-    if (posix_memalign((void**)&queries, 32, sizeof(float) * D * num_threads)) {
+    if (posix_memalign((void **)&queries, 32,
+                       sizeof(float) * D * num_threads)) {
       throw runtime_error("can't allocate memory for queries");
     }
     for (int i = 0; i < num_threads * D; ++i) {
@@ -73,7 +74,7 @@ int main() {
       int cnt = Q / num_threads;
       int rem = Q % num_threads;
       if (i < rem) {
-	++cnt;
+        ++cnt;
       }
       start[i + 1] = start[i] + cnt;
     }
@@ -81,19 +82,16 @@ int main() {
     vector<thread> threads;
     auto t1 = high_resolution_clock::now();
     for (int i = 0; i < num_threads; ++i) {
-      threads.push_back(thread(worker, dataset, queries + i * D, candidates, D, start[i], start[i + 1], &dummy[i]));
+      threads.push_back(thread(worker, dataset, queries + i * D, candidates, D,
+                               start[i], start[i + 1], &dummy[i]));
     }
     for (int i = 0; i < num_threads; ++i) {
       threads[i].join();
     }
     auto t2 = high_resolution_clock::now();
-    cout << num_threads
-	 << " thread"
-	 << ((num_threads > 1) ? "s" : "")
-	 << ": "
-	 << duration_cast<duration<double>>(t2 - t1).count()
-	 << " seconds"
-	 << endl;
+    cout << num_threads << " thread" << ((num_threads > 1) ? "s" : "") << ": "
+         << duration_cast<duration<double>>(t2 - t1).count() << " seconds"
+         << endl;
     free(queries);
   }
   free(dataset);

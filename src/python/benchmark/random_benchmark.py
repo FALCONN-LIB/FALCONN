@@ -11,67 +11,69 @@ sys.path.append('python_swig')
 
 import falconn
 
-def run_experiment(table, queries, true_nns):
-  average_query_time_outside = 0.0
-  num_correct = 0
 
-  for query, true_nn in zip(queries, true_nns):
-    start = timeit.default_timer()
-    res = table.find_nearest_neighbor(query)
-    end = timeit.default_timer()
-    average_query_time_outside += (end - start)
-    if res == true_nn:
-      num_correct += 1
+def run_experiment(query_obj, queries, true_nns):
+    average_query_time_outside = 0.0
+    num_correct = 0
 
-  average_query_time_outside /= len(queries)
-  success_probability = float(num_correct) / len(queries)
-  print('Average query time (measured outside): {:e}'.format(
-      average_query_time_outside))
-  print('Empirical success probability: {}\n'.format(success_probability))
-  print('Query statistics:')
-  stats = table.get_query_statistics()
-  print('Average total query time: {:e} seconds'.format(
-      stats.average_total_query_time))
-  print('Average LSH time:         {:e} seconds'.format(stats.average_lsh_time))
-  print('Average hash table time:  {:e} seconds'.format(
-      stats.average_hash_table_time))
-  print('Average distance time:    {:e} seconds'.format(
-      stats.average_distance_time))
-  print('Average number of candidates:        {}'.format(
-      stats.average_num_candidates))
-  print('Average number of unique candidates: {}\n'.format(
-      stats.average_num_unique_candidates))
-  print('Diagnostics:')
-  mismatch = average_query_time_outside - stats.average_total_query_time
-  print('Outside - inside average total query time: {:e} seconds ({:%})'.format(
-      mismatch, mismatch / average_query_time_outside))
-  unaccounted = stats.average_total_query_time - stats.average_lsh_time \
-      - stats.average_hash_table_time - stats.average_distance_time
-  print('Unaccounted inside query time: {:e} seconds ({:%})'.format(unaccounted,
-      unaccounted / stats.average_total_query_time))
-  return average_query_time_outside, float(num_correct) / len(queries)
+    for query, true_nn in zip(queries, true_nns):
+        start = timeit.default_timer()
+        res = query_obj.find_nearest_neighbor(query)
+        end = timeit.default_timer()
+        average_query_time_outside += (end - start)
+        if res == true_nn:
+            num_correct += 1
+
+    average_query_time_outside /= len(queries)
+    success_probability = float(num_correct) / len(queries)
+    print('Average query time (measured outside): {:e}'.format(
+        average_query_time_outside))
+    print('Empirical success probability: {}\n'.format(success_probability))
+    print('Query statistics:')
+    stats = query_obj.get_query_statistics()
+    print('Average total query time: {:e} seconds'.format(
+        stats.average_total_query_time))
+    print('Average LSH time:         {:e} seconds'.format(
+        stats.average_lsh_time))
+    print('Average hash table time:  {:e} seconds'.format(
+        stats.average_hash_table_time))
+    print('Average distance time:    {:e} seconds'.format(
+        stats.average_distance_time))
+    print('Average number of candidates:        {}'.format(
+        stats.average_num_candidates))
+    print('Average number of unique candidates: {}\n'.format(
+        stats.average_num_unique_candidates))
+    print('Diagnostics:')
+    mismatch = average_query_time_outside - stats.average_total_query_time
+    print('Outside - inside average total query time: {:e} seconds ({:%})'.
+          format(mismatch, mismatch / average_query_time_outside))
+    unaccounted = stats.average_total_query_time - stats.average_lsh_time \
+        - stats.average_hash_table_time - stats.average_distance_time
+    print('Unaccounted inside query time: {:e} seconds ({:%})'.format(
+        unaccounted, unaccounted / stats.average_total_query_time))
+    return average_query_time_outside, float(num_correct) / len(queries)
 
 
 def gen_near_neighbor(v, r):
-  rp = np.random.randn(v.size)
-  rp = rp / np.linalg.norm(rp)
-  rp = rp - np.dot(rp, v) * v
-  rp = rp / np.linalg.norm(rp)
-  alpha = 1 - r * r / 2.0
-  beta = math.sqrt(1.0 - alpha * alpha)
-  return alpha * v + beta * rp
+    rp = np.random.randn(v.size)
+    rp = rp / np.linalg.norm(rp)
+    rp = rp - np.dot(rp, v) * v
+    rp = rp / np.linalg.norm(rp)
+    alpha = 1 - r * r / 2.0
+    beta = math.sqrt(1.0 - alpha * alpha)
+    return alpha * v + beta * rp
 
 
 def aligned(a, alignment=32):
-  if (a.ctypes.data % alignment) == 0:
-    return a
-  extra = alignment / a.itemsize
-  buf = np.empty(a.size + extra, dtype=a.dtype)
-  ofs = (-buf.ctypes.data % alignment) / a.itemsize
-  aa = buf[ofs:ofs+a.size].reshape(a.shape)
-  np.copyto(aa, a)
-  assert (aa.ctypes.data % alignment) == 0
-  return aa
+    if (a.ctypes.data % alignment) == 0:
+        return a
+    extra = alignment // a.itemsize
+    buf = np.empty(a.size + extra, dtype=a.dtype)
+    ofs = (-buf.ctypes.data % alignment) // a.itemsize
+    aa = buf[ofs:ofs + a.size].reshape(a.shape)
+    np.copyto(aa, a)
+    assert (aa.ctypes.data % alignment) == 0
+    return aa
 
 
 
@@ -106,19 +108,19 @@ data = aligned(data)
 print('Generating queries ...\n')
 queries = []
 for ii in range(num_queries):
-  q = gen_near_neighbor(data[np.random.randint(n)], r)
-  q = aligned(q)
-  queries.append(q.astype(np.float32))
+    q = gen_near_neighbor(data[np.random.randint(n)], r)
+    q = aligned(q)
+    queries.append(q.astype(np.float32))
 
 print('Computing true nearest neighbors via a linear scan ...')
 true_nns = []
 average_scan_time = 0.0
 for query in queries:
-  start = timeit.default_timer()
-  best_index = np.argmax(np.dot(data, query))
-  stop = timeit.default_timer()
-  true_nns.append(best_index)
-  average_scan_time += (stop - start)
+    start = timeit.default_timer()
+    best_index = np.argmax(np.dot(data, query))
+    stop = timeit.default_timer()
+    true_nns.append(best_index)
+    average_scan_time += (stop - start)
 average_scan_time /= num_queries
 print('Average query time: {} seconds'.format(average_scan_time))
 print(sepline)

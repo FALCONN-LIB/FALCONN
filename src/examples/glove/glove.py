@@ -15,7 +15,7 @@ if __name__ == '__main__':
     print('Reading the dataset')
     dataset = np.load(dataset_file)
     print('Done')
-    
+
     # It's important not to use doubles, unless they are strictly necessary.
     # If your dataset consists of doubles, convert it to floats using `astype`.
     assert dataset.dtype == np.float32
@@ -39,9 +39,10 @@ if __name__ == '__main__':
     answers = []
     for query in queries:
         answers.append(np.dot(dataset, query).argmax())
-    t2 = timeit.default_timer()    
+    t2 = timeit.default_timer()
     print('Done')
-    print('Linear scan time: {} per query'.format((t2 - t1) / float(len(queries))))
+    print('Linear scan time: {} per query'.format((t2 - t1) / float(
+        len(queries))))
 
     # Center the dataset and the queries: this improves the performance of LSH quite a bit.
     print('Centering the dataset and queries')
@@ -79,6 +80,7 @@ if __name__ == '__main__':
     # using the binary search
     print('Choosing number of probes')
     number_of_probes = number_of_tables
+
     def evaluate_number_of_probes(number_of_probes):
         table.set_num_probes(number_of_probes)
         score = 0
@@ -86,6 +88,7 @@ if __name__ == '__main__':
             if answers[i] in table.get_candidates_with_duplicates(query):
                 score += 1
         return float(score) / len(queries)
+
     while True:
         accuracy = evaluate_number_of_probes(number_of_probes)
         print('{} -> {}'.format(number_of_probes, accuracy))
