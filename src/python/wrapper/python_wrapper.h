@@ -6,7 +6,8 @@
 #include <string>
 #include <vector>
 
-#include "falconn/eigen_wrapper.h"
+#include <Eigen/Dense>
+
 #include "falconn/falconn_global.h"
 #include "falconn/lsh_nn_table.h"
 
