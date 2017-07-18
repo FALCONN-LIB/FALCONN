@@ -7,7 +7,7 @@
 #include <type_traits>
 #include <vector>
 
-#include "eigen_wrapper.h"
+#include <Eigen/Dense>
 
 #include "falconn_global.h"
 

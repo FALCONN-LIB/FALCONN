@@ -5,7 +5,7 @@
 #include <utility>
 #include <vector>
 
-#include "eigen_wrapper.h"
+#include <Eigen/Dense>
 
 namespace falconn {
 
@@ -148,19 +148,5 @@ struct QueryStatistics {
 };
 
 }  // namespace falconn
-
-// Workaround for the CYGWIN bug described in
-// http://stackoverflow.com/questions/28997206/cygwin-support-for-c11-in-g4-9-2
-
-#ifdef __CYGWIN__
-
-#include <cmath>
-
-namespace std {
-using ::log2;
-using ::round;
-};
-
-#endif
 
 #endif

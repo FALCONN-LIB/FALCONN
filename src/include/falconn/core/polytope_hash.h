@@ -10,7 +10,7 @@
 #include <random>
 #include <vector>
 
-#include "../eigen_wrapper.h"
+#include <Eigen/Dense>
 
 #include "../ffht/fht_header_only.h"
 #include "data_storage.h"

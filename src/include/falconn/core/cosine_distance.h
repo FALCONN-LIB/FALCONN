@@ -4,7 +4,7 @@
 #include <cstdint>
 #include <vector>
 
-#include "../eigen_wrapper.h"
+#include <Eigen/Dense>
 
 namespace falconn {
 namespace core {

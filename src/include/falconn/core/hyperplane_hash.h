@@ -8,7 +8,7 @@
 #include <random>
 #include <vector>
 
-#include "../eigen_wrapper.h"
+#include <Eigen/Dense>
 
 #include "data_storage.h"
 #include "heap.h"
