@@ -11,6 +11,11 @@
 namespace falconn {
 namespace python {
 
+class PyLSHNearestNeighborTableError : public FalconnError {
+ public:
+  PyLSHNearestNeighborTableError(const char* msg) : FalconnError(msg) {}
+};
+
 namespace py = pybind11;
 
 template <typename T>
@@ -22,7 +27,7 @@ template <typename T>
 inline EigenMap<T> numpy_to_eigen(NumPyArray<T> x) {
   py::buffer_info buf = x.request();
   if (buf.ndim != 1) {
-    throw std::runtime_error("expected a one-dimensional array");
+    throw PyLSHNearestNeighborTableError("expected a one-dimensional array");
   }
   return EigenMap<T>((T *)buf.ptr, buf.shape[0]);
 }
@@ -31,7 +36,7 @@ template <typename T>
 PlainArrayPointSet<T> numpy_to_plain_dataset(NumPyArray<T> dataset) {
   py::buffer_info buf = dataset.request();
   if (buf.ndim != 2) {
-    throw std::runtime_error("expected a two-dimensional array");
+    throw PyLSHNearestNeighborTableError("expected a two-dimensional array");
   }
   size_t num_points = buf.shape[0];
   size_t dimension = buf.shape[1];
@@ -130,7 +135,7 @@ std::unique_ptr<OuterLSHTable> construct_table_dense_{{scalar_type}}(
 
 }  // namespace {{namespace_name}}
 
-{% endfor %}PYBIND11_MODULE(falconn_internal, m) {
+{% endfor %}PYBIND11_MODULE(_falconn, m) {
   using single_precision::PyLSHNearestNeighborTableDenseFloat;
   using single_precision::PyLSHNearestNeighborQueryDenseFloat;
   using single_precision::PyLSHNearestNeighborQueryPoolDenseFloat;
