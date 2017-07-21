@@ -207,6 +207,8 @@ std::unique_ptr<OuterLSHTable> construct_table_dense_{{scalar_type}}(
       .def("{{method_name}}",
            &{{class_name}}::{{method_name}}){% endfor %};
 {% endfor %}
+  m.def("compute_number_of_hash_functions", &compute_number_of_hash_functions<DenseVector<float>>, "");
+  m.def("get_default_parameters", &get_default_parameters<DenseVector<float>>, "");
 }
 }  // namespace python
 }  // namespace falconn

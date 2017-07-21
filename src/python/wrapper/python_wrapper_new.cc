@@ -600,6 +600,11 @@ PYBIND11_MODULE(falconn_internal, m) {
            &PyLSHNearestNeighborQueryPoolDenseDouble::reset_query_statistics)
       .def("get_query_statistics",
            &PyLSHNearestNeighborQueryPoolDenseDouble::get_query_statistics);
+
+  m.def("compute_number_of_hash_functions",
+        &compute_number_of_hash_functions<DenseVector<float>>, "");
+  m.def("get_default_parameters", &get_default_parameters<DenseVector<float>>,
+        "");
 }
 }  // namespace python
 }  // namespace falconn
