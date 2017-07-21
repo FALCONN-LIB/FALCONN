@@ -49,9 +49,9 @@ using LSHQueryObject = LSHNearestNeighborQuery<DenseVector<T>>;
 template <typename T>
 using LSHQueryPool = LSHNearestNeighborQueryPool<DenseVector<T>>;
 
-namespace single_precision {
+{% for (namespace_name, scalar_type, scalar_type_capitalized) in [('single_precision', 'float', 'Float'), ('double_precision', 'double', 'Double')] %}namespace {{namespace_name}} {
 
-typedef float ScalarType;
+typedef {{scalar_type}} ScalarType;
 typedef DenseVector<ScalarType> InnerVector;
 typedef EigenMap<ScalarType> InnerEigenMap;
 typedef PlainArrayPointSet<ScalarType> InnerPlainArrayPointSet;
@@ -61,9 +61,9 @@ typedef LSHQueryPool<ScalarType> InnerLSHQueryPool;
 
 typedef NumPyArray<ScalarType> OuterNumPyArray;
 
-class PyLSHNearestNeighborQueryDenseFloat {
+class PyLSHNearestNeighborQueryDense{{scalar_type_capitalized}} {
  public:
-  PyLSHNearestNeighborQueryDenseFloat(
+  PyLSHNearestNeighborQueryDense{{scalar_type_capitalized}}(
       std::shared_ptr<InnerLSHQueryObject> query_object)
       : inner_entity_(query_object) {}
 
@@ -73,9 +73,9 @@ class PyLSHNearestNeighborQueryDenseFloat {
   std::shared_ptr<InnerLSHQueryObject> inner_entity_;
 };
 
-class PyLSHNearestNeighborQueryPoolDenseFloat {
+class PyLSHNearestNeighborQueryPoolDense{{scalar_type_capitalized}} {
  public:
-  PyLSHNearestNeighborQueryPoolDenseFloat(
+  PyLSHNearestNeighborQueryPoolDense{{scalar_type_capitalized}}(
       std::shared_ptr<InnerLSHQueryPool> query_pool)
       : inner_entity_(query_pool) {}
 
@@ -85,12 +85,12 @@ class PyLSHNearestNeighborQueryPoolDenseFloat {
   std::shared_ptr<InnerLSHQueryPool> inner_entity_;
 };
 
-typedef PyLSHNearestNeighborQueryDenseFloat OuterLSHQueryObject;
-typedef PyLSHNearestNeighborQueryPoolDenseFloat OuterLSHQueryPool;
+typedef PyLSHNearestNeighborQueryDense{{scalar_type_capitalized}} OuterLSHQueryObject;
+typedef PyLSHNearestNeighborQueryPoolDense{{scalar_type_capitalized}} OuterLSHQueryPool;
 
-class PyLSHNearestNeighborTableDenseFloat {
+class PyLSHNearestNeighborTableDense{{scalar_type_capitalized}} {
  public:
-  PyLSHNearestNeighborTableDenseFloat(std::shared_ptr<InnerLSHTable> table)
+  PyLSHNearestNeighborTableDense{{scalar_type_capitalized}}(std::shared_ptr<InnerLSHTable> table)
       : table_(table) {}
 
   std::unique_ptr<OuterLSHQueryObject> construct_query_object(
@@ -116,9 +116,9 @@ class PyLSHNearestNeighborTableDenseFloat {
   std::shared_ptr<InnerLSHTable> table_;
 };
 
-typedef PyLSHNearestNeighborTableDenseFloat OuterLSHTable;
+typedef PyLSHNearestNeighborTableDense{{scalar_type_capitalized}} OuterLSHTable;
 
-std::unique_ptr<OuterLSHTable> construct_table_dense_float(
+std::unique_ptr<OuterLSHTable> construct_table_dense_{{scalar_type}}(
     OuterNumPyArray points, const LSHConstructionParameters &params) {
   InnerPlainArrayPointSet converted_points = numpy_to_plain_dataset(points);
   std::unique_ptr<InnerLSHTable> inner_table =
@@ -128,13 +128,17 @@ std::unique_ptr<OuterLSHTable> construct_table_dense_float(
       new OuterLSHTable(std::move(inner_table)));
 }
 
-}  // namespace single_precision
+}  // namespace {{namespace_name}}
 
-PYBIND11_MODULE(falconn_internal, m) {
+{% endfor %}PYBIND11_MODULE(falconn_internal, m) {
   using single_precision::PyLSHNearestNeighborTableDenseFloat;
   using single_precision::PyLSHNearestNeighborQueryDenseFloat;
   using single_precision::PyLSHNearestNeighborQueryPoolDenseFloat;
   using single_precision::construct_table_dense_float;
+  using double_precision::PyLSHNearestNeighborTableDenseDouble;
+  using double_precision::PyLSHNearestNeighborQueryDenseDouble;
+  using double_precision::PyLSHNearestNeighborQueryPoolDenseDouble;
+  using double_precision::construct_table_dense_double;
 
   py::enum_<LSHFamily>(m, "LSHFamily")
       .value("Unknown", LSHFamily::Unknown)
@@ -195,34 +199,14 @@ PYBIND11_MODULE(falconn_internal, m) {
            py::arg("num_probes") = -1, py::arg("max_num_candidates") = -1,
            py::arg("num_query_objects") = 0);
   m.def("construct_table_dense_float", &construct_table_dense_float, "");
+  m.def("construct_table_dense_double", &construct_table_dense_double, "");
+{% for class_name in ['PyLSHNearestNeighborQueryDenseFloat', 'PyLSHNearestNeighborQueryPoolDenseFloat', 'PyLSHNearestNeighborQueryDenseDouble', 'PyLSHNearestNeighborQueryPoolDenseDouble'] %}
   // we do not expose a constructor
-  py::class_<PyLSHNearestNeighborQueryDenseFloat>(
-      m, "PyLSHNearestNeighborQueryDenseFloat")
-      .def("set_num_probes",
-           &PyLSHNearestNeighborQueryDenseFloat::set_num_probes)
-      .def("get_num_probes",
-           &PyLSHNearestNeighborQueryDenseFloat::get_num_probes)
-      .def("set_max_num_candidates",
-           &PyLSHNearestNeighborQueryDenseFloat::set_max_num_candidates)
-      .def("get_max_num_candidates",
-           &PyLSHNearestNeighborQueryDenseFloat::get_max_num_candidates)
-      .def("find_nearest_neighbor",
-           &PyLSHNearestNeighborQueryDenseFloat::find_nearest_neighbor)
-      .def("find_k_nearest_neighbors",
-           &PyLSHNearestNeighborQueryDenseFloat::find_k_nearest_neighbors)
-      .def("find_near_neighbors",
-           &PyLSHNearestNeighborQueryDenseFloat::find_near_neighbors)
-      .def("get_unique_candidates",
-           &PyLSHNearestNeighborQueryDenseFloat::get_unique_candidates)
-      .def("get_candidates_with_duplicates",
-           &PyLSHNearestNeighborQueryDenseFloat::get_candidates_with_duplicates)
-      .def("reset_query_statistics",
-           &PyLSHNearestNeighborQueryDenseFloat::reset_query_statistics)
-      .def("get_query_statistics",
-           &PyLSHNearestNeighborQueryDenseFloat::get_query_statistics);
-  // we do not expose a constructor
-  py::class_<PyLSHNearestNeighborQueryPoolDenseFloat>(
-      m, "PyLSHNearestNeighborQueryPoolDenseFloat");
+  py::class_<{{class_name}}>(
+      m, "{{class_name}}"){% for method_name in ['set_num_probes', 'get_num_probes', 'set_max_num_candidates', 'get_max_num_candidates', 'find_nearest_neighbor', 'find_k_nearest_neighbors', 'find_near_neighbors', 'get_unique_candidates', 'get_candidates_with_duplicates', 'reset_query_statistics', 'get_query_statistics'] %}
+      .def("{{method_name}}",
+           &{{class_name}}::{{method_name}}){% endfor %};
+{% endfor %}
 }
 }  // namespace python
 }  // namespace falconn
