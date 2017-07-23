@@ -13,7 +13,7 @@ class Queriable:
         if len(query.shape) != 1:
             raise ValueError('query must be one-dimensional')
         if self._parent._dataset.dtype != query.dtype:
-            raise ValueError('dataset and query must have the same dtype')
+            raise TypeError('dataset and query must have the same dtype')
         if query.shape[0] != self._parent._params.dimension:
             raise ValueError(
                 'query dimension mismatch: {} expected, but {} found'.format(
@@ -27,6 +27,8 @@ class Queriable:
 
     def find_near_neighbors(self, query, threshold):
         self._check_query(query)
+        if threshold < 0:
+            raise ValueError('threshold must be non-negative rather than {}'.format(threshold))
         return self._inner_entity.find_near_neighbors(query, threshold)
 
     def find_nearest_neighbor(self, query):

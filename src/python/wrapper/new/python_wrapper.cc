@@ -496,6 +496,16 @@ PYBIND11_MODULE(_falconn, m) {
            &PyLSHNearestNeighborTableDenseFloat::construct_query_pool,
            py::arg("num_probes") = -1, py::arg("max_num_candidates") = -1,
            py::arg("num_query_objects") = 0);
+  // we do not expose a constructor
+  py::class_<PyLSHNearestNeighborTableDenseDouble>(
+      m, "PyLSHNearestNeighborTableDenseDouble")
+      .def("construct_query_object",
+           &PyLSHNearestNeighborTableDenseDouble::construct_query_object,
+           py::arg("num_probes") = -1, py::arg("max_num_candidates") = -1)
+      .def("construct_query_pool",
+           &PyLSHNearestNeighborTableDenseDouble::construct_query_pool,
+           py::arg("num_probes") = -1, py::arg("max_num_candidates") = -1,
+           py::arg("num_query_objects") = 0);
   m.def("construct_table_dense_float", &construct_table_dense_float, "");
   m.def("construct_table_dense_double", &construct_table_dense_double, "");
 
@@ -607,9 +617,12 @@ PYBIND11_MODULE(_falconn, m) {
            &PyLSHNearestNeighborQueryPoolDenseDouble::get_query_statistics);
 
   m.def("compute_number_of_hash_functions",
-        &compute_number_of_hash_functions<DenseVector<float>>, "");
+        &compute_number_of_hash_functions<DenseVector<float>>, "",
+        py::arg("num_hash_bits"), py::arg("params"));
   m.def("get_default_parameters", &get_default_parameters<DenseVector<float>>,
-        "");
+        "", py::arg("num_points"), py::arg("dimension"),
+        py::arg("distance") = DistanceFunction::EuclideanSquared,
+        py::arg("is_sufficiently_dense") = false);
 }
 }  // namespace python
 }  // namespace falconn
