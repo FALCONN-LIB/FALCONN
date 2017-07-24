@@ -9,14 +9,22 @@ def test_lsh_index_positive():
     t = falconn.LSHIndex(p)
     dataset = np.random.randn(n, d).astype(np.float32)
     t.setup(dataset)
+    def is_int(x):
+        try:
+            res = isinstance(x, (int, long))
+            return res
+        except NameError:
+            res = isinstance(x, int)
+            return res
+
     def test_positive(q):
         u = np.random.randn(d).astype(np.float32)
         assert isinstance(q.find_k_nearest_neighbors(u, 10), list)
         assert isinstance(q.find_near_neighbors(u, 10.0), list)
-        assert isinstance(q.find_nearest_neighbor(u), long)
+        assert is_int(q.find_nearest_neighbor(u))
         assert isinstance(q.get_candidates_with_duplicates(u), list)
-        assert isinstance(q.get_max_num_candidates(), long)
-        assert isinstance(q.get_num_probes(), long)
+        assert is_int(q.get_max_num_candidates())
+        assert is_int(q.get_num_probes())
         assert isinstance(q.get_query_statistics(), falconn.QueryStatistics)
         assert isinstance(q.get_unique_candidates(u), list)
         assert q.reset_query_statistics() is None
