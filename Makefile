@@ -37,6 +37,8 @@ python_package:
 	mkdir -p $(PYTHON_PKG_DIR)
 	cp src/python/package/new/setup.py $(PYTHON_PKG_DIR)
 	cp README.md $(PYTHON_PKG_DIR)
+	cp LICENSE.txt $(PYTHON_PKG_DIR)
+	cp CONTRIBUTORS.md $(PYTHON_PKG_DIR)
 	cp src/python/package/new/MANIFEST.in $(PYTHON_PKG_DIR)
 	mkdir -p $(PYTHON_PKG_DIR)/falconn
 	cp src/python/package/new/falconn/__init__.py $(PYTHON_PKG_DIR)/falconn
