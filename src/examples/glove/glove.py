@@ -53,8 +53,8 @@ if __name__ == '__main__':
 
     params_cp = falconn.LSHConstructionParameters()
     params_cp.dimension = len(dataset[0])
-    params_cp.lsh_family = 'cross_polytope'
-    params_cp.distance_function = 'euclidean_squared'
+    params_cp.lsh_family = falconn.LSHFamily.CrossPolytope
+    params_cp.distance_function = falconn.DistanceFunction.EuclideanSquared
     params_cp.l = number_of_tables
     # we set one rotation, since the data is dense enough,
     # for sparse data set it to 2
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     params_cp.seed = 5721840
     # we want to use all the available threads to set up
     params_cp.num_setup_threads = 0
-    params_cp.storage_hash_table = 'bit_packed_flat_hash_table'
+    params_cp.storage_hash_table = falconn.StorageHashTable.BitPackedFlatHashTable
     # we build 18-bit hashes so that each table has
     # 2^18 bins; this is a good choise since 2^18 is of the same
     # order of magnitude as the number of data points
@@ -76,16 +76,18 @@ if __name__ == '__main__':
     print('Done')
     print('Construction time: {}'.format(t2 - t1))
 
+    query_object = table.construct_query_object()
+
     # find the smallest number of probes to achieve accuracy 0.9
     # using the binary search
     print('Choosing number of probes')
     number_of_probes = number_of_tables
 
     def evaluate_number_of_probes(number_of_probes):
-        table.set_num_probes(number_of_probes)
+        query_object.set_num_probes(number_of_probes)
         score = 0
         for (i, query) in enumerate(queries):
-            if answers[i] in table.get_candidates_with_duplicates(query):
+            if answers[i] in query_object.get_candidates_with_duplicates(query):
                 score += 1
         return float(score) / len(queries)
 
@@ -114,7 +116,7 @@ if __name__ == '__main__':
     t1 = timeit.default_timer()
     score = 0
     for (i, query) in enumerate(queries):
-        if table.find_nearest_neighbor(query) == answers[i]:
+        if query_object.find_nearest_neighbor(query) == answers[i]:
             score += 1
     t2 = timeit.default_timer()
 

@@ -62,10 +62,10 @@ class Queriable:
         self._inner_entity.set_max_num_candidates(max_num_candidates)
 
     def set_num_probes(self, num_probes):
-        if num_probes < self._params.l:
+        if num_probes < self._parent._params.l:
             raise ValueError(
                 'number of probes must be at least the number of tables ({})'.
-                format(self._params.l))
+                format(self._parent._params.l))
         self._inner_entity.set_num_probes(num_probes)
 
 class LSHIndex:
@@ -83,7 +83,7 @@ class LSHIndex:
         if len(dataset.shape) != 2:
             raise ValueError('dataset must be a two-dimensional array')
         if dataset.dtype != _numpy.float32 and dataset.dtype != _numpy.float64:
-            raise ValueError('dataset must consist of floats or doubles')
+            raise TypeError('dataset must consist of floats or doubles')
         if dataset.shape[1] != self._params.dimension:
             raise ValueError(
                 'dataset dimension mismatch: {} expected, but {} found'.format(
@@ -106,4 +106,4 @@ class LSHIndex:
 
     def construct_query_pool(self, num_probes=-1, max_num_candidates=-1, num_query_objects=0):
         self._check_built()
-        return Queriable(self._table.construct_query_object(num_probes, max_num_candidates, num_query_objects), self)
+        return Queriable(self._table.construct_query_pool(num_probes, max_num_candidates, num_query_objects), self)
