@@ -649,6 +649,29 @@ class StaticTableFactory {
           "parameter struct? A value of 0 indicates that FALCONN should use "
           "the maximum number of available hardware threads.");
     }
+    if (params_.lsh_family == LSHFamily::Unknown) {
+      throw LSHNNTableSetupError("The hash family is not specified.");
+    }
+    if (params_.distance_function == DistanceFunction::Unknown) {
+      throw LSHNNTableSetupError("The distance function is not specified.");
+    }
+    if (params_.storage_hash_table == StorageHashTable::Unknown) {
+      throw LSHNNTableSetupError("The storage type is not specified.");
+    }
+    if (params_.lsh_family == LSHFamily::CrossPolytope) {
+      if (params_.last_cp_dimension < 1) {
+        throw LSHNNTableSetupError(
+            "Forgot to set last_cp_dimension in the parameter struct.");
+      }
+      if (params_.num_rotations < 1) {
+        throw LSHNNTableSetupError(
+            "Forgot to set num_rotations in the parameter struct.");
+      }
+      if (params_.feature_hashing_dimension < -1) {
+        throw LSHNNTableSetupError(
+            "Invalid value for the feature hashing dimension.");
+      }
+    }
 
     data_storage_ = std::move(
         DataStorageAdapter<PointSet>::template construct_data_storage<KeyType>(
