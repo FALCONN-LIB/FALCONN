@@ -1,5 +1,6 @@
-#include "falconn/eigen_wrapper.h"
 #include "falconn/lsh_nn_table.h"
+
+#include <Eigen/Dense>
 
 #include <chrono>
 #include <cstdint>
