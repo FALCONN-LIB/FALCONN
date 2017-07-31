@@ -288,9 +288,6 @@ enum class LSHFamily {
   CrossPolytope = 2
 };
 
-static const std::array<const char*, 3> kLSHFamilyStrings = {
-    "unknown", "hyperplane", "cross_polytope"};
-
 ///
 /// Supported distance functions.
 ///
@@ -313,9 +310,6 @@ enum class DistanceFunction {
   ///
   EuclideanSquared = 2
 };
-
-static const std::array<const char*, 3> kDistanceFunctionStrings = {
-    "unknown", "negative_inner_product", "euclidean_squared"};
 
 ///
 /// Supported low-level storage hash tables.
@@ -346,10 +340,6 @@ enum class StorageHashTable {
   ///
   LinearProbingHashTable = 4
 };
-
-static const std::array<const char*, 5> kStorageHashTableStrings = {
-    "unknown", "flat_hash_table", "bit_packed_flat_hash_table",
-    "stl_hash_table", "linear_probing_hash_table"};
 
 ///
 /// Contains the parameters for constructing a LSH table wrapper. Not all fields
