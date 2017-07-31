@@ -43,8 +43,8 @@ Many of the ideas used in FALCONN were proposed in research papers over the past
 
 If you want to cite FALCONN in a publication, here is the bibliographic information of  our research paper [(bibtex)](http://papers.nips.cc/paper/5893-practical-and-optimal-lsh-for-angular-distance/bibtex):
 
-> [Practical and Optimal LSH for Angular Distance](http://papers.nips.cc/paper/5893-practical-and-optimal-lsh-for-angular-distance)  
-> Alexandr Andoni, Piotr Indyk, Thijs Laarhoven, Ilya Razenshteyn, Ludwig Schmidt  
+> [Practical and Optimal LSH for Angular Distance](http://papers.nips.cc/paper/5893-practical-and-optimal-lsh-for-angular-distance)
+> Alexandr Andoni, Piotr Indyk, Thijs Laarhoven, Ilya Razenshteyn, Ludwig Schmidt
 > NIPS 2015
 
 ### License
@@ -53,4 +53,4 @@ FALCONN is available under the [MIT License](https://opensource.org/licenses/MIT
 Note that the third-party libraries in the `external/` folder are distributed under other open source licenses.
 The Eigen library is licensed under the [MPL2](https://www.mozilla.org/en-US/MPL/2.0/).
 The googletest and googlemock libraries are licensed under the [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
-Furthermore, the file `external/numpy.i` is part of the [NumPy project](http://www.numpy.org/) and also licensed under the [BSD 3-Clause License](https://opensource.org/licenses/BSD-3-Clause).
+The pybind11 library is licensed under a [BSD-style license](https://github.com/pybind/pybind11/blob/master/LICENSE).

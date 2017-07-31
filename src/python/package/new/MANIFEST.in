@@ -1,6 +1,0 @@
-include README.md
-include LICENSE.txt
-include CONTRIBUTORS.md
-include internal/python_wrapper.cc
-recursive-include include *
-recursive-include external *

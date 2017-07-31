@@ -13,12 +13,6 @@ except ImportError:
     sys.stderr.write('Setuptools not found!\n')
     raise
 
-try:
-    import numpy as np
-except ImportError:
-    sys.stderr.write('NumPy not found!\n')
-    raise
-
 extra_args = ['-std=c++11', '-march=native', '-O3']
 if sys.platform == 'darwin':
     extra_args += ['-mmacosx-version-min=10.9', '-stdlib=libc++']
@@ -26,11 +20,10 @@ if sys.platform == 'darwin':
 
 module = Extension(
     '_falconn',
-    sources=['falconn/swig/falconn_wrap.cc'],
+    sources=['internal/python_wrapper.cc'],
     extra_compile_args=extra_args,
     include_dirs=[
-        'falconn/src/include', 'falconn/external/eigen',
-        np.get_include()
+        'include', 'external/eigen', 'external/pybind11/include'
     ])
 
 setup(
