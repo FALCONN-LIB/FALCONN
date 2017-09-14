@@ -72,7 +72,7 @@ import numpy as _numpy
 import _falconn as _internal
 from _falconn import LSHConstructionParameters, QueryStatistics, DistanceFunction, LSHFamily, StorageHashTable, get_default_parameters, compute_number_of_hash_functions
 
-class Queriable:
+class Queryable:
     def __init__(self, inner_entity, parent):
         self._inner_entity = inner_entity
         self._parent = parent
@@ -361,9 +361,42 @@ class LSHIndex:
             raise RuntimeError('LSH table is not built (use setup())')
 
     def construct_query_object(self, num_probes=-1, max_num_candidates=-1):
+        """Construct a query object.
+
+        This method constructs and returns a query object, which can be used
+        to query the LSH data structure. The query object is not thread-safe,
+        for a thread-safe version, see the `construct_query_pool` method. Alternatively,
+        you can construct a separate query object per thread.
+
+        Arguments:
+        * `num_probes` (default `-1`): the number of buckets the query algorithm
+        probes. This number can later be modified using the `set_num_probes` method of
+        the query object. The higher number of probes is, the better accuracy one gets,
+        but the slower queries are. If `num_probes` is equal to `-1`, then we probe
+        one bucket per (each of the `params.L`) table;
+        * `max_num_candidates` (default `-1`): the maximum number of candidate points
+        we retrieve. The value `-1` means that the said number is unbounded.
+        """
         self._check_built()
-        return Queriable(self._table.construct_query_object(num_probes, max_num_candidates), self)
+        return Queryable(self._table.construct_query_object(num_probes, max_num_candidates), self)
 
     def construct_query_pool(self, num_probes=-1, max_num_candidates=-1, num_query_objects=0):
+        """Construct a pool of query objects.
+
+        This method constructs and returns a pool of query objects, which
+        can be used to query the LSH data structure from several threads.
+
+        Arguments:
+        * `num_probes` (default `-1`): the number of buckets the query algorithm
+        probes. This number can later be modified using the `set_num_probes` method of
+        the query object. The higher number of probes is, the better accuracy one gets,
+        but the slower queries are. If `num_probes` is equal to `-1`, then we probe
+        one bucket per (each of the `params.L`) table;
+        * `max_num_candidates` (default `-1`): the maximum number of candidate points
+        we retrieve. The value `-1` means that the said number is unbounded;
+        * `num_query_objects` (default `0`): the number of query objects in the pool.
+        The value `0` makes the number of query objects to be twice the number of hardware
+        threads on the machine.
+        """
         self._check_built()
-        return Queriable(self._table.construct_query_pool(num_probes, max_num_candidates, num_query_objects), self)
+        return Queryable(self._table.construct_query_pool(num_probes, max_num_candidates, num_query_objects), self)
