@@ -26,7 +26,7 @@ module = Extension(
 
 setup(
     name='FALCONN',
-    version='1.3.0',
+    version='1.3.1',
     author='Ilya Razenshteyn, Ludwig Schmidt',
     author_email='falconn.lib@gmail.com',
     url='http://falconn-lib.org/',
