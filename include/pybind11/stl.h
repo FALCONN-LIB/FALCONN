@@ -46,7 +46,7 @@
 #  define PYBIND11_HAS_VARIANT 1
 #endif
 
-NAMESPACE_BEGIN(pybind11)
+NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 NAMESPACE_BEGIN(detail)
 
 /// Extracts an const lvalue reference or rvalue reference for U based on the type of T (e.g. for
@@ -83,7 +83,7 @@ template <typename Type, typename Key> struct set_caster {
     template <typename T>
     static handle cast(T &&src, return_value_policy policy, handle parent) {
         pybind11::set s;
-        for (auto &value: src) {
+        for (auto &&value : src) {
             auto value_ = reinterpret_steal<object>(key_conv::cast(forward_like<T>(value), policy, parent));
             if (!value_ || !s.add(value_))
                 return handle();
@@ -117,7 +117,7 @@ template <typename Type, typename Key, typename Value> struct map_caster {
     template <typename T>
     static handle cast(T &&src, return_value_policy policy, handle parent) {
         dict d;
-        for (auto &kv: src) {
+        for (auto &&kv : src) {
             auto key = reinterpret_steal<object>(key_conv::cast(forward_like<T>(kv.first), policy, parent));
             auto value = reinterpret_steal<object>(value_conv::cast(forward_like<T>(kv.second), policy, parent));
             if (!key || !value)
@@ -159,7 +159,7 @@ public:
     static handle cast(T &&src, return_value_policy policy, handle parent) {
         list l(src.size());
         size_t index = 0;
-        for (auto &value: src) {
+        for (auto &&value : src) {
             auto value_ = reinterpret_steal<object>(value_conv::cast(forward_like<T>(value), policy, parent));
             if (!value_)
                 return handle();
@@ -213,7 +213,7 @@ public:
     static handle cast(T &&src, return_value_policy policy, handle parent) {
         list l(src.size());
         size_t index = 0;
-        for (auto &value: src) {
+        for (auto &&value : src) {
             auto value_ = reinterpret_steal<object>(value_conv::cast(forward_like<T>(value), policy, parent));
             if (!value_)
                 return handle();
@@ -292,8 +292,10 @@ struct variant_caster_visitor {
     return_value_policy policy;
     handle parent;
 
+    using result_type = handle; // required by boost::variant in C++11
+
     template <typename T>
-    handle operator()(T &&src) const {
+    result_type operator()(T &&src) const {
         return make_caster<T>::cast(std::forward<T>(src), policy, parent);
     }
 };
@@ -360,7 +362,7 @@ inline std::ostream &operator<<(std::ostream &os, const handle &obj) {
     return os;
 }
 
-NAMESPACE_END(pybind11)
+NAMESPACE_END(PYBIND11_NAMESPACE)
 
 #if defined(_MSC_VER)
 #pragma warning(pop)

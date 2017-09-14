@@ -9,6 +9,7 @@
 
 #include "pybind11_tests.h"
 #include "constructor_stats.h"
+#include "local_bindings.h"
 
 TEST_SUBMODULE(class_, m) {
     // test_instance
@@ -184,9 +185,126 @@ TEST_SUBMODULE(class_, m) {
         auto def = new PyMethodDef{"f", f, METH_VARARGS, nullptr};
         return py::reinterpret_steal<py::object>(PyCFunction_NewEx(def, nullptr, m.ptr()));
     }());
+
+    // test_operator_new_delete
+    struct HasOpNewDel {
+        std::uint64_t i;
+        static void *operator new(size_t s) { py::print("A new", s); return ::operator new(s); }
+        static void *operator new(size_t s, void *ptr) { py::print("A placement-new", s); return ptr; }
+        static void operator delete(void *p) { py::print("A delete"); return ::operator delete(p); }
+    };
+    struct HasOpNewDelSize {
+        std::uint32_t i;
+        static void *operator new(size_t s) { py::print("B new", s); return ::operator new(s); }
+        static void *operator new(size_t s, void *ptr) { py::print("B placement-new", s); return ptr; }
+        static void operator delete(void *p, size_t s) { py::print("B delete", s); return ::operator delete(p); }
+    };
+    struct AliasedHasOpNewDelSize {
+        std::uint64_t i;
+        static void *operator new(size_t s) { py::print("C new", s); return ::operator new(s); }
+        static void *operator new(size_t s, void *ptr) { py::print("C placement-new", s); return ptr; }
+        static void operator delete(void *p, size_t s) { py::print("C delete", s); return ::operator delete(p); }
+        virtual ~AliasedHasOpNewDelSize() = default;
+    };
+    struct PyAliasedHasOpNewDelSize : AliasedHasOpNewDelSize {
+        PyAliasedHasOpNewDelSize() = default;
+        PyAliasedHasOpNewDelSize(int) { }
+        std::uint64_t j;
+    };
+    struct HasOpNewDelBoth {
+        std::uint32_t i[8];
+        static void *operator new(size_t s) { py::print("D new", s); return ::operator new(s); }
+        static void *operator new(size_t s, void *ptr) { py::print("D placement-new", s); return ptr; }
+        static void operator delete(void *p) { py::print("D delete"); return ::operator delete(p); }
+        static void operator delete(void *p, size_t s) { py::print("D wrong delete", s); return ::operator delete(p); }
+    };
+    py::class_<HasOpNewDel>(m, "HasOpNewDel").def(py::init<>());
+    py::class_<HasOpNewDelSize>(m, "HasOpNewDelSize").def(py::init<>());
+    py::class_<HasOpNewDelBoth>(m, "HasOpNewDelBoth").def(py::init<>());
+    py::class_<AliasedHasOpNewDelSize, PyAliasedHasOpNewDelSize> aliased(m, "AliasedHasOpNewDelSize");
+    aliased.def(py::init<>());
+    aliased.attr("size_noalias") = py::int_(sizeof(AliasedHasOpNewDelSize));
+    aliased.attr("size_alias") = py::int_(sizeof(PyAliasedHasOpNewDelSize));
+
+    // This test is actually part of test_local_bindings (test_duplicate_local), but we need a
+    // definition in a different compilation unit within the same module:
+    bind_local<LocalExternal, 17>(m, "LocalExternal", py::module_local());
+
+    // test_bind_protected_functions
+    class ProtectedA {
+    protected:
+        int foo() const { return value; }
+
+    private:
+        int value = 42;
+    };
+
+    class PublicistA : public ProtectedA {
+    public:
+        using ProtectedA::foo;
+    };
+
+    py::class_<ProtectedA>(m, "ProtectedA")
+        .def(py::init<>())
+#if !defined(_MSC_VER) || _MSC_VER >= 1910
+        .def("foo", &PublicistA::foo);
+#else
+        .def("foo", static_cast<int (ProtectedA::*)() const>(&PublicistA::foo));
+#endif
+
+    class ProtectedB {
+    public:
+        virtual ~ProtectedB() = default;
+
+    protected:
+        virtual int foo() const { return value; }
+
+    private:
+        int value = 42;
+    };
+
+    class TrampolineB : public ProtectedB {
+    public:
+        int foo() const override { PYBIND11_OVERLOAD(int, ProtectedB, foo, ); }
+    };
+
+    class PublicistB : public ProtectedB {
+    public:
+        using ProtectedB::foo;
+    };
+
+    py::class_<ProtectedB, TrampolineB>(m, "ProtectedB")
+        .def(py::init<>())
+#if !defined(_MSC_VER) || _MSC_VER >= 1910
+        .def("foo", &PublicistB::foo);
+#else
+        .def("foo", static_cast<int (ProtectedB::*)() const>(&PublicistB::foo));
+#endif
+
+    // test_brace_initialization
+    struct BraceInitialization {
+        int field1;
+        std::string field2;
+    };
+
+    py::class_<BraceInitialization>(m, "BraceInitialization")
+        .def(py::init<int, const std::string &>())
+        .def_readwrite("field1", &BraceInitialization::field1)
+        .def_readwrite("field2", &BraceInitialization::field2);
+
+    // test_reentrant_implicit_conversion_failure
+    // #1035: issue with runaway reentrant implicit conversion
+    struct BogusImplicitConversion {
+        BogusImplicitConversion(const BogusImplicitConversion &) { }
+    };
+
+    py::class_<BogusImplicitConversion>(m, "BogusImplicitConversion")
+        .def(py::init<const BogusImplicitConversion &>());
+
+    py::implicitly_convertible<int, BogusImplicitConversion>();
 }
 
-template <int N> class BreaksBase {};
+template <int N> class BreaksBase { public: virtual ~BreaksBase() = default; };
 template <int N> class BreaksTramp : public BreaksBase<N> {};
 // These should all compile just fine:
 typedef py::class_<BreaksBase<1>, std::unique_ptr<BreaksBase<1>>, BreaksTramp<1>> DoesntBreak1;

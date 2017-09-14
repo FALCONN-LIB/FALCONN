@@ -1,5 +1,5 @@
 /*
-    pybind11/typeid.h: Convenience wrapper classes for basic Python types
+    pybind11/pytypes.h: Convenience wrapper classes for basic Python types
 
     Copyright (c) 2016 Wenzel Jakob <wenzel.jakob@epfl.ch>
 
@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include "common.h"
+#include "detail/common.h"
 #include "buffer_info.h"
 #include <utility>
 #include <type_traits>
 
-NAMESPACE_BEGIN(pybind11)
+NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 
 /* A few forward declarations */
 class handle; class object;
@@ -279,6 +279,42 @@ template <typename T> T reinterpret_borrow(handle h) { return {h, object::borrow
 \endrst */
 template <typename T> T reinterpret_steal(handle h) { return {h, object::stolen_t{}}; }
 
+NAMESPACE_BEGIN(detail)
+inline std::string error_string();
+NAMESPACE_END(detail)
+
+/// Fetch and hold an error which was already set in Python.  An instance of this is typically
+/// thrown to propagate python-side errors back through C++ which can either be caught manually or
+/// else falls back to the function dispatcher (which then raises the captured error back to
+/// python).
+class error_already_set : public std::runtime_error {
+public:
+    /// Constructs a new exception from the current Python error indicator, if any.  The current
+    /// Python error indicator will be cleared.
+    error_already_set() : std::runtime_error(detail::error_string()) {
+        PyErr_Fetch(&type.ptr(), &value.ptr(), &trace.ptr());
+    }
+
+    inline ~error_already_set();
+
+    /// Give the currently-held error back to Python, if any.  If there is currently a Python error
+    /// already set it is cleared first.  After this call, the current object no longer stores the
+    /// error variables (but the `.what()` string is still available).
+    void restore() { PyErr_Restore(type.release().ptr(), value.release().ptr(), trace.release().ptr()); }
+
+    // Does nothing; provided for backwards compatibility.
+    PYBIND11_DEPRECATED("Use of error_already_set.clear() is deprecated")
+    void clear() {}
+
+    /// Check if the currently trapped error type matches the given Python exception class (or a
+    /// subclass thereof).  May also be passed a tuple to search for any exception class matches in
+    /// the given tuple.
+    bool matches(handle ex) const { return PyErr_GivenExceptionMatches(ex.ptr(), type.ptr()); }
+
+private:
+    object type, value, trace;
+};
+
 /** \defgroup python_builtins _
     Unless stated otherwise, the following C++ functions behave the same
     as their Python counterparts.
@@ -354,6 +390,13 @@ inline void setattr(handle obj, handle name, handle value) {
 inline void setattr(handle obj, const char *name, handle value) {
     if (PyObject_SetAttrString(obj.ptr(), name, value.ptr()) != 0) { throw error_already_set(); }
 }
+
+inline ssize_t hash(handle obj) {
+    auto h = PyObject_Hash(obj.ptr());
+    if (h == -1) { throw error_already_set(); }
+    return h;
+}
+
 /// @} python_builtins
 
 NAMESPACE_BEGIN(detail)
@@ -388,8 +431,8 @@ class accessor : public object_api<accessor<Policy>> {
 
 public:
     accessor(handle obj, key_type key) : obj(obj), key(std::move(key)) { }
-    accessor(const accessor &a) = default;
-    accessor(accessor &&a) = default;
+    accessor(const accessor &) = default;
+    accessor(accessor &&) = default;
 
     // accessor overload required to override default assignment operator (templates are not allowed
     // to replace default compiler-generated assignments).
@@ -695,7 +738,14 @@ NAMESPACE_END(detail)
 #define PYBIND11_OBJECT_CVT(Name, Parent, CheckFun, ConvertFun) \
     PYBIND11_OBJECT_COMMON(Name, Parent, CheckFun) \
     /* This is deliberately not 'explicit' to allow implicit conversion from object: */ \
-    Name(const object &o) : Parent(ConvertFun(o.ptr()), stolen_t{}) { if (!m_ptr) throw error_already_set(); }
+    Name(const object &o) \
+    : Parent(check_(o) ? o.inc_ref().ptr() : ConvertFun(o.ptr()), stolen_t{}) \
+    { if (!m_ptr) throw error_already_set(); } \
+    Name(object &&o) \
+    : Parent(check_(o) ? o.release().ptr() : ConvertFun(o.ptr()), stolen_t{}) \
+    { if (!m_ptr) throw error_already_set(); } \
+    template <typename Policy_> \
+    Name(const ::pybind11::detail::accessor<Policy_> &a) : Name(object(a)) { }
 
 #define PYBIND11_OBJECT(Name, Parent, CheckFun) \
     PYBIND11_OBJECT_COMMON(Name, Parent, CheckFun) \
@@ -1279,4 +1329,4 @@ template <typename D>
 handle object_api<D>::get_type() const { return (PyObject *) Py_TYPE(derived().ptr()); }
 
 NAMESPACE_END(detail)
-NAMESPACE_END(pybind11)
+NAMESPACE_END(PYBIND11_NAMESPACE)
