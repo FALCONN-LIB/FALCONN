@@ -1,5 +1,5 @@
 /*
-    pybind11/class_support.h: Python C API implementation details for py::class_
+    pybind11/detail/class.h: Python C API implementation details for py::class_
 
     Copyright (c) 2017 Wenzel Jakob <wenzel.jakob@epfl.ch>
 
@@ -9,10 +9,15 @@
 
 #pragma once
 
-#include "attr.h"
+#include "../attr.h"
 
-NAMESPACE_BEGIN(pybind11)
+NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 NAMESPACE_BEGIN(detail)
+
+inline PyTypeObject *type_incref(PyTypeObject *type) {
+    Py_INCREF(type);
+    return type;
+}
 
 #if !defined(PYPY_VERSION)
 
@@ -49,7 +54,7 @@ inline PyTypeObject *make_static_property_type() {
 
     auto type = &heap_type->ht_type;
     type->tp_name = name;
-    type->tp_base = &PyProperty_Type;
+    type->tp_base = type_incref(&PyProperty_Type);
     type->tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HEAPTYPE;
     type->tp_descr_get = pybind11_static_get;
     type->tp_descr_set = pybind11_static_set;
@@ -162,7 +167,7 @@ inline PyTypeObject* make_default_metaclass() {
 
     auto type = &heap_type->ht_type;
     type->tp_name = name;
-    type->tp_base = &PyType_Type;
+    type->tp_base = type_incref(&PyType_Type);
     type->tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HEAPTYPE;
 
     type->tp_setattro = pybind11_meta_setattro;
@@ -227,12 +232,10 @@ inline bool deregister_instance(instance *self, void *valptr, const type_info *t
     return ret;
 }
 
-/// Instance creation function for all pybind11 types. It only allocates space for the C++ object
-/// (or multiple objects, for Python-side inheritance from multiple pybind11 types), but doesn't
-/// call the constructor -- an `__init__` function must do that.  If allocating value, the instance
-/// is registered; otherwise register_instance will need to be called once the value has been
-/// assigned.
-inline PyObject *make_new_instance(PyTypeObject *type, bool allocate_value /*= true (in cast.h)*/) {
+/// Instance creation function for all pybind11 types. It allocates the internal instance layout for
+/// holding C++ objects and holders.  Allocation is done lazily (the first time the instance is cast
+/// to a reference or pointer), and initialization is done by an `__init__` function.
+inline PyObject *make_new_instance(PyTypeObject *type) {
 #if defined(PYPY_VERSION)
     // PyPy gets tp_basicsize wrong (issue 2482) under multiple inheritance when the first inherited
     // object is a a plain Python type (i.e. not derived from an extension type).  Fix it.
@@ -247,14 +250,6 @@ inline PyObject *make_new_instance(PyTypeObject *type, bool allocate_value /*= t
     inst->allocate_layout();
 
     inst->owned = true;
-    // Allocate (if requested) the value pointers; otherwise leave them as nullptr
-    if (allocate_value) {
-        for (auto &v_h : values_and_holders(inst)) {
-            void *&vptr = v_h.value_ptr();
-            vptr = v_h.type->operator_new(v_h.type->type_size);
-            register_instance(inst, vptr, v_h.type);
-        }
-    }
 
     return self;
 }
@@ -311,11 +306,14 @@ inline void clear_instance(PyObject *self) {
     // Deallocate any values/holders, if present:
     for (auto &v_h : values_and_holders(instance)) {
         if (v_h) {
+
+            // We have to deregister before we call dealloc because, for virtual MI types, we still
+            // need to be able to get the parent pointers.
+            if (v_h.instance_registered() && !deregister_instance(instance, v_h.value_ptr(), v_h.type))
+                pybind11_fail("pybind11_object_dealloc(): Tried to deallocate unregistered instance!");
+
             if (instance->owned || v_h.holder_constructed())
                 v_h.type->dealloc(v_h);
-
-            if (!deregister_instance(instance, v_h.value_ptr(), v_h.type))
-                pybind11_fail("pybind11_object_dealloc(): Tried to deallocate unregistered instance!");
         }
     }
     // Deallocate the value/holder layout internals:
@@ -336,7 +334,17 @@ inline void clear_instance(PyObject *self) {
 /// to destroy the C++ object itself, while the rest is Python bookkeeping.
 extern "C" inline void pybind11_object_dealloc(PyObject *self) {
     clear_instance(self);
-    Py_TYPE(self)->tp_free(self);
+
+    auto type = Py_TYPE(self);
+    type->tp_free(self);
+
+    // `type->tp_dealloc != pybind11_object_dealloc` means that we're being called
+    // as part of a derived type's dealloc, in which case we're not allowed to decref
+    // the type here. For cross-module compatibility, we shouldn't compare directly
+    // with `pybind11_object_dealloc`, but with the common one stashed in internals.
+    auto pybind11_object_type = (PyTypeObject *) get_internals().instance_base;
+    if (type->tp_dealloc == pybind11_object_type->tp_dealloc)
+        Py_DECREF(type);
 }
 
 /** Create the type which can be used as a common base for all classes.  This is
@@ -361,7 +369,7 @@ inline PyObject *make_object_base_type(PyTypeObject *metaclass) {
 
     auto type = &heap_type->ht_type;
     type->tp_name = name;
-    type->tp_base = &PyBaseObject_Type;
+    type->tp_base = type_incref(&PyBaseObject_Type);
     type->tp_basicsize = static_cast<ssize_t>(sizeof(instance));
     type->tp_flags = Py_TPFLAGS_DEFAULT | Py_TPFLAGS_BASETYPE | Py_TPFLAGS_HEAPTYPE;
 
@@ -512,12 +520,11 @@ inline PyObject* make_new_python_type(const type_record &rec) {
             module = rec.scope.attr("__name__");
     }
 
+    auto full_name = c_str(
 #if !defined(PYPY_VERSION)
-    const auto full_name = module ? str(module).cast<std::string>() + "." + rec.name
-                                  : std::string(rec.name);
-#else
-    const auto full_name = std::string(rec.name);
+        module ? str(module).cast<std::string>() + "." + rec.name :
 #endif
+        rec.name);
 
     char *tp_doc = nullptr;
     if (rec.doc && options::show_user_defined_docstrings()) {
@@ -550,9 +557,9 @@ inline PyObject* make_new_python_type(const type_record &rec) {
 #endif
 
     auto type = &heap_type->ht_type;
-    type->tp_name = strdup(full_name.c_str());
+    type->tp_name = full_name;
     type->tp_doc = tp_doc;
-    type->tp_base = (PyTypeObject *) handle(base).inc_ref().ptr();
+    type->tp_base = type_incref((PyTypeObject *)base);
     type->tp_basicsize = static_cast<ssize_t>(sizeof(instance));
     if (bases.size() > 0)
         type->tp_bases = bases.release().ptr();
@@ -586,6 +593,8 @@ inline PyObject* make_new_python_type(const type_record &rec) {
     /* Register type with the parent scope */
     if (rec.scope)
         setattr(rec.scope, rec.name, (PyObject *) type);
+    else
+        Py_INCREF(type); // Keep it alive forever (reference leak)
 
     if (module) // Needed by pydoc
         setattr((PyObject *) type, "__module__", module);
@@ -594,4 +603,4 @@ inline PyObject* make_new_python_type(const type_record &rec) {
 }
 
 NAMESPACE_END(detail)
-NAMESPACE_END(pybind11)
+NAMESPACE_END(PYBIND11_NAMESPACE)

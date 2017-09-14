@@ -35,7 +35,7 @@ def test_docstrings(doc):
 
         Get value using a method
     """
-    assert doc(UserType.value) == "Get value using a property"
+    assert doc(UserType.value) == "Get/set value using a property"
 
     assert doc(m.NoConstructor.new_instance) == """
         new_instance() -> m.class_.NoConstructor
@@ -127,3 +127,109 @@ def test_implicit_conversion_life_support():
     assert m.implicitly_convert_variable(UserType(5)) == 5
 
     assert "outside a bound function" in m.implicitly_convert_variable_fail(UserType(5))
+
+
+def test_operator_new_delete(capture):
+    """Tests that class-specific operator new/delete functions are invoked"""
+
+    class SubAliased(m.AliasedHasOpNewDelSize):
+        pass
+
+    with capture:
+        a = m.HasOpNewDel()
+        b = m.HasOpNewDelSize()
+        d = m.HasOpNewDelBoth()
+    assert capture == """
+        A new 8
+        B new 4
+        D new 32
+    """
+    sz_alias = str(m.AliasedHasOpNewDelSize.size_alias)
+    sz_noalias = str(m.AliasedHasOpNewDelSize.size_noalias)
+    with capture:
+        c = m.AliasedHasOpNewDelSize()
+        c2 = SubAliased()
+    assert capture == (
+        "C new " + sz_noalias + "\n" +
+        "C new " + sz_alias + "\n"
+    )
+
+    with capture:
+        del a
+        pytest.gc_collect()
+        del b
+        pytest.gc_collect()
+        del d
+        pytest.gc_collect()
+    assert capture == """
+        A delete
+        B delete 4
+        D delete
+    """
+
+    with capture:
+        del c
+        pytest.gc_collect()
+        del c2
+        pytest.gc_collect()
+    assert capture == (
+        "C delete " + sz_noalias + "\n" +
+        "C delete " + sz_alias + "\n"
+    )
+
+
+def test_bind_protected_functions():
+    """Expose protected member functions to Python using a helper class"""
+    a = m.ProtectedA()
+    assert a.foo() == 42
+
+    b = m.ProtectedB()
+    assert b.foo() == 42
+
+    class C(m.ProtectedB):
+        def __init__(self):
+            m.ProtectedB.__init__(self)
+
+        def foo(self):
+            return 0
+
+    c = C()
+    assert c.foo() == 0
+
+
+def test_brace_initialization():
+    """ Tests that simple POD classes can be constructed using C++11 brace initialization """
+    a = m.BraceInitialization(123, "test")
+    assert a.field1 == 123
+    assert a.field2 == "test"
+
+
+@pytest.unsupported_on_pypy
+def test_class_refcount():
+    """Instances must correctly increase/decrease the reference count of their types (#1029)"""
+    from sys import getrefcount
+
+    class PyDog(m.Dog):
+        pass
+
+    for cls in m.Dog, PyDog:
+        refcount_1 = getrefcount(cls)
+        molly = [cls("Molly") for _ in range(10)]
+        refcount_2 = getrefcount(cls)
+
+        del molly
+        pytest.gc_collect()
+        refcount_3 = getrefcount(cls)
+
+        assert refcount_1 == refcount_3
+        assert refcount_2 > refcount_1
+
+
+def test_reentrant_implicit_conversion_failure(msg):
+    # ensure that there is no runaway reentrant implicit conversion (#1035)
+    with pytest.raises(TypeError) as excinfo:
+        m.BogusImplicitConversion(0)
+    assert msg(excinfo.value) == '''__init__(): incompatible constructor arguments. The following argument types are supported:
+    1. m.class_.BogusImplicitConversion(arg0: m.class_.BogusImplicitConversion)
+
+Invoked with: 0'''

@@ -12,7 +12,7 @@
 
 #include "cast.h"
 
-NAMESPACE_BEGIN(pybind11)
+NAMESPACE_BEGIN(PYBIND11_NAMESPACE)
 
 /// \addtogroup annotations
 /// @{
@@ -64,6 +64,9 @@ struct metaclass {
     explicit metaclass(handle value) : value(value) { }
 };
 
+/// Annotation that marks a class as local to the module:
+struct module_local { const bool value; constexpr module_local(bool v = true) : value(v) { } };
+
 /// Annotation to mark enums as an arithmetic type
 struct arithmetic { };
 
@@ -113,8 +116,6 @@ enum op_id : int;
 enum op_type : int;
 struct undefined_t;
 template <op_id id, op_type ot, typename L = undefined_t, typename R = undefined_t> struct op_;
-template <typename... Args> struct init;
-template <typename... Args> struct init_alias;
 inline void keep_alive_impl(size_t Nurse, size_t Patient, function_call &call, handle ret);
 
 /// Internal data structure which holds metadata about a keyword argument
@@ -132,8 +133,8 @@ struct argument_record {
 /// Internal data structure which holds metadata about a bound function (signature, overloads, etc.)
 struct function_record {
     function_record()
-        : is_constructor(false), is_stateless(false), is_operator(false),
-          has_args(false), has_kwargs(false), is_method(false) { }
+        : is_constructor(false), is_new_style_constructor(false), is_stateless(false),
+          is_operator(false), has_args(false), has_kwargs(false), is_method(false) { }
 
     /// Function name
     char *name = nullptr; /* why no C++ strings? They generate heavier code.. */
@@ -161,6 +162,9 @@ struct function_record {
 
     /// True if name == '__init__'
     bool is_constructor : 1;
+
+    /// True if this is a new-style `__init__` defined in `detail/init.h`
+    bool is_new_style_constructor : 1;
 
     /// True if this is a stateless function pointer
     bool is_stateless : 1;
@@ -196,7 +200,7 @@ struct function_record {
 /// Special data structure which (temporarily) holds metadata about a bound class
 struct type_record {
     PYBIND11_NOINLINE type_record()
-        : multiple_inheritance(false), dynamic_attr(false), buffer_protocol(false) { }
+        : multiple_inheritance(false), dynamic_attr(false), buffer_protocol(false), module_local(false) { }
 
     /// Handle to the parent scope
     handle scope;
@@ -216,11 +220,11 @@ struct type_record {
     /// The global operator new can be overridden with a class-specific variant
     void *(*operator_new)(size_t) = ::operator new;
 
-    /// Function pointer to class_<..>::init_holder
-    void (*init_holder)(instance *, const void *) = nullptr;
+    /// Function pointer to class_<..>::init_instance
+    void (*init_instance)(instance *, const void *) = nullptr;
 
     /// Function pointer to class_<..>::dealloc
-    void (*dealloc)(const detail::value_and_holder &) = nullptr;
+    void (*dealloc)(detail::value_and_holder &) = nullptr;
 
     /// List of base classes of the newly created type
     list bases;
@@ -242,6 +246,9 @@ struct type_record {
 
     /// Is the default (unique_ptr) holder type used?
     bool default_holder : 1;
+
+    /// Is the class definition local to the module shared object?
+    bool module_local : 1;
 
     PYBIND11_NOINLINE void add_base(const std::type_info &base, void *(*caster)(void *)) {
         auto base_info = detail::get_type_info(base, false);
@@ -276,6 +283,9 @@ inline function_call::function_call(function_record &f, handle p) :
     args.reserve(f.nargs);
     args_convert.reserve(f.nargs);
 }
+
+/// Tag for a new-style `__init__` defined in `detail/init.h`
+struct is_new_style_constructor { };
 
 /**
  * Partial template specializations to process custom attributes provided to
@@ -333,6 +343,10 @@ template <> struct process_attribute<scope> : process_attribute_default<scope> {
 /// Process an attribute which indicates that this function is an operator
 template <> struct process_attribute<is_operator> : process_attribute_default<is_operator> {
     static void init(const is_operator &, function_record *r) { r->is_operator = true; }
+};
+
+template <> struct process_attribute<is_new_style_constructor> : process_attribute_default<is_new_style_constructor> {
+    static void init(const is_new_style_constructor &, function_record *r) { r->is_new_style_constructor = true; }
 };
 
 /// Process a keyword argument attribute (*without* a default value)
@@ -408,6 +422,10 @@ struct process_attribute<metaclass> : process_attribute_default<metaclass> {
     static void init(const metaclass &m, type_record *r) { r->metaclass = m.value; }
 };
 
+template <>
+struct process_attribute<module_local> : process_attribute_default<module_local> {
+    static void init(const module_local &l, type_record *r) { r->module_local = l.value; }
+};
 
 /// Process an 'arithmetic' attribute for enums (does nothing here)
 template <>
@@ -468,4 +486,4 @@ constexpr bool expected_num_args(size_t nargs, bool has_args, bool has_kwargs) {
 }
 
 NAMESPACE_END(detail)
-NAMESPACE_END(pybind11)
+NAMESPACE_END(PYBIND11_NAMESPACE)
