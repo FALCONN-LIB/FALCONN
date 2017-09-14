@@ -72,6 +72,7 @@ import numpy as _numpy
 import _falconn as _internal
 from _falconn import LSHConstructionParameters, QueryStatistics, DistanceFunction, LSHFamily, StorageHashTable, get_default_parameters, compute_number_of_hash_functions
 
+
 class Queryable:
     def __init__(self, inner_entity, parent):
         self._inner_entity = inner_entity
@@ -125,7 +126,8 @@ class Queryable:
         """
         self._check_query(query)
         if threshold < 0:
-            raise ValueError('threshold must be non-negative rather than {}'.format(threshold))
+            raise ValueError('threshold must be non-negative rather than {}'.
+                             format(threshold))
         return self._inner_entity.find_near_neighbors(query, threshold)
 
     def find_nearest_neighbor(self, query):
@@ -236,6 +238,7 @@ class Queryable:
                 format(self._parent._params.l))
         self._inner_entity.set_num_probes(num_probes)
 
+
 class LSHIndex:
     """The main class that represents the LSH data structure.
 
@@ -300,6 +303,7 @@ class LSHIndex:
     in parallel. The vanilla query object is not thread-safe, so each
     thread must have its own query object.
     """
+
     def __init__(self, params):
         """Initialize with an instance of `LSHConstructionParameters`.
 
@@ -378,9 +382,14 @@ class LSHIndex:
         we retrieve. The value `-1` means that the said number is unbounded.
         """
         self._check_built()
-        return Queryable(self._table.construct_query_object(num_probes, max_num_candidates), self)
+        return Queryable(
+            self._table.construct_query_object(num_probes, max_num_candidates),
+            self)
 
-    def construct_query_pool(self, num_probes=-1, max_num_candidates=-1, num_query_objects=0):
+    def construct_query_pool(self,
+                             num_probes=-1,
+                             max_num_candidates=-1,
+                             num_query_objects=0):
         """Construct a pool of query objects.
 
         This method constructs and returns a pool of query objects, which
@@ -399,4 +408,6 @@ class LSHIndex:
         threads on the machine.
         """
         self._check_built()
-        return Queryable(self._table.construct_query_pool(num_probes, max_num_candidates, num_query_objects), self)
+        return Queryable(
+            self._table.construct_query_pool(num_probes, max_num_candidates,
+                                             num_query_objects), self)

@@ -4,11 +4,13 @@ import numpy as np
 n = 1000
 d = 128
 
+
 def test_lsh_index_positive():
     p = falconn.get_default_parameters(n, d)
     t = falconn.LSHIndex(p)
     dataset = np.random.randn(n, d).astype(np.float32)
     t.setup(dataset)
+
     def is_int(x):
         try:
             res = isinstance(x, (int, long))
@@ -30,10 +32,12 @@ def test_lsh_index_positive():
         assert q.reset_query_statistics() is None
         assert q.set_max_num_candidates(100) is None
         assert q.set_num_probes(10) is None
+
     q = t.construct_query_object()
     test_positive(q)
     q = t.construct_query_pool()
     test_positive(q)
+
 
 def test_lsh_index_negative():
     p = falconn.get_default_parameters(n, d)
@@ -69,7 +73,10 @@ def test_lsh_index_negative():
     except RuntimeError:
         pass
     for (t1, t2) in [(np.float32, np.float64), (np.float64, np.float32)]:
-        for g in [lambda t: t.construct_query_object(), lambda t: t.construct_query_pool()]:
+        for g in [
+                lambda t: t.construct_query_object(),
+                lambda t: t.construct_query_pool()
+        ]:
             t = falconn.LSHIndex(p)
             t.setup(np.random.randn(n, d).astype(t1))
             q = g(t)

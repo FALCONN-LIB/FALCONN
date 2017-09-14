@@ -87,7 +87,8 @@ if __name__ == '__main__':
         query_object.set_num_probes(number_of_probes)
         score = 0
         for (i, query) in enumerate(queries):
-            if answers[i] in query_object.get_candidates_with_duplicates(query):
+            if answers[i] in query_object.get_candidates_with_duplicates(
+                    query):
                 score += 1
         return float(score) / len(queries)
 

@@ -22,9 +22,7 @@ module = Extension(
     '_falconn',
     sources=['internal/python_wrapper.cc'],
     extra_compile_args=extra_args,
-    include_dirs=[
-        'include', 'external/eigen', 'external/pybind11/include'
-    ])
+    include_dirs=['include', 'external/eigen', 'external/pybind11/include'])
 
 setup(
     name='FALCONN',
