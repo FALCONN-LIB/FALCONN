@@ -74,6 +74,13 @@ from _falconn import LSHConstructionParameters, QueryStatistics, DistanceFunctio
 
 
 class Queryable:
+    """A simple wrapper for query objects and query pools.
+    
+    Instances of `Queryable` are returned by the methods
+    `construct_query_object` and `construct_query_pool` of `LSHIndex`.
+    You are not expected to construct instances of `Queryable` directly.
+    """
+
     def __init__(self, inner_entity, parent):
         self._inner_entity = inner_entity
         self._parent = parent
@@ -373,6 +380,7 @@ class LSHIndex:
         you can construct a separate query object per thread.
 
         Arguments:
+
         * `num_probes` (default `-1`): the number of buckets the query algorithm
         probes. This number can later be modified using the `set_num_probes` method of
         the query object. The higher number of probes is, the better accuracy one gets,
@@ -396,6 +404,7 @@ class LSHIndex:
         can be used to query the LSH data structure from several threads.
 
         Arguments:
+
         * `num_probes` (default `-1`): the number of buckets the query algorithm
         probes. This number can later be modified using the `set_num_probes` method of
         the query object. The higher number of probes is, the better accuracy one gets,
