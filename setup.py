@@ -27,7 +27,7 @@ module = Extension('_ffht',
                    include_dirs=[np.get_include()])
 
 setup(name='FFHT',
-      version='1.0',
+      version='1.1',
       author='Ilya Razenshteyn, Ludwig Schmidt',
       author_email='falconn.lib@gmail.com',
       url='https://github.com/FALCONN-LIB/FFHT',

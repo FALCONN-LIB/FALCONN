@@ -1,8 +1,8 @@
 #ifndef _FHT_H_
 #define _FHT_H_
 
-int FHTFloat(float *buffer, int len, int chunk);
-int FHTDouble(double *buffer, int len, int chunk);
+int fht_float(float *buf, int log_n);
+int fht_double(float *buf, int log_n);
 
 #include "fht_impl.h"
 

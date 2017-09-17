@@ -59,14 +59,8 @@ static PyObject *ffht_fht(PyObject *self, PyObject *args) {
   UNUSED(self);
 
   PyObject *buffer_obj;
-  int chunk_size;
 
-  if (!PyArg_ParseTuple(args, "Oi", &buffer_obj, &chunk_size)) {
-    return NULL;
-  }
-
-  if (chunk_size < 8) {
-    PyErr_SetString(PyExc_ValueError, "chunk_size must be at least 8");
+  if (!PyArg_ParseTuple(args, "O", &buffer_obj)) {
     return NULL;
   }
 
@@ -107,21 +101,19 @@ static PyObject *ffht_fht(PyObject *self, PyObject *args) {
     return NULL;
   }
 
-  void *raw_buffer = PyArray_DATA(arr);
-#ifdef __AVX__
-  if ((size_t)raw_buffer % 32) {
-    PyErr_SetString(PyExc_ValueError, "array is not aligned");
-    Py_DECREF(arr);
-    return NULL;
+  int log_n = 0;
+  while ((1 << log_n) < n) {
+    ++log_n;
   }
-#endif
+
+  void *raw_buffer = PyArray_DATA(arr);
   int res;
   if (dtype->type_num == NPY_FLOAT) {
     float *buffer = (float *)raw_buffer;
-    res = FHTFloat(buffer, n, chunk_size);
+    res = fht_float(buffer, log_n);
   } else {
     double *buffer = (double *)raw_buffer;
-    res = FHTDouble(buffer, n, chunk_size);
+    res = fht_double(buffer, log_n);
   }
 
   if (res) {
