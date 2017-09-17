@@ -58,8 +58,12 @@ struct FHTFunction {
 template <>
 struct FHTFunction<float> {
   static void apply(float* data, int_fast32_t dim) {
-    if (FHTFloat(data, dim, std::max(dim, static_cast<int_fast32_t>(8))) != 0) {
-      throw LSHFunctionError("FHTFloat returned nonzero value.");
+    int_fast32_t log_dim = 0;
+    while (((int_fast32_t)1 << log_dim) < dim) {
+      ++log_dim;
+    }
+    if (fht_float(data, log_dim) != 0) {
+      throw LSHFunctionError("fht_float returned nonzero value.");
     }
   }
 };
@@ -67,8 +71,11 @@ struct FHTFunction<float> {
 template <>
 struct FHTFunction<double> {
   static void apply(double* data, int_fast32_t dim) {
-    if (FHTDouble(data, dim, std::max(dim, static_cast<int_fast32_t>(8))) !=
-        0) {
+    int_fast32_t log_dim = 0;
+    while (((int_fast32_t)1 << log_dim) < dim) {
+      ++log_dim;
+    }
+    if (fht_double(data, log_dim) != 0) {
       throw LSHFunctionError("FHTDouble returned nonzero value.");
     }
   }
@@ -81,41 +88,10 @@ class FHTHelper {
 
   int_fast32_t get_dim() { return dim_; }
 
-  void apply(ScalarType* data) {
-#ifdef __AVX__
-    if (reinterpret_cast<int_fast64_t>(data) % 32 == 0) {
-      FHTFunction<ScalarType>::apply(data, dim_);
-    } else {
-      if (aligned_data_ == nullptr) {
-        if (posix_memalign(
-                (reinterpret_cast<void**>(&aligned_data_)), 32,
-                std::max(static_cast<int_fast32_t>(dim_ * sizeof(ScalarType)),
-                         static_cast<int_fast32_t>(32))) != 0) {
-          throw LSHFunctionError("Error when allocating temporary FHT array.");
-        }
-      }
-      std::memcpy(aligned_data_, data, dim_ * sizeof(ScalarType));
-      FHTFunction<ScalarType>::apply(aligned_data_, dim_);
-      std::memcpy(data, aligned_data_, dim_ * sizeof(ScalarType));
-    }
-#else
-    FHTFunction<ScalarType>::apply(data, dim_);
-#endif
-  }
-
-#ifdef __AVX__
-  ~FHTHelper() {
-    if (aligned_data_ != nullptr) {
-      free(aligned_data_);
-    }
-  }
-#endif
+  void apply(ScalarType* data) { FHTFunction<ScalarType>::apply(data, dim_); }
 
  private:
   int_fast64_t dim_;
-#ifdef __AVX__
-  ScalarType* aligned_data_ = nullptr;
-#endif
 };
 
 }  // namespace cp_hash_helpers

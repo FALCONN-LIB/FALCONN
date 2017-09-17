@@ -14,11 +14,11 @@ namespace fc = falconn::core;
 namespace ft = falconn::test;
 
 using fc::ArrayDataStorage;
-using fc::cp_hash_helpers::compute_k_parameters_for_bits;
-using fc::cp_hash_helpers::FHTHelper;
-using fc::log2ceil;
 using fc::CrossPolytopeHashDense;
 using fc::CrossPolytopeHashSparse;
+using fc::cp_hash_helpers::FHTHelper;
+using fc::cp_hash_helpers::compute_k_parameters_for_bits;
+using fc::log2ceil;
 using ft::count_bits;
 using std::make_pair;
 using std::pair;
@@ -63,7 +63,7 @@ TEST(PolytopeHashTest, FHTHelperTest1) {
     v[0] = 1.0;
     fht.apply(v.data());
 
-    float expected_coordinate = std::sqrt(1.0 / dim);
+    float expected_coordinate = 1.0;
     for (int ii = 0; ii < dim; ++ii) {
       EXPECT_NEAR(expected_coordinate, v[ii], 0.00001);
     }
@@ -81,7 +81,7 @@ TEST(PolytopeHashTest, FHTHelperTest2) {
     v[0] = 1.0;
     fht.apply(v.data());
 
-    float expected_coordinate = std::sqrt(1.0 / dim);
+    float expected_coordinate = 1.0;
     for (int ii = 0; ii < dim; ++ii) {
       EXPECT_NEAR(expected_coordinate, v[ii], 0.00001);
     }
@@ -99,7 +99,7 @@ TEST(PolytopeHashTest, FHTHelperTest3) {
     v[0] = 1.0;
     fht.apply(v.data());
 
-    double expected_coordinate = std::sqrt(1.0 / dim);
+    double expected_coordinate = 1.0;
     for (int ii = 0; ii < dim; ++ii) {
       EXPECT_NEAR(expected_coordinate, v[ii], 0.00001);
     }
