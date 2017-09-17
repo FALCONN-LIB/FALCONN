@@ -92,7 +92,7 @@ protected:
     /// Special internal constructor for functors, lambda functions, etc.
     template <typename Func, typename Return, typename... Args, typename... Extra>
     void initialize(Func &&f, Return (*)(Args...), const Extra&... extra) {
-
+        using namespace detail;
         struct capture { detail::remove_reference_t<Func> f; };
 
         /* Store the function including any extra state it might have (e.g. a lambda capture object) */
@@ -163,11 +163,11 @@ protected:
         detail::process_attributes<Extra...>::init(extra..., rec);
 
         /* Generate a readable signature describing the function's arguments and return value types */
-        using detail::descr; using detail::_;
-        PYBIND11_DESCR signature = _("(") + cast_in::arg_names() + _(") -> ") + cast_out::name();
+        static constexpr auto signature = _("(") + cast_in::arg_names + _(") -> ") + cast_out::name;
+        PYBIND11_DESCR_CONSTEXPR auto types = decltype(signature)::types();
 
         /* Register the function with Python from generic (non-templated) code */
-        initialize_generic(rec, signature.text(), signature.types(), sizeof...(Args));
+        initialize_generic(rec, signature.text, types.data(), sizeof...(Args));
 
         if (cast_in::has_args) rec->has_args = true;
         if (cast_in::has_kwargs) rec->has_kwargs = true;
@@ -217,34 +217,30 @@ protected:
 
         /* Generate a proper function signature */
         std::string signature;
-        size_t type_depth = 0, char_index = 0, type_index = 0, arg_index = 0;
-        while (true) {
-            char c = text[char_index++];
-            if (c == '\0')
-                break;
+        size_t type_index = 0, arg_index = 0;
+        for (auto *pc = text; *pc != '\0'; ++pc) {
+            const auto c = *pc;
 
             if (c == '{') {
-                // Write arg name for everything except *args, **kwargs and return type.
-                if (type_depth == 0 && text[char_index] != '*' && arg_index < args) {
-                    if (!rec->args.empty() && rec->args[arg_index].name) {
-                        signature += rec->args[arg_index].name;
-                    } else if (arg_index == 0 && rec->is_method) {
-                        signature += "self";
-                    } else {
-                        signature += "arg" + std::to_string(arg_index - (rec->is_method ? 1 : 0));
-                    }
-                    signature += ": ";
+                // Write arg name for everything except *args and **kwargs.
+                if (*(pc + 1) == '*')
+                    continue;
+
+                if (arg_index < rec->args.size() && rec->args[arg_index].name) {
+                    signature += rec->args[arg_index].name;
+                } else if (arg_index == 0 && rec->is_method) {
+                    signature += "self";
+                } else {
+                    signature += "arg" + std::to_string(arg_index - (rec->is_method ? 1 : 0));
                 }
-                ++type_depth;
+                signature += ": ";
             } else if (c == '}') {
-                --type_depth;
-                if (type_depth == 0) {
-                    if (arg_index < rec->args.size() && rec->args[arg_index].descr) {
-                        signature += "=";
-                        signature += rec->args[arg_index].descr;
-                    }
-                    arg_index++;
+                // Write default value if available.
+                if (arg_index < rec->args.size() && rec->args[arg_index].descr) {
+                    signature += "=";
+                    signature += rec->args[arg_index].descr;
                 }
+                arg_index++;
             } else if (c == '%') {
                 const std::type_info *t = types[type_index++];
                 if (!t)
@@ -272,13 +268,8 @@ protected:
                 signature += c;
             }
         }
-        if (type_depth != 0 || types[type_index] != nullptr)
+        if (arg_index != args || types[type_index] != nullptr)
             pybind11_fail("Internal error while parsing type signature (2)");
-
-        #if !defined(PYBIND11_CONSTEXPR_DESCR)
-            delete[] types;
-            delete[] text;
-        #endif
 
 #if PY_MAJOR_VERSION < 3
         if (strcmp(rec->name, "__next__") == 0) {
