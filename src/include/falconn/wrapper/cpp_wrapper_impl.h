@@ -923,15 +923,12 @@ std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> construct_table(
 namespace wrapper {
 template <typename PointType, typename KeyType, typename DataStorageType>
 class RandomProjectionSketchesQueryWrapper
-    : public SketchesQueryable<PointType, int32_t, KeyType> {
+    : public SketchesQueryObject<PointType, KeyType> {
  public:
   RandomProjectionSketchesQueryWrapper(
       const core::RandomProjectionSketches<PointType, DataStorageType>& rps,
       int32_t distance_threshold)
       : rpsq_(rps, distance_threshold) {}
-  void set_distance_threshold(int32_t threshold) {
-    rpsq_.set_distance_threshold(threshold);
-  }
   void filter_close(const PointType& query,
                     const std::vector<KeyType>& candidates,
                     std::vector<KeyType>* filtered_candidates) {
@@ -953,9 +950,9 @@ class RandomProjectionSketchesWrapper
                                   int32_t num_chunks, RNGType& rng)
       : rps_(points, num_chunks, rng) {}
 
-  std::unique_ptr<SketchesQueryable<PointType, int32_t, KeyType>>
+  std::unique_ptr<SketchesQueryObject<PointType, KeyType>>
   construct_query_object(int32_t distance_threshold) {
-    return std::unique_ptr<SketchesQueryable<PointType, int32_t, KeyType>>(
+    return std::unique_ptr<SketchesQueryObject<PointType, KeyType>>(
         new RandomProjectionSketchesQueryWrapper<PointType, KeyType,
                                                  DataStorageType>(
             rps_, distance_threshold));
@@ -966,25 +963,16 @@ class RandomProjectionSketchesWrapper
 };
 
 template <typename PointType, typename DistanceType, typename KeyType>
-class SketchesQueryPool
-    : public SketchesQueryable<PointType, DistanceType, KeyType> {
+class SketchesQueryPoolGeneric : public SketchesQueryPool<PointType, KeyType> {
  public:
-  SketchesQueryPool(Sketches<PointType, DistanceType, KeyType>& parent,
-                    DistanceType threshold, int_fast32_t num_query_objects)
+  SketchesQueryPoolGeneric(Sketches<PointType, DistanceType, KeyType>& parent,
+                           DistanceType threshold,
+                           int_fast32_t num_query_objects)
       : num_query_objects_(num_query_objects),
         internal_locks_(num_query_objects) {
     for (int_fast32_t i = 0; i < num_query_objects; ++i) {
       internal_query_objects_.push_back(
           parent.construct_query_object(threshold));
-      internal_locks_[i].clear(std::memory_order_release);
-    }
-  }
-
-  void set_distance_threshold(DistanceType threshold) {
-    for (int_fast32_t i = 0; i < num_query_objects_; ++i) {
-      while (internal_locks_[i].test_and_set(std::memory_order_acquire))
-        ;
-      internal_query_objects_[i]->set_distance_threshold(threshold);
       internal_locks_[i].clear(std::memory_order_release);
     }
   }
@@ -1000,8 +988,7 @@ class SketchesQueryPool
 
  private:
   int_fast32_t num_query_objects_;
-  std::vector<
-      std::unique_ptr<SketchesQueryable<PointType, DistanceType, KeyType>>>
+  std::vector<std::unique_ptr<SketchesQueryObject<PointType, KeyType>>>
       internal_query_objects_;
   std::vector<std::atomic_flag> internal_locks_;
 
@@ -1026,14 +1013,14 @@ class SketchesQueryPool
 }  // namespace wrapper
 
 template <typename PointType, typename DistanceType, typename KeyType>
-std::unique_ptr<SketchesQueryable<PointType, DistanceType, KeyType>>
+std::unique_ptr<SketchesQueryPool<PointType, KeyType>>
 Sketches<PointType, DistanceType, KeyType>::construct_query_pool(
     DistanceType distance_threshold, int_fast32_t num_query_objects) {
   if (num_query_objects <= 0) {
     num_query_objects = std::max(1u, 2 * std::thread::hardware_concurrency());
   }
-  return std::unique_ptr<SketchesQueryable<PointType, DistanceType, KeyType>>(
-      new wrapper::SketchesQueryPool<PointType, DistanceType, KeyType>(
+  return std::unique_ptr<SketchesQueryPool<PointType, KeyType>>(
+      new wrapper::SketchesQueryPoolGeneric<PointType, DistanceType, KeyType>(
           *this, distance_threshold, num_query_objects));
 }
 
