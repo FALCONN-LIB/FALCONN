@@ -5,7 +5,6 @@
 #include "data_storage.h"
 #include "polytope_hash.h"
 
-#include <iostream>
 #include <memory>
 #include <random>
 #include <vector>
