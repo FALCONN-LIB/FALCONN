@@ -119,6 +119,21 @@ TEST(SketchesTest, EmptyDataset) {
   }
 }
 
+TEST(SketchesTest, DimensionMismatchTest) {
+  mt19937_64 gen(4057218);
+  vector<DenseVector<float>> dataset(1, DenseVector<float>(128));
+  ArrayDataStorage<DenseVector<float>> ads(dataset);
+  RandomProjectionSketches<DenseVector<float>> rps(ads, 2, gen);
+  RandomProjectionSketchesQuery<DenseVector<float>> rpsq(rps, 0);
+  try {
+    rpsq.load_query(DenseVector<float>(129));
+    FAIL();
+  } catch (SketchesError &e) {
+  } catch (...) {
+    FAIL();
+  }
+}
+
 TEST(SketchesTest, StatisticalTest) {
   const int n = 1000;
   const int d = 100;

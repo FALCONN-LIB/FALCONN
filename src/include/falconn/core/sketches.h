@@ -5,6 +5,7 @@
 #include "data_storage.h"
 #include "polytope_hash.h"
 
+#include <iostream>
 #include <memory>
 #include <random>
 #include <vector>
@@ -47,6 +48,9 @@ class RandomProjectionSketchesWorker {
   }
 
   void compute_sketch(const PointType &point, uint64_t *result) {
+    if (point.size() != dimension_) {
+      throw SketchesError("dimension mismatch");
+    }
     for (int32_t i = 0; i < num_rotations_; ++i) {
       Eigen::Map<PointType>(&buffer_[0], dimension_) =
           point.cwiseProduct(Eigen::Map<const PointType>(
@@ -90,7 +94,7 @@ class RandomProjectionSketchesWorker {
 };
 }  // namespace sketches_helpers
 
-template <typename PointType, typename IndexType = int32_t,
+template <typename PointType, typename KeyType = int32_t,
           typename DataStorageType = ArrayDataStorage<PointType>>
 class RandomProjectionSketchesQuery;
 
@@ -160,23 +164,20 @@ class RandomProjectionSketches {
   friend class RandomProjectionSketchesQuery;
 };
 
-template <typename PointType, typename IndexType, typename DataStorageType>
+template <typename PointType, typename KeyType, typename DataStorageType>
 class RandomProjectionSketchesQuery {
  public:
   RandomProjectionSketchesQuery(
       const RandomProjectionSketches<PointType, DataStorageType> &sketch,
-      int32_t distance_threshold = -1)
+      int32_t distance_threshold)
       : sketch_(sketch),
         num_chunks_(sketch.num_chunks_),
         distance_threshold_(distance_threshold),
         worker_(sketch.dimension_, sketch.num_rotations_, sketch.num_chunks_,
                 sketch.random_signs_),
         query_sketch_(sketch.num_chunks_) {
-    if (distance_threshold_ < -1) {
-      throw SketchesError("distance threshold must be -1 or non-negative");
-    }
-    if (distance_threshold_ == -1) {
-      distance_threshold_ = 64 * num_chunks_;
+    if (distance_threshold_ < 0) {
+      throw SketchesError("distance threshold must be non-negative");
     }
   }
 
@@ -185,7 +186,7 @@ class RandomProjectionSketchesQuery {
     loaded_ = true;
   }
 
-  inline int32_t get_distance_estimate(IndexType dataset_point_id) {
+  inline int32_t get_distance_estimate(KeyType dataset_point_id) {
     if (!loaded_) {
       throw SketchesError("query is not loaded");
     }
@@ -199,12 +200,12 @@ class RandomProjectionSketchesQuery {
     return hamming_distance;
   }
 
-  inline bool is_close(IndexType dataset_point_id) {
+  inline bool is_close(KeyType dataset_point_id) {
     return get_distance_estimate(dataset_point_id) <= distance_threshold_;
   }
 
-  inline void filter_close(const std::vector<IndexType> &candidates,
-                           std::vector<IndexType> *filtered_candidates) {
+  inline void filter_close(const std::vector<KeyType> &candidates,
+                           std::vector<KeyType> *filtered_candidates) {
     filtered_candidates->clear();
     for (size_t i = 0; i < candidates.size(); ++i) {
       if (is_close(candidates[i])) {
