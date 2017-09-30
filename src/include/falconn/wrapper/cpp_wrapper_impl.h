@@ -6,6 +6,8 @@
 #include <thread>
 #include <type_traits>
 
+#include "data_storage_adapter.h"
+
 #include "../core/bit_packed_flat_hash_table.h"
 #include "../core/composite_hash_table.h"
 #include "../core/cosine_distance.h"
@@ -19,7 +21,7 @@
 #include "../core/probing_hash_table.h"
 #include "../core/stl_hash_table.h"
 
-#include "../core/sketches.h"
+#include "../core/random_projection_sketches.h"
 
 namespace falconn {
 namespace wrapper {
@@ -70,48 +72,6 @@ class PointTypeTraitsInternal<SparseVector<CoordinateType, IndexType>> {
         params.dimension, params.k, params.l, params.num_rotations,
         params.feature_hashing_dimension, params.last_cp_dimension,
         params.seed ^ 93384688));
-    return std::move(res);
-  }
-};
-
-template <typename PointSet>
-class DataStorageAdapter {
- public:
-  DataStorageAdapter() {
-    static_assert(FalseStruct<PointSet>::value,
-                  "Point set type not supported.");
-  }
-
-  template <typename PS>
-  struct FalseStruct : std::false_type {};
-};
-
-template <typename PointType>
-class DataStorageAdapter<std::vector<PointType>> {
- public:
-  template <typename KeyType>
-  using DataStorage = core::ArrayDataStorage<PointType, KeyType>;
-
-  template <typename KeyType>
-  static std::unique_ptr<DataStorage<KeyType>> construct_data_storage(
-      const std::vector<PointType>& points) {
-    std::unique_ptr<DataStorage<KeyType>> res(new DataStorage<KeyType>(points));
-    return std::move(res);
-  }
-};
-
-template <typename CoordinateType>
-class DataStorageAdapter<PlainArrayPointSet<CoordinateType>> {
- public:
-  template <typename KeyType>
-  using DataStorage =
-      core::PlainArrayDataStorage<DenseVector<CoordinateType>, KeyType>;
-
-  template <typename KeyType>
-  static std::unique_ptr<DataStorage<KeyType>> construct_data_storage(
-      const PlainArrayPointSet<CoordinateType>& points) {
-    std::unique_ptr<DataStorage<KeyType>> res(new DataStorage<KeyType>(
-        points.data, points.num_points, points.dimension));
     return std::move(res);
   }
 };

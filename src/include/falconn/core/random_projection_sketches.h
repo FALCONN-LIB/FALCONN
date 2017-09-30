@@ -1,5 +1,5 @@
-#ifndef _SKETCHES_H_
-#define _SKETCHES_H_
+#ifndef __RANDOM_PROJECTION_SKETCHES_H__
+#define __RANDOM_PROJECTION_SKETCHES_H__
 
 #include "../falconn_global.h"
 #include "data_storage.h"
@@ -230,4 +230,4 @@ class RandomProjectionSketchesQuery {
 }  // namespace core
 }  // namespace falconn
 
-#endif
+#endif /* __RANDOM_PROJECTION_SKETCHES_H__ */

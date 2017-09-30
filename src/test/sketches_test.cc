@@ -1,5 +1,5 @@
 #include <falconn/core/data_storage.h>
-#include <falconn/core/sketches.h>
+#include <falconn/core/random_projection_sketches.h>
 #include <falconn/falconn_global.h>
 
 #include <gtest/gtest.h>
