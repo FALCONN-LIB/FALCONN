@@ -131,11 +131,12 @@ construct_random_projection_sketches(const PointSet& points,
   typedef typename wrapper::DataStorageAdapter<PointSet>::template DataStorage<
       KeyType>
       DataStorageType;
-  DataStorageType data_storage(points);
+  auto data_storage_ptr = wrapper::DataStorageAdapter<
+      PointSet>::template construct_data_storage<KeyType>(points);
   return std::unique_ptr<Sketches<PointType, int32_t, KeyType>>(
       new wrapper::RandomProjectionSketchesWrapper<PointType, KeyType,
                                                    DataStorageType, RNGType>(
-          data_storage, num_chunks, rng));
+          *data_storage_ptr.get(), num_chunks, rng));
 }
 
 }  // namespace falconn

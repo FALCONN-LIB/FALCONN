@@ -40,4 +40,6 @@ construct_random_projection_sketches(const PointSet& points,
 
 }  // namespace falconn
 
+#include "wrapper/sketches_impl.h"
+
 #endif /* __SKETCHES_H__ */
