@@ -15,7 +15,7 @@ namespace falconn {
 namespace wrapper {
 template <typename PointType, typename KeyType, typename DataStorageType>
 class RandomProjectionSketchesQueryWrapper
-    : public SketchesQueryObject<PointType, KeyType> {
+    : public SketchesQueryable<PointType, KeyType> {
  public:
   RandomProjectionSketchesQueryWrapper(
       const core::RandomProjectionSketches<PointType, DataStorageType>& rps,
@@ -42,9 +42,9 @@ class RandomProjectionSketchesWrapper
                                   int32_t num_chunks, RNGType& rng)
       : rps_(points, num_chunks, rng) {}
 
-  std::unique_ptr<SketchesQueryObject<PointType, KeyType>>
-  construct_query_object(int32_t distance_threshold) {
-    return std::unique_ptr<SketchesQueryObject<PointType, KeyType>>(
+  std::unique_ptr<SketchesQueryable<PointType, KeyType>> construct_query_object(
+      int32_t distance_threshold) {
+    return std::unique_ptr<SketchesQueryable<PointType, KeyType>>(
         new RandomProjectionSketchesQueryWrapper<PointType, KeyType,
                                                  DataStorageType>(
             rps_, distance_threshold));
@@ -55,7 +55,7 @@ class RandomProjectionSketchesWrapper
 };
 
 template <typename PointType, typename DistanceType, typename KeyType>
-class SketchesQueryPoolGeneric : public SketchesQueryPool<PointType, KeyType> {
+class SketchesQueryPoolGeneric : public SketchesQueryable<PointType, KeyType> {
  public:
   SketchesQueryPoolGeneric(Sketches<PointType, DistanceType, KeyType>& parent,
                            DistanceType threshold,
@@ -80,7 +80,7 @@ class SketchesQueryPoolGeneric : public SketchesQueryPool<PointType, KeyType> {
 
  private:
   int_fast32_t num_query_objects_;
-  std::vector<std::unique_ptr<SketchesQueryObject<PointType, KeyType>>>
+  std::vector<std::unique_ptr<SketchesQueryable<PointType, KeyType>>>
       internal_query_objects_;
   std::vector<std::atomic_flag> internal_locks_;
 
@@ -105,13 +105,13 @@ class SketchesQueryPoolGeneric : public SketchesQueryPool<PointType, KeyType> {
 }  // namespace wrapper
 
 template <typename PointType, typename DistanceType, typename KeyType>
-std::unique_ptr<SketchesQueryPool<PointType, KeyType>>
+std::unique_ptr<SketchesQueryable<PointType, KeyType>>
 Sketches<PointType, DistanceType, KeyType>::construct_query_pool(
     DistanceType distance_threshold, int_fast32_t num_query_objects) {
   if (num_query_objects <= 0) {
     num_query_objects = std::max(1u, 2 * std::thread::hardware_concurrency());
   }
-  return std::unique_ptr<SketchesQueryPool<PointType, KeyType>>(
+  return std::unique_ptr<SketchesQueryable<PointType, KeyType>>(
       new wrapper::SketchesQueryPoolGeneric<PointType, DistanceType, KeyType>(
           *this, distance_threshold, num_query_objects));
 }

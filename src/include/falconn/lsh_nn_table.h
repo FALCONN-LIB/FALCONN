@@ -10,6 +10,7 @@
 #include <Eigen/Dense>
 
 #include "falconn_global.h"
+#include "sketches.h"
 
 ///
 /// The main namespace.
@@ -60,14 +61,17 @@ class LSHNearestNeighborQuery {
   ///
   /// Finds the key of the closest candidate in the probing sequence for q.
   ///
-  virtual KeyType find_nearest_neighbor(const PointType& q) = 0;
+  virtual KeyType find_nearest_neighbor(
+      const PointType& q,
+      SketchesQueryable<PointType, KeyType>* sketches = nullptr) = 0;
 
   ///
   /// Find the keys of the k closest candidates in the probing sequence for q.
   /// The keys are returned in order of increasing distance to q.
   ///
-  virtual void find_k_nearest_neighbors(const PointType& q, int_fast64_t k,
-                                        std::vector<KeyType>* result) = 0;
+  virtual void find_k_nearest_neighbors(
+      const PointType& q, int_fast64_t k, std::vector<KeyType>* result,
+      SketchesQueryable<PointType, KeyType>* sketches = nullptr) = 0;
 
   ///
   /// Returns the keys corresponding to candidates in the probing sequence for q
@@ -76,7 +80,8 @@ class LSHNearestNeighborQuery {
   virtual void find_near_neighbors(
       const PointType& q,
       typename PointTypeTraits<PointType>::ScalarType threshold,
-      std::vector<KeyType>* result) = 0;
+      std::vector<KeyType>* result,
+      SketchesQueryable<PointType, KeyType>* sketches = nullptr) = 0;
 
   ///
   /// Returns the keys of all candidates in the probing sequence for q.
@@ -84,8 +89,9 @@ class LSHNearestNeighborQuery {
   /// candidates are returned in the order of their first occurrence in the
   /// probing sequence.
   ///
-  virtual void get_unique_candidates(const PointType& q,
-                                     std::vector<KeyType>* result) = 0;
+  virtual void get_unique_candidates(
+      const PointType& q, std::vector<KeyType>* result,
+      SketchesQueryable<PointType, KeyType>* sketches = nullptr) = 0;
 
   ///
   /// Returns the keys of all candidates in the probing sequence for q. If a
@@ -93,8 +99,9 @@ class LSHNearestNeighborQuery {
   /// in the result. The candidates are returned in the order in which they
   /// appear in the probing sequence.
   ///
-  virtual void get_candidates_with_duplicates(const PointType& q,
-                                              std::vector<KeyType>* result) = 0;
+  virtual void get_candidates_with_duplicates(
+      const PointType& q, std::vector<KeyType>* result,
+      SketchesQueryable<PointType, KeyType>* sketches = nullptr) = 0;
 
   ///
   /// Resets the query statistics.
@@ -147,14 +154,17 @@ class LSHNearestNeighborQueryPool {
   ///
   /// Finds the key of the closest candidate in the probing sequence for q.
   ///
-  virtual KeyType find_nearest_neighbor(const PointType& q) = 0;
+  virtual KeyType find_nearest_neighbor(
+      const PointType& q,
+      SketchesQueryable<PointType, KeyType>* sketches = nullptr) = 0;
 
   ///
   /// Find the keys of the k closest candidates in the probing sequence for q.
   /// See the documentation for LSHNearestNeighborQuery.
   ///
-  virtual void find_k_nearest_neighbors(const PointType& q, int_fast64_t k,
-                                        std::vector<KeyType>* result) = 0;
+  virtual void find_k_nearest_neighbors(
+      const PointType& q, int_fast64_t k, std::vector<KeyType>* result,
+      SketchesQueryable<PointType, KeyType>* sketches = nullptr) = 0;
 
   ///
   /// Returns the keys corresponding to candidates in the probing sequence for q
@@ -163,21 +173,24 @@ class LSHNearestNeighborQueryPool {
   virtual void find_near_neighbors(
       const PointType& q,
       typename PointTypeTraits<PointType>::ScalarType threshold,
-      std::vector<KeyType>* result) = 0;
+      std::vector<KeyType>* result,
+      SketchesQueryable<PointType, KeyType>* sketches = nullptr) = 0;
 
   ///
   /// Returns the keys of all candidates in the probing sequence for q.
   /// See the documentation for LSHNearestNeighborQuery.
   ///
-  virtual void get_unique_candidates(const PointType& q,
-                                     std::vector<KeyType>* result) = 0;
+  virtual void get_unique_candidates(
+      const PointType& q, std::vector<KeyType>* result,
+      SketchesQueryable<PointType, KeyType>* sketches = nullptr) = 0;
 
   ///
   /// Returns the multiset of all candidate keys in the probing sequence for q.
   /// See the documentation for LSHNearestNeighborQuery.
   ///
-  virtual void get_candidates_with_duplicates(const PointType& q,
-                                              std::vector<KeyType>* result) = 0;
+  virtual void get_candidates_with_duplicates(
+      const PointType& q, std::vector<KeyType>* result,
+      SketchesQueryable<PointType, KeyType>* sketches = nullptr) = 0;
 
   ///
   /// Resets the query statistics.
@@ -458,19 +471,6 @@ class LSHNNTableSetupError : public FalconnError {
 };
 
 ///
-/// A struct for wrapping point data stored in a single dense data array. The
-/// coordinate order is assumed to be point-by-point (row major), i.e., the
-/// first dimension coordinates belong to the first point and there are
-/// num_points points in total.
-///
-template <typename CoordinateType>
-struct PlainArrayPointSet {
-  const CoordinateType* data;
-  int_fast32_t num_points;
-  int_fast32_t dimension;
-};
-
-///
 /// Function for constructing an LSH table wrapper. The template parameters
 /// PointType and KeyType are as in LSHNearestNeighborTable above. The
 /// PointSet template parameter default is set so that a std::vector<PointType>
@@ -489,45 +489,6 @@ template <typename PointType, typename KeyType = int32_t,
           typename PointSet = std::vector<PointType>>
 std::unique_ptr<LSHNearestNeighborTable<PointType, KeyType>> construct_table(
     const PointSet& points, const LSHConstructionParameters& params);
-
-template <typename PointType, typename KeyType = int32_t>
-class SketchesQueryObject {
- public:
-  virtual void filter_close(const PointType& query,
-                            const std::vector<KeyType>& candidates,
-                            std::vector<KeyType>* filtered_candidates) = 0;
-};
-
-template <typename PointType, typename KeyType = int32_t>
-class SketchesQueryPool {
- public:
-  virtual void filter_close(const PointType& query,
-                            const std::vector<KeyType>& candidates,
-                            std::vector<KeyType>* filtered_candidates) = 0;
-};
-
-template <typename PointType, typename DistanceType, typename KeyType = int32_t>
-class Sketches {
- public:
-  virtual std::unique_ptr<SketchesQueryObject<PointType, KeyType>>
-  construct_query_object(DistanceType distance_threshold) = 0;
-
-  std::unique_ptr<SketchesQueryPool<PointType, KeyType>> construct_query_pool(
-      DistanceType distance_threshold, int_fast32_t num_query_objects = -1);
-};
-
-class SketchesSetupError : public FalconnError {
- public:
-  SketchesSetupError(const char* msg) : FalconnError(msg) {}
-};
-
-// TODO: add is_sufficiently_dense
-// TODO: swap KeyType and PointSet, do the same for the table stuff
-template <typename PointType, typename KeyType = int32_t,
-          typename PointSet = std::vector<PointType>, typename RNGType>
-std::unique_ptr<Sketches<PointType, int32_t, KeyType>>
-construct_random_projection_sketches(const PointSet& points,
-                                     int_fast32_t num_bits, RNGType& rng);
 
 }  // namespace falconn
 

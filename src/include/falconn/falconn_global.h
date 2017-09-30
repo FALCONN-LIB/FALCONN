@@ -88,6 +88,8 @@ struct QueryStatistics {
   /// Average hash table retrieval time
   ///
   double average_hash_table_time = 0.0;
+
+  double average_sketches_time = 0.0;
   ///
   /// Average time for computing distances
   ///
@@ -100,6 +102,8 @@ struct QueryStatistics {
   /// Average number of *unique* candidates
   ///
   double average_num_unique_candidates = 0;
+
+  double average_num_filtered_candidates = 0;
   ///
   /// Number of queries the statistics were computed over
   ///
@@ -110,9 +114,11 @@ struct QueryStatistics {
     average_total_query_time *= num_queries;
     average_lsh_time *= num_queries;
     average_hash_table_time *= num_queries;
+    average_sketches_time *= num_queries;
     average_distance_time *= num_queries;
     average_num_candidates *= num_queries;
     average_num_unique_candidates *= num_queries;
+    average_num_filtered_candidates *= num_queries;
   }
 
   void compute_averages() {
@@ -120,9 +126,11 @@ struct QueryStatistics {
       average_total_query_time /= num_queries;
       average_lsh_time /= num_queries;
       average_hash_table_time /= num_queries;
+      average_sketches_time /= num_queries;
       average_distance_time /= num_queries;
       average_num_candidates /= num_queries;
       average_num_unique_candidates /= num_queries;
+      average_num_filtered_candidates /= num_queries;
     }
   }
 
@@ -130,9 +138,11 @@ struct QueryStatistics {
     average_total_query_time += other.average_total_query_time;
     average_lsh_time += other.average_lsh_time;
     average_hash_table_time += other.average_hash_table_time;
+    average_sketches_time += other.average_sketches_time;
     average_distance_time += other.average_distance_time;
     average_num_candidates += other.average_num_candidates;
     average_num_unique_candidates += other.average_num_unique_candidates;
+    average_num_filtered_candidates += other.average_num_filtered_candidates;
     num_queries += other.num_queries;
   }
 
@@ -140,11 +150,26 @@ struct QueryStatistics {
     average_total_query_time = 0.0;
     average_lsh_time = 0.0;
     average_hash_table_time = 0.0;
+    average_sketches_time = 0.0;
     average_distance_time = 0.0;
     average_num_candidates = 0.0;
     average_num_unique_candidates = 0.0;
+    average_num_filtered_candidates = 0.0;
     num_queries = 0;
   }
+};
+
+///
+/// A struct for wrapping point data stored in a single dense data array. The
+/// coordinate order is assumed to be point-by-point (row major), i.e., the
+/// first dimension coordinates belong to the first point and there are
+/// num_points points in total.
+///
+template <typename CoordinateType>
+struct PlainArrayPointSet {
+  const CoordinateType* data;
+  int_fast32_t num_points;
+  int_fast32_t dimension;
 };
 
 }  // namespace falconn
