@@ -33,7 +33,7 @@ Besides the documentation, we provide two examples:
 
 * [here](https://github.com/FALCONN-LIB/FALCONN/tree/master/src/benchmark)
 the LSH data structure for a random dataset is built and used;
-* [here](https://github.com/FALCONN-LIB/FALCONN/tree/master/examples/glove)
+* [here](https://github.com/FALCONN-LIB/FALCONN/tree/master/src/examples/glove)
 we show how to use LSH to perform similarity search on a GloVe dataset.
 
 An intended workflow is as follows:
