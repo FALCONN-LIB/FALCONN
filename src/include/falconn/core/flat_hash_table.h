@@ -51,47 +51,46 @@ class FlatHashTable {
     if (entries_added_) {
       throw FlatHashTableError("Entries were already added.");
     }
-    bucket_list_.resize(num_buckets_, std::make_pair(0, 0));
 
     entries_added_ = true;
 
-    KeyComparator comp(keys);
+    std::vector<IndexType> bucket_counts(num_buckets_, 0);
     indices_.resize(keys.size());
+
     for (IndexType ii = 0; static_cast<size_t>(ii) < indices_.size(); ++ii) {
       if (keys[ii] >= static_cast<KeyType>(num_buckets_) || keys[ii] < 0) {
         throw FlatHashTableError("Key value out of range.");
       }
       indices_[ii] = ii;
+      bucket_counts[keys[ii]]++;
     }
+
+    KeyComparator comp(keys);
     std::sort(indices_.begin(), indices_.end(), comp);
 
-    IndexType cur_index = 0;
-    while (cur_index < static_cast<IndexType>(indices_.size())) {
-      IndexType end_index = cur_index;
-      do {
-        end_index += 1;
-      } while (end_index < static_cast<IndexType>(indices_.size()) &&
-               keys[indices_[cur_index]] == keys[indices_[end_index]]);
-
-      bucket_list_[keys[indices_[cur_index]]].first = cur_index;
-      bucket_list_[keys[indices_[cur_index]]].second = end_index - cur_index;
-      cur_index = end_index;
+    bucket_start_.resize(num_buckets_, 0);
+    for (IndexType ii = 1; ii < num_buckets_; ++ii) {
+      bucket_start_[ii] = bucket_start_[ii - 1] + bucket_counts[ii - 1];
     }
   }
 
   std::pair<Iterator, Iterator> retrieve(const KeyType& key) {
-    IndexType start = bucket_list_[key].first;
-    IndexType len = bucket_list_[key].second;
+    IndexType start = bucket_start_[key];
+    IndexType end = static_cast<IndexType>(indices_.size());
+    if (static_cast<IndexType>(key) < num_buckets_ - 1) {
+      end = bucket_start_[key + 1];
+    }
+    assert(start <= end);
     // printf("retrieve for key %u\n", key);
-    // printf("  start: %lld  len %lld\n", start, len);
-    return std::make_pair(&(indices_[start]), &(indices_[start + len]));
+    // printf("  start: %lld  end %lld\n", start, end);
+    return std::make_pair(&(indices_[start]), &(indices_[end]));
   }
 
  private:
   IndexType num_buckets_ = -1;
   bool entries_added_ = false;
-  // the pair contains start index and length
-  std::vector<std::pair<IndexType, IndexType>> bucket_list_;
+  // start index of the respective hash bucket
+  std::vector<IndexType> bucket_start_;
   // point indices
   std::vector<ValueType> indices_;
 
