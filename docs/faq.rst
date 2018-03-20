@@ -228,16 +228,32 @@ In addition to decreasing binary size, ``-fvisibility=hidden`` also avoids
 potential serious issues when loading multiple modules and is required for
 proper pybind operation.  See the previous FAQ entry for more details.
 
-Working with ancient Visual Studio 2009 builds on Windows
+Working with ancient Visual Studio 2008 builds on Windows
 =========================================================
 
 The official Windows distributions of Python are compiled using truly
 ancient versions of Visual Studio that lack good C++11 support. Some users
 implicitly assume that it would be impossible to load a plugin built with
 Visual Studio 2015 into a Python distribution that was compiled using Visual
-Studio 2009. However, no such issue exists: it's perfectly legitimate to
+Studio 2008. However, no such issue exists: it's perfectly legitimate to
 interface DLLs that are built with different compilers and/or C libraries.
 Common gotchas to watch out for involve not ``free()``-ing memory region
 that that were ``malloc()``-ed in another shared library, using data
 structures with incompatible ABIs, and so on. pybind11 is very careful not
 to make these types of mistakes.
+
+How to cite this project?
+=========================
+
+We suggest the following BibTeX template to cite pybind11 in scientific
+discourse:
+
+.. code-block:: bash
+
+    @misc{pybind11,
+       author = {Wenzel Jakob and Jason Rhinelander and Dean Moldovan},
+       year = {2017},
+       note = {https://github.com/pybind/pybind11},
+       title = {pybind11 -- Seamless operability between C++11 and Python}
+    }
+

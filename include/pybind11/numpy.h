@@ -18,9 +18,9 @@
 #include <cstring>
 #include <sstream>
 #include <string>
-#include <initializer_list>
 #include <functional>
 #include <utility>
+#include <vector>
 #include <typeindex>
 
 #if defined(_MSC_VER)
@@ -440,7 +440,7 @@ public:
     /// This is essentially the same as calling numpy.dtype(args) in Python.
     static dtype from_args(object args) {
         PyObject *ptr = nullptr;
-        if (!detail::npy_api::get().PyArray_DescrConverter_(args.release().ptr(), &ptr) || !ptr)
+        if (!detail::npy_api::get().PyArray_DescrConverter_(args.ptr(), &ptr) || !ptr)
             throw error_already_set();
         return reinterpret_steal<dtype>(ptr);
     }
@@ -940,9 +940,9 @@ struct format_descriptor<T, detail::enable_if_t<std::is_enum<T>::value>> {
 template <typename T>
 struct format_descriptor<T, detail::enable_if_t<detail::array_info<T>::is_array>> {
     static std::string format() {
-        using detail::_;
-        static constexpr auto extents = _("(") + detail::array_info<T>::extents + _(")");
-        return extents.text + format_descriptor<detail::remove_all_extents_t<T>>::format();
+        using namespace detail;
+        static constexpr auto extents = _("(") + array_info<T>::extents + _(")");
+        return extents.text + format_descriptor<remove_all_extents_t<T>>::format();
     }
 };
 
@@ -1057,7 +1057,7 @@ struct field_descriptor {
 };
 
 inline PYBIND11_NOINLINE void register_structured_dtype(
-    const std::initializer_list<field_descriptor>& fields,
+    any_container<field_descriptor> fields,
     const std::type_info& tinfo, ssize_t itemsize,
     bool (*direct_converter)(PyObject *, void *&)) {
 
@@ -1066,7 +1066,7 @@ inline PYBIND11_NOINLINE void register_structured_dtype(
         pybind11_fail("NumPy: dtype is already registered");
 
     list names, formats, offsets;
-    for (auto field : fields) {
+    for (auto field : *fields) {
         if (!field.descr)
             pybind11_fail(std::string("NumPy: unsupported field dtype: `") +
                             field.name + "` @ " + tinfo.name());
@@ -1083,7 +1083,7 @@ inline PYBIND11_NOINLINE void register_structured_dtype(
     // - https://github.com/numpy/numpy/pull/7798
     // Because of this, we won't use numpy's logic to generate buffer format
     // strings and will just do it ourselves.
-    std::vector<field_descriptor> ordered_fields(fields);
+    std::vector<field_descriptor> ordered_fields(std::move(fields));
     std::sort(ordered_fields.begin(), ordered_fields.end(),
         [](const field_descriptor &a, const field_descriptor &b) { return a.offset < b.offset; });
     ssize_t offset = 0;
@@ -1130,8 +1130,8 @@ template <typename T, typename SFINAE> struct npy_format_descriptor {
         return format_str;
     }
 
-    static void register_dtype(const std::initializer_list<field_descriptor>& fields) {
-        register_structured_dtype(fields, typeid(typename std::remove_cv<T>::type),
+    static void register_dtype(any_container<field_descriptor> fields) {
+        register_structured_dtype(std::move(fields), typeid(typename std::remove_cv<T>::type),
                                   sizeof(T), &direct_converter);
     }
 
@@ -1204,7 +1204,8 @@ private:
 
 #define PYBIND11_NUMPY_DTYPE(Type, ...) \
     ::pybind11::detail::npy_format_descriptor<Type>::register_dtype \
-        ({PYBIND11_MAP_LIST (PYBIND11_FIELD_DESCRIPTOR, Type, __VA_ARGS__)})
+        (::std::vector<::pybind11::detail::field_descriptor> \
+         {PYBIND11_MAP_LIST (PYBIND11_FIELD_DESCRIPTOR, Type, __VA_ARGS__)})
 
 #ifdef _MSC_VER
 #define PYBIND11_MAP2_LIST_NEXT1(test, next) \
@@ -1225,7 +1226,8 @@ private:
 
 #define PYBIND11_NUMPY_DTYPE_EX(Type, ...) \
     ::pybind11::detail::npy_format_descriptor<Type>::register_dtype \
-        ({PYBIND11_MAP2_LIST (PYBIND11_FIELD_DESCRIPTOR_EX, Type, __VA_ARGS__)})
+        (::std::vector<::pybind11::detail::field_descriptor> \
+         {PYBIND11_MAP2_LIST (PYBIND11_FIELD_DESCRIPTOR_EX, Type, __VA_ARGS__)})
 
 #endif // __CLION_IDE__
 
