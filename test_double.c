@@ -33,7 +33,7 @@ int main(void) {
         double *a = (double*)start;
         double *aux = (double*)malloc(sizeof(double) * n);
         for (int i = 0; i < n; ++i) {
-            a[i] = 1.0 - 2.0 * (rand() % 2);
+            a[i] = 1.0 - 2.0 * (rand() & 1);
             aux[i] = a[i];
         }
         fht_double(a, log_n);

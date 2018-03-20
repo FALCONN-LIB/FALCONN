@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "fht.h"
+#include "fht_header_only.h"
 
 void dumb_fht(float *buf, int log_n);
 void dumb_fht(float *buf, int log_n) {

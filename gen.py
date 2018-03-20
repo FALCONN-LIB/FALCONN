@@ -387,7 +387,7 @@ def double_sse_composite_step(buf_name, log_n, from_it, to_it, ident=''):
 
 
 def plain_unmerged(type_name, log_n):
-    signature = "inline void helper_%s_%d(%s *buf)" % (type_name, log_n,
+    signature = "static inline void helper_%s_%d(%s *buf)" % (type_name, log_n,
                                                        type_name)
     res = '%s;\n' % signature
     res += '%s {\n' % signature
@@ -402,7 +402,7 @@ def greedy_merged(type_name, log_n, composite_step):
         composite_step('buf', log_n, 0, 0)
     except Exception:
         raise Exception('log_n is too small: %d' % log_n)
-    signature = 'inline void helper_%s_%d(%s *buf)' % (type_name, log_n,
+    signature = 'static inline void helper_%s_%d(%s *buf)' % (type_name, log_n,
                                                        type_name)
     res = '%s;\n' % signature
     res += '%s {\n' % signature
