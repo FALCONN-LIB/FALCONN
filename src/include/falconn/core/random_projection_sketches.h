@@ -1,13 +1,14 @@
 #ifndef __RANDOM_PROJECTION_SKETCHES_H__
 #define __RANDOM_PROJECTION_SKETCHES_H__
 
-#include "../falconn_global.h"
-#include "data_storage.h"
-#include "polytope_hash.h"
+#define UNUSED(x) (void)(x)
 
 #include <memory>
 #include <random>
 #include <vector>
+#include "../falconn_global.h"
+#include "data_storage.h"
+#include "polytope_hash.h"
 
 #include <cstdlib>
 
@@ -87,7 +88,7 @@ class RandomProjectionSketchesWorker {
   int32_t padded_dimension_;
   int32_t num_rotations_;
   int32_t num_chunks_;
-  const std::vector<ScalarType> &random_signs_;
+  std::vector<ScalarType> random_signs_;
   std::vector<ScalarType> buffer_;
   PointType padding_;
 };
@@ -95,18 +96,15 @@ class RandomProjectionSketchesWorker {
 
 template <typename PointType, typename KeyType = int32_t,
           typename DataStorageType = ArrayDataStorage<PointType>>
-class RandomProjectionSketchesQuery;
-
-template <typename PointType,
-          typename DataStorageType = ArrayDataStorage<PointType>>
 class RandomProjectionSketches {
  public:
   typedef typename PointTypeTraits<PointType>::ScalarType ScalarType;
-
-  template <typename RNG>
-  RandomProjectionSketches(const DataStorageType &points, int32_t num_chunks,
-                           RNG &rng)
-      : num_chunks_(num_chunks), sketches_(points.size() * num_chunks) {
+  using ScoreType = int32_t;
+  RandomProjectionSketches(int32_t num_workers, const DataStorageType &points,
+                           int32_t num_chunks, uint_fast64_t seed)
+      : num_chunks_(num_chunks),
+        num_workers_(num_workers),
+        sketches_(points.size() * num_chunks) {
     if (points.size() == 0) {
       throw SketchesError("empty dataset");
     }
@@ -134,99 +132,73 @@ class RandomProjectionSketches {
     random_signs_.resize(num_rotations_ * dimension_);
 
     std::uniform_int_distribution<> random_bit(0, 1);
+    std::mt19937_64 gen(seed);
 
     for (int32_t i = 0; i < num_rotations_ * dimension_; ++i) {
-      random_signs_[i] = 1.0 - 2.0 * random_bit(rng);
+      random_signs_[i] = 1.0 - 2.0 * random_bit(gen);
     }
 
-    sketches_helpers::RandomProjectionSketchesWorker<PointType, DataStorageType>
-        worker(dimension_, num_rotations_, num_chunks_, random_signs_);
+    workers_.resize(
+        num_workers_,
+        sketches_helpers::RandomProjectionSketchesWorker<PointType,
+                                                         DataStorageType>(
+            dimension_, num_rotations_, num_chunks_, random_signs_));
+    query_sketches_.resize(num_workers_, std::vector<uint64_t>(num_chunks_));
 
     size_t counter = 0;
     while (iter.is_valid()) {
-      worker.compute_sketch(iter.get_point(),
-                            &sketches_[counter * num_chunks_]);
+      workers_[0].compute_sketch(iter.get_point(),
+                                 &sketches_[counter * num_chunks_]);
       ++counter;
       ++iter;
     }
   }
 
+  void load_query(int32_t worker_id, const PointType &query) {
+    if (worker_id < 0 || worker_id >= num_workers_) {
+      throw SketchesError(
+          "worker id is not in the range 0 to num_workers_ - 1");
+    }
+    workers_[worker_id].compute_sketch(query, &query_sketches_[worker_id][0]);
+  }
+
+  void prepare(int32_t worker_id, int32_t dataset_point_id) {
+    UNUSED(worker_id);
+    size_t ind = static_cast<size_t>(dataset_point_id) * num_chunks_;
+    __builtin_prefetch(sketches_.data() + ind);
+  }
+
+  inline int32_t get_score(int32_t worker_id, KeyType dataset_point_id) {
+    if (worker_id < 0 || worker_id >= num_workers_) {
+      throw SketchesError(
+          "worker id is not in the range 0 to num_workers_ - 1");
+    }
+    int32_t hamming_distance = 0;
+    size_t ind = dataset_point_id * num_chunks_;
+
+    for (int32_t i = 0; i < num_chunks_; ++i) {
+      hamming_distance +=
+          __builtin_popcountll(sketches_[ind] ^ query_sketches_[worker_id][i]);
+      ++ind;
+    }
+    return hamming_distance;
+  }
+
  private:
   int32_t num_chunks_;
+  int32_t num_workers_;
   std::vector<uint64_t> sketches_;
   std::vector<ScalarType> random_signs_;
 
   int32_t dimension_;
   int32_t num_rotations_;
 
-  template <typename, typename, typename>
-  friend class RandomProjectionSketchesQuery;
+  std::vector<sketches_helpers::RandomProjectionSketchesWorker<PointType,
+                                                               DataStorageType>>
+      workers_;
+  std::vector<std::vector<uint64_t>> query_sketches_;
 };
 
-template <typename PointType, typename KeyType, typename DataStorageType>
-class RandomProjectionSketchesQuery {
- public:
-  RandomProjectionSketchesQuery(
-      const RandomProjectionSketches<PointType, DataStorageType> &sketch,
-      int32_t distance_threshold)
-      : sketch_(sketch),
-        num_chunks_(sketch.num_chunks_),
-        distance_threshold_(distance_threshold),
-        worker_(sketch.dimension_, sketch.num_rotations_, sketch.num_chunks_,
-                sketch.random_signs_),
-        query_sketch_(sketch.num_chunks_) {
-    if (distance_threshold_ < 0) {
-      throw SketchesError("distance threshold must be non-negative");
-    }
-  }
-
-  void load_query(const PointType &query) {
-    worker_.compute_sketch(query, &query_sketch_[0]);
-    loaded_ = true;
-  }
-
-  inline int32_t get_distance_estimate(KeyType dataset_point_id) {
-    if (!loaded_) {
-      throw SketchesError("query is not loaded");
-    }
-    int32_t hamming_distance = 0;
-    size_t ind = dataset_point_id * num_chunks_;
-    for (int32_t i = 0; i < num_chunks_; ++i) {
-      hamming_distance +=
-          __builtin_popcountll(sketch_.sketches_[ind] ^ query_sketch_[i]);
-      ++ind;
-    }
-    return hamming_distance;
-  }
-
-  inline bool is_close(KeyType dataset_point_id) {
-    return get_distance_estimate(dataset_point_id) <= distance_threshold_;
-  }
-
-  inline void filter_close(const std::vector<KeyType> &candidates,
-                           std::vector<KeyType> *filtered_candidates) {
-    filtered_candidates->clear();
-    for (size_t i = 0; i < candidates.size(); ++i) {
-      if (is_close(candidates[i])) {
-        filtered_candidates->push_back(candidates[i]);
-      }
-    }
-  }
-
-  void set_distance_threshold(int32_t threshold) {
-    distance_threshold_ = threshold;
-  }
-
- private:
-  const RandomProjectionSketches<PointType, DataStorageType> &sketch_;
-  int32_t num_chunks_;
-  int32_t distance_threshold_;
-  sketches_helpers::RandomProjectionSketchesWorker<PointType, DataStorageType>
-      worker_;
-
-  std::vector<uint64_t> query_sketch_;
-  bool loaded_ = false;
-};
 }  // namespace core
 }  // namespace falconn
 

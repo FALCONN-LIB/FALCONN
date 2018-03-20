@@ -10,6 +10,7 @@ and [Thijs Laarhoven](http://thijs.com/).
 We thank the following people for their contributions:
 * [Grey Ballard](http://www.sandia.gov/~gmballa/)
 * [Davis Blalock](http://www.csail.mit.edu/user/4035)
+* [Alejandro Cassis](https://github.com/csssaz)
 * [Ranjit Chacko](https://github.com/rjchacko)
 * [Dhiraj Holden](http://toc.csail.mit.edu/user/237)
 * Ilya Kornakov
@@ -19,3 +20,4 @@ We thank the following people for their contributions:
 * [Marcel Ruegenberg](https://github.com/mruegenberg)
 * [Andrew Sabisch](http://www.jamoozy.com/index.html)
 * [Charlampos Tsourakakis](http://people.seas.harvard.edu/~babis/)
+* Bihao Zhang

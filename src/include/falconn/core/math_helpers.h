@@ -41,7 +41,7 @@ void normalize(Point* p) {
   NormalizationHelper<Point>::normalize(p);
 }
 
-}  // namsepace core
+}  // namespace core
 }  // namespace falconn
 
 #endif

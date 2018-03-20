@@ -21,8 +21,6 @@
 #include "../core/probing_hash_table.h"
 #include "../core/stl_hash_table.h"
 
-#include "../core/random_projection_sketches.h"
-
 namespace falconn {
 namespace wrapper {
 
@@ -303,39 +301,32 @@ class LSHNNQueryWrapper : public LSHNearestNeighborQuery<PointType, KeyType> {
         new NNQueryType(internal_query_.get(), data_storage));
   }
 
-  KeyType find_nearest_neighbor(
-      const PointType& q,
-      SketchesQueryable<PointType, KeyType>* sketches = nullptr) {
-    return internal_nn_query_->find_nearest_neighbor(
-        q, q, num_probes_, max_num_candidates_, sketches);
+  KeyType find_nearest_neighbor(const PointType& q) {
+    return internal_nn_query_->find_nearest_neighbor(q, q, num_probes_,
+                                                     max_num_candidates_);
   }
 
-  void find_k_nearest_neighbors(
-      const PointType& q, int_fast64_t k, std::vector<KeyType>* result,
-      SketchesQueryable<PointType, KeyType>* sketches = nullptr) {
-    internal_nn_query_->find_k_nearest_neighbors(
-        q, q, k, num_probes_, max_num_candidates_, result, sketches);
+  void find_k_nearest_neighbors(const PointType& q, int_fast64_t k,
+                                std::vector<KeyType>* result) {
+    internal_nn_query_->find_k_nearest_neighbors(q, q, k, num_probes_,
+                                                 max_num_candidates_, result);
   }
 
-  void find_near_neighbors(
-      const PointType& q, DistanceType threshold, std::vector<KeyType>* result,
-      SketchesQueryable<PointType, KeyType>* sketches = nullptr) {
-    internal_nn_query_->find_near_neighbors(
-        q, q, threshold, num_probes_, max_num_candidates_, result, sketches);
+  void find_near_neighbors(const PointType& q, DistanceType threshold,
+                           std::vector<KeyType>* result) {
+    internal_nn_query_->find_near_neighbors(q, q, threshold, num_probes_,
+                                            max_num_candidates_, result);
   }
 
-  void get_candidates_with_duplicates(
-      const PointType& q, std::vector<KeyType>* result,
-      SketchesQueryable<PointType, KeyType>* sketches = nullptr) {
+  void get_candidates_with_duplicates(const PointType& q,
+                                      std::vector<KeyType>* result) {
     internal_nn_query_->get_candidates_with_duplicates(
-        q, num_probes_, max_num_candidates_, result, sketches);
+        q, num_probes_, max_num_candidates_, result);
   }
 
-  void get_unique_candidates(
-      const PointType& q, std::vector<KeyType>* result,
-      SketchesQueryable<PointType, KeyType>* sketches = nullptr) {
-    internal_nn_query_->get_unique_candidates(
-        q, num_probes_, max_num_candidates_, result, sketches);
+  void get_unique_candidates(const PointType& q, std::vector<KeyType>* result) {
+    internal_nn_query_->get_unique_candidates(q, num_probes_,
+                                              max_num_candidates_, result);
   }
 
   int_fast64_t get_num_probes() { return num_probes_; }
@@ -407,49 +398,42 @@ class LSHNNQueryPool : public LSHNearestNeighborQueryPool<PointType, KeyType> {
     }
   }
 
-  KeyType find_nearest_neighbor(
-      const PointType& q,
-      SketchesQueryable<PointType, KeyType>* sketches = nullptr) {
+  KeyType find_nearest_neighbor(const PointType& q) {
     int_fast32_t query_index = get_query_index_and_lock();
     KeyType res = internal_nn_queries_[query_index]->find_nearest_neighbor(
-        q, q, num_probes_, max_num_candidates_, sketches);
+        q, q, num_probes_, max_num_candidates_);
     unlock_query(query_index);
     return res;
   }
 
-  void find_k_nearest_neighbors(
-      const PointType& q, int_fast64_t k, std::vector<KeyType>* result,
-      SketchesQueryable<PointType, KeyType>* sketches = nullptr) {
+  void find_k_nearest_neighbors(const PointType& q, int_fast64_t k,
+                                std::vector<KeyType>* result) {
     int_fast32_t query_index = get_query_index_and_lock();
     internal_nn_queries_[query_index]->find_k_nearest_neighbors(
-        q, q, k, num_probes_, max_num_candidates_, result, sketches);
+        q, q, k, num_probes_, max_num_candidates_, result);
     unlock_query(query_index);
   }
 
-  void find_near_neighbors(
-      const PointType& q, DistanceType threshold, std::vector<KeyType>* result,
-      SketchesQueryable<PointType, KeyType>* sketches = nullptr) {
+  void find_near_neighbors(const PointType& q, DistanceType threshold,
+                           std::vector<KeyType>* result) {
     int_fast32_t query_index = get_query_index_and_lock();
     internal_nn_queries_[query_index]->find_near_neighbors(
-        q, q, threshold, num_probes_, max_num_candidates_, result, sketches);
+        q, q, threshold, num_probes_, max_num_candidates_, result);
     unlock_query(query_index);
   }
 
-  void get_candidates_with_duplicates(
-      const PointType& q, std::vector<KeyType>* result,
-      SketchesQueryable<PointType, KeyType>* sketches = nullptr) {
+  void get_candidates_with_duplicates(const PointType& q,
+                                      std::vector<KeyType>* result) {
     int_fast32_t query_index = get_query_index_and_lock();
     internal_nn_queries_[query_index]->get_candidates_with_duplicates(
-        q, num_probes_, max_num_candidates_, result, sketches);
+        q, num_probes_, max_num_candidates_, result);
     unlock_query(query_index);
   }
 
-  void get_unique_candidates(
-      const PointType& q, std::vector<KeyType>* result,
-      SketchesQueryable<PointType, KeyType>* sketches = nullptr) {
+  void get_unique_candidates(const PointType& q, std::vector<KeyType>* result) {
     int_fast32_t query_index = get_query_index_and_lock();
     internal_nn_queries_[query_index]->get_unique_candidates(
-        q, num_probes_, max_num_candidates_, result, sketches);
+        q, num_probes_, max_num_candidates_, result);
     unlock_query(query_index);
   }
 
@@ -541,6 +525,12 @@ class LSHNNTableWrapper : public LSHNearestNeighborTable<PointType, KeyType> {
         hash_table_factory_(std::move(hash_table_factory)),
         composite_hash_table_(std::move(composite_hash_table)),
         data_storage_(std::move(data_storage)) {}
+
+  void add_table() {
+    lsh_->add_table();
+    composite_hash_table_->add_table();
+    lsh_table_->add_table();
+  }
 
   std::unique_ptr<LSHNearestNeighborQuery<PointType, KeyType>>
   construct_query_object(int_fast64_t num_probes = -1,

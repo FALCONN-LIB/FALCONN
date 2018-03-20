@@ -129,10 +129,12 @@ class HyperplaneHashBase {
     }
   }
 
+  void add_table() { throw LSHFunctionError("not implemented"); }
+
  protected:
   HyperplaneHashBase(int dim, int_fast32_t k, int_fast32_t l,
                      uint_fast64_t seed)
-      : dim_(dim), k_(k), l_(l), seed_(seed) {
+      : dim_(dim), k_(k), l_(l), seed_(seed), gen_(seed) {
     if (dim_ < 1) {
       throw LSHFunctionError("Dimension must be at least 1.");
     }
@@ -153,8 +155,6 @@ class HyperplaneHashBase {
       throw LSHFunctionError("Number of hash tables must be at least 1.");
     }
 
-    // use the STL Mersenne Twister for random numbers
-    std::mt19937_64 gen(seed_);
     std::normal_distribution<CoordinateType> gauss(0.0, 1.0);
 
     hyperplanes_.resize(k_ * l_, dim_);
@@ -163,7 +163,7 @@ class HyperplaneHashBase {
 
     for (int ii = 0; ii < dim_; ++ii) {
       for (int jj = 0; jj < k_ * l_; ++jj) {
-        hyperplanes_(jj, ii) = gauss(gen);
+        hyperplanes_(jj, ii) = gauss(gen_);
         row_norms[jj] += hyperplanes_(jj, ii) * hyperplanes_(jj, ii);
       }
     }
@@ -184,6 +184,7 @@ class HyperplaneHashBase {
   int_fast32_t k_;
   int_fast32_t l_;
   uint_fast64_t seed_;
+  std::mt19937_64 gen_;
   Eigen::Matrix<CoordinateType, Eigen::Dynamic, Eigen::Dynamic, Eigen::ColMajor>
       hyperplanes_;
 

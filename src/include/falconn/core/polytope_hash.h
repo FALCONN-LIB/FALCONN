@@ -250,6 +250,18 @@ class CrossPolytopeHashBase {
     return res;
   }
 
+  void add_table() {
+    std::uniform_int_distribution<int_fast32_t> bernoulli(0, 1);
+    for (int_fast32_t ii = 0; ii < k_ * num_rotations_; ++ii) {
+      RotatedVectorType tmp_vec(rotation_dim_);
+      for (int_fast32_t jj = 0; jj < rotation_dim_; ++jj) {
+        tmp_vec(jj) = 2 * bernoulli(gen_) - 1;
+      }
+      random_signs_.push_back(tmp_vec);
+    }
+    ++l_;
+  }
+
  protected:
   CrossPolytopeHashBase(int_fast32_t rotation_dim, int_fast32_t k,
                         int_fast32_t l, int_fast32_t num_rotations,
@@ -261,7 +273,8 @@ class CrossPolytopeHashBase {
         num_rotations_(num_rotations),
         last_cp_dim_(last_cp_dim),
         last_cp_log_dim_(log2ceil(last_cp_dim)),
-        seed_(seed) {
+        seed_(seed),
+        gen_(seed) {
     if (rotation_dim_ < 1) {
       throw LSHFunctionError("Rotation dimension must be at least 1.");
     }
@@ -308,13 +321,12 @@ class CrossPolytopeHashBase {
     }
 
     // use the STL Mersenne Twister for random numbers
-    std::mt19937_64 gen(seed_);
     std::uniform_int_distribution<int_fast32_t> bernoulli(0, 1);
 
     for (int_fast32_t ii = 0; ii < k_ * l_ * num_rotations_; ++ii) {
       RotatedVectorType tmp_vec(rotation_dim_);
       for (int_fast32_t jj = 0; jj < rotation_dim_; ++jj) {
-        tmp_vec(jj) = 2 * bernoulli(gen) - 1;
+        tmp_vec(jj) = 2 * bernoulli(gen_) - 1;
       }
       random_signs_.push_back(tmp_vec);
     }
@@ -347,11 +359,12 @@ class CrossPolytopeHashBase {
   const int_fast32_t rotation_dim_;  // dimension of the vectors to be rotated
   const int_fast32_t log_rotation_dim_;  // binary log of rotation_dim
   const int_fast32_t k_;
-  const int_fast32_t l_;
+  int_fast32_t l_;
   const int_fast32_t num_rotations_;
   const int_fast32_t last_cp_dim_;
   const int_fast32_t last_cp_log_dim_;
   const uint_fast64_t seed_;
+  std::mt19937_64 gen_;
   std::vector<RotatedVectorType> random_signs_;
 
  private:
@@ -476,7 +489,7 @@ class CrossPolytopeHashBase {
         return false;
       }
 
-      if (num_probes_ <= l_) {
+      if (num_probes_ >= 0 && num_probes_ <= l_) {
         *result_table = cur_probe_counter_;
         *result_probe = main_table_probes_[*result_table];
         return true;

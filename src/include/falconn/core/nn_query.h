@@ -13,8 +13,6 @@
 #include "../falconn_global.h"
 #include "heap.h"
 
-#include "../sketches.h"
-
 namespace falconn {
 namespace core {
 
@@ -33,15 +31,14 @@ class NearestNeighborQuery {
                        const DataStorage& data_storage)
       : table_query_(table_query), data_storage_(data_storage) {}
 
-  LSHTableKeyType find_nearest_neighbor(
-      const LSHTablePointType& q, const ComparisonPointType& q_comp,
-      int_fast64_t num_probes, int_fast64_t max_num_candidates,
-      SketchesQueryable<LSHTablePointType, LSHTableKeyType>* sketches =
-          nullptr) {
+  LSHTableKeyType find_nearest_neighbor(const LSHTablePointType& q,
+                                        const ComparisonPointType& q_comp,
+                                        int_fast64_t num_probes,
+                                        int_fast64_t max_num_candidates) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     table_query_->get_unique_candidates(q, num_probes, max_num_candidates,
-                                        &candidates_, sketches);
+                                        &candidates_);
     auto distance_start_time = std::chrono::high_resolution_clock::now();
 
     // TODO: use nullptr for pointer types
@@ -82,12 +79,11 @@ class NearestNeighborQuery {
     return best_key;
   }
 
-  void find_k_nearest_neighbors(
-      const LSHTablePointType& q, const ComparisonPointType& q_comp,
-      int_fast64_t k, int_fast64_t num_probes, int_fast64_t max_num_candidates,
-      std::vector<LSHTableKeyType>* result,
-      SketchesQueryable<LSHTablePointType, LSHTableKeyType>* sketches =
-          nullptr) {
+  void find_k_nearest_neighbors(const LSHTablePointType& q,
+                                const ComparisonPointType& q_comp,
+                                int_fast64_t k, int_fast64_t num_probes,
+                                int_fast64_t max_num_candidates,
+                                std::vector<LSHTableKeyType>* result) {
     if (result == nullptr) {
       throw NearestNeighborQueryError("Results vector pointer is nullptr.");
     }
@@ -98,7 +94,7 @@ class NearestNeighborQuery {
     res.clear();
 
     table_query_->get_unique_candidates(q, num_probes, max_num_candidates,
-                                        &candidates_, sketches);
+                                        &candidates_);
 
     heap_.reset();
     heap_.resize(k);
@@ -147,12 +143,11 @@ class NearestNeighborQuery {
     stats_.average_total_query_time += elapsed_total.count();
   }
 
-  void find_near_neighbors(
-      const LSHTablePointType& q, const ComparisonPointType& q_comp,
-      DistanceType threshold, int_fast64_t num_probes,
-      int_fast64_t max_num_candidates, std::vector<LSHTableKeyType>* result,
-      SketchesQueryable<LSHTablePointType, LSHTableKeyType>* sketches =
-          nullptr) {
+  void find_near_neighbors(const LSHTablePointType& q,
+                           const ComparisonPointType& q_comp,
+                           DistanceType threshold, int_fast64_t num_probes,
+                           int_fast64_t max_num_candidates,
+                           std::vector<LSHTableKeyType>* result) {
     if (result == nullptr) {
       throw NearestNeighborQueryError("Results vector pointer is nullptr.");
     }
@@ -163,7 +158,7 @@ class NearestNeighborQuery {
     res.clear();
 
     table_query_->get_unique_candidates(q, num_probes, max_num_candidates,
-                                        &candidates_, sketches);
+                                        &candidates_);
     auto distance_start_time = std::chrono::high_resolution_clock::now();
 
     typename DataStorage::SubsequenceIterator iter =
@@ -187,15 +182,14 @@ class NearestNeighborQuery {
     stats_.average_total_query_time += elapsed_total.count();
   }
 
-  void get_candidates_with_duplicates(
-      const LSHTablePointType& q, int_fast64_t num_probes,
-      int_fast64_t max_num_candidates, std::vector<LSHTableKeyType>* result,
-      SketchesQueryable<LSHTablePointType, LSHTableKeyType>* sketches =
-          nullptr) {
+  void get_candidates_with_duplicates(const LSHTablePointType& q,
+                                      int_fast64_t num_probes,
+                                      int_fast64_t max_num_candidates,
+                                      std::vector<LSHTableKeyType>* result) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
-    table_query_->get_candidates_with_duplicates(
-        q, num_probes, max_num_candidates, result, sketches);
+    table_query_->get_candidates_with_duplicates(q, num_probes,
+                                                 max_num_candidates, result);
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto elapsed_total =
@@ -204,15 +198,14 @@ class NearestNeighborQuery {
     stats_.average_total_query_time += elapsed_total.count();
   }
 
-  void get_unique_candidates(
-      const LSHTablePointType& q, int_fast64_t num_probes,
-      int_fast64_t max_num_candidates, std::vector<LSHTableKeyType>* result,
-      SketchesQueryable<LSHTablePointType, LSHTableKeyType>* sketches =
-          nullptr) {
+  void get_unique_candidates(const LSHTablePointType& q,
+                             int_fast64_t num_probes,
+                             int_fast64_t max_num_candidates,
+                             std::vector<LSHTableKeyType>* result) {
     auto start_time = std::chrono::high_resolution_clock::now();
 
     table_query_->get_unique_candidates(q, num_probes, max_num_candidates,
-                                        result, sketches);
+                                        result);
 
     auto end_time = std::chrono::high_resolution_clock::now();
     auto elapsed_total =

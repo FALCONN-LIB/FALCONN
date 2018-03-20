@@ -108,6 +108,32 @@ class BasicCompositeHashTable {
     }
   }
 
+  void add_table() {
+    ++l_;
+    tables_.resize(l_);
+    tables_[l_ - 1].reset(factory_->new_hash_table());
+    if (!tables_[l_ - 1]) {
+      throw CompositeHashTableError("Error adding a table");
+    }
+  }
+
+  void serialize(FILE* output) {
+    for (size_t i = 0; i < tables_.size(); ++i) {
+      tables_[i]->serialize(output);
+    }
+  }
+
+  void serialize(const std::string& file_name) {
+    FILE* output = fopen(file_name.c_str(), "wb");
+    if (!output) {
+      throw std::runtime_error("can't open to write");
+    }
+    serialize(output);
+    if (fclose(output)) {
+      throw std::runtime_error("can't close");
+    }
+  }
+
   int_fast32_t get_l() { return l_; }
 
   std::pair<Iterator, Iterator> retrieve_bulk(

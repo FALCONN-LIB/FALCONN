@@ -10,6 +10,8 @@
 
 #include "hash_table_helpers.h"
 
+#include <serialize.h>
+
 namespace falconn {
 namespace core {
 
@@ -51,7 +53,7 @@ class FlatHashTable {
     if (entries_added_) {
       throw FlatHashTableError("Entries were already added.");
     }
-    bucket_list_.resize(num_buckets_, std::make_pair(0, 0));
+    bucket_list_.resize(num_buckets_ + 1, 0);
 
     entries_added_ = true;
 
@@ -66,34 +68,51 @@ class FlatHashTable {
     std::sort(indices_.begin(), indices_.end(), comp);
 
     IndexType cur_index = 0;
-    while (cur_index < static_cast<IndexType>(indices_.size())) {
+    for (KeyType bucket = 0; bucket < static_cast<KeyType>(num_buckets_);
+         ++bucket) {
+      bucket_list_[bucket] = cur_index;
       IndexType end_index = cur_index;
-      do {
-        end_index += 1;
-      } while (end_index < static_cast<IndexType>(indices_.size()) &&
-               keys[indices_[cur_index]] == keys[indices_[end_index]]);
-
-      bucket_list_[keys[indices_[cur_index]]].first = cur_index;
-      bucket_list_[keys[indices_[cur_index]]].second = end_index - cur_index;
+      while (end_index < static_cast<IndexType>(keys.size()) &&
+             keys[indices_[end_index]] == bucket) {
+        ++end_index;
+      }
       cur_index = end_index;
     }
+    bucket_list_[num_buckets_] = keys.size();
   }
 
   std::pair<Iterator, Iterator> retrieve(const KeyType& key) {
-    IndexType start = bucket_list_[key].first;
-    IndexType len = bucket_list_[key].second;
+    IndexType start = bucket_list_[key];
+    IndexType end = bucket_list_[key + 1];
     // printf("retrieve for key %u\n", key);
     // printf("  start: %lld  len %lld\n", start, len);
-    return std::make_pair(&(indices_[start]), &(indices_[start + len]));
+    return std::make_pair(&(indices_[start]), &(indices_[end]));
+  }
+
+  void serialize(FILE* output) { ir::serialize(output, get_data()); }
+
+  void serialize(const std::string& file_name) {
+    ir::serialize(file_name, get_data());
   }
 
  private:
   IndexType num_buckets_ = -1;
   bool entries_added_ = false;
-  // the pair contains start index and length
-  std::vector<std::pair<IndexType, IndexType>> bucket_list_;
+  std::vector<IndexType> bucket_list_;
   // point indices
   std::vector<ValueType> indices_;
+
+  std::vector<KeyType> get_data() {
+    std::vector<KeyType> data(indices_.size());
+    for (KeyType bucket = 0; bucket < static_cast<KeyType>(num_buckets_);
+         ++bucket) {
+      for (IndexType i = bucket_list_[bucket]; i < bucket_list_[bucket + 1];
+           ++i) {
+        data[indices_[i]] = bucket;
+      }
+    }
+    return data;
+  }
 
   class KeyComparator {
    public:
