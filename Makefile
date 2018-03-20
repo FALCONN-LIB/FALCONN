@@ -49,6 +49,7 @@ python_package:
 	mkdir -p $(PYTHON_PKG_DIR)/external
 	cp -r external/eigen $(PYTHON_PKG_DIR)/external
 	cp -r external/pybind11 $(PYTHON_PKG_DIR)/external
+	cp -r external/simple-serializer $(PYTHON_PKG_DIR)/external
 	cd $(PYTHON_PKG_DIR); python setup.py sdist; cd dist; tar -xf FALCONN*.tar.gz; cd FALCONN-*; python setup.py build
 
 python_package_install: python_package

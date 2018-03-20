@@ -22,11 +22,11 @@ module = Extension(
     '_falconn',
     sources=['internal/python_wrapper.cc'],
     extra_compile_args=extra_args,
-    include_dirs=['include', 'external/eigen', 'external/pybind11/include'])
+    include_dirs=['include', 'external/eigen', 'external/pybind11/include', 'external/simple-serializer'])
 
 setup(
     name='FALCONN',
-    version='1.3.1',
+    version='1.4.0',
     author='Ilya Razenshteyn, Ludwig Schmidt',
     author_email='falconn.lib@gmail.com',
     url='http://falconn-lib.org/',
