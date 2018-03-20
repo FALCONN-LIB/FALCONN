@@ -1,6 +1,6 @@
 #include "fht.h"
-inline void helper_float_1(float *buf);
-inline void helper_float_1(float *buf) {
+static inline void helper_float_1(float *buf);
+static inline void helper_float_1(float *buf) {
   for (int j = 0; j < 2; j += 2) {
     for (int k = 0; k < 1; ++k) {
       float u = buf[j + k];
@@ -10,8 +10,8 @@ inline void helper_float_1(float *buf) {
     }
   }
 }
-inline void helper_float_2(float *buf);
-inline void helper_float_2(float *buf) {
+static inline void helper_float_2(float *buf);
+static inline void helper_float_2(float *buf) {
   for (int j = 0; j < 4; j += 4) {
     __asm__ volatile (
       "movups (%0), %%xmm0\n"
@@ -37,8 +37,8 @@ inline void helper_float_2(float *buf) {
     );
   }
 }
-inline void helper_float_3(float *buf);
-inline void helper_float_3(float *buf) {
+static inline void helper_float_3(float *buf);
+static inline void helper_float_3(float *buf) {
   for (int j = 0; j < 8; j += 8) {
     for (int k = 0; k < 4; k += 4) {
       __asm__ volatile (
@@ -89,8 +89,8 @@ inline void helper_float_3(float *buf) {
     }
   }
 }
-inline void helper_float_4(float *buf);
-inline void helper_float_4(float *buf) {
+static inline void helper_float_4(float *buf);
+static inline void helper_float_4(float *buf) {
   for (int j = 0; j < 16; j += 16) {
     for (int k = 0; k < 4; k += 4) {
       __asm__ volatile (
@@ -191,8 +191,8 @@ inline void helper_float_4(float *buf) {
     }
   }
 }
-inline void helper_float_5(float *buf);
-inline void helper_float_5(float *buf) {
+static inline void helper_float_5(float *buf);
+static inline void helper_float_5(float *buf) {
   for (int j = 0; j < 32; j += 32) {
     for (int k = 0; k < 4; k += 4) {
       __asm__ volatile (
@@ -401,8 +401,8 @@ inline void helper_float_5(float *buf) {
     }
   }
 }
-inline void helper_float_6(float *buf);
-inline void helper_float_6(float *buf) {
+static inline void helper_float_6(float *buf);
+static inline void helper_float_6(float *buf) {
   for (int j = 0; j < 64; j += 32) {
     for (int k = 0; k < 4; k += 4) {
       __asm__ volatile (
@@ -874,8 +874,8 @@ void helper_float_7(float *buf);
 void helper_float_7(float *buf) {
   helper_float_7_recursive(buf, 7);
 }
-inline void helper_float_8(float *buf);
-inline void helper_float_8(float *buf) {
+static inline void helper_float_8(float *buf);
+static inline void helper_float_8(float *buf) {
   for (int j = 0; j < 256; j += 32) {
     for (int k = 0; k < 4; k += 4) {
       __asm__ volatile (
@@ -1155,8 +1155,8 @@ inline void helper_float_8(float *buf) {
     }
   }
 }
-inline void helper_float_9(float *buf);
-inline void helper_float_9(float *buf) {
+static inline void helper_float_9(float *buf);
+static inline void helper_float_9(float *buf) {
   for (int j = 0; j < 512; j += 32) {
     for (int k = 0; k < 4; k += 4) {
       __asm__ volatile (
@@ -1451,8 +1451,8 @@ inline void helper_float_9(float *buf) {
     }
   }
 }
-inline void helper_float_10(float *buf);
-inline void helper_float_10(float *buf) {
+static inline void helper_float_10(float *buf);
+static inline void helper_float_10(float *buf) {
   for (int j = 0; j < 1024; j += 32) {
     for (int k = 0; k < 4; k += 4) {
       __asm__ volatile (
@@ -1763,8 +1763,8 @@ inline void helper_float_10(float *buf) {
     }
   }
 }
-inline void helper_float_11(float *buf);
-inline void helper_float_11(float *buf) {
+static inline void helper_float_11(float *buf);
+static inline void helper_float_11(float *buf) {
   for (int j = 0; j < 2048; j += 32) {
     for (int k = 0; k < 4; k += 4) {
       __asm__ volatile (
@@ -13951,8 +13951,8 @@ int fht_float(float *buf, int log_n) {
   }
   return 1;
 }
-inline void helper_double_1(double *buf);
-inline void helper_double_1(double *buf) {
+static inline void helper_double_1(double *buf);
+static inline void helper_double_1(double *buf) {
   for (int j = 0; j < 2; j += 2) {
     __asm__ volatile (
       "movupd (%0), %%xmm0\n"
@@ -14069,8 +14069,8 @@ void helper_double_3(double *buf);
 void helper_double_3(double *buf) {
   helper_double_3_recursive(buf, 3);
 }
-inline void helper_double_4(double *buf);
-inline void helper_double_4(double *buf) {
+static inline void helper_double_4(double *buf);
+static inline void helper_double_4(double *buf) {
   for (int j = 0; j < 16; j += 16) {
     for (int k = 0; k < 2; k += 2) {
       __asm__ volatile (
@@ -14310,8 +14310,8 @@ void helper_double_5(double *buf);
 void helper_double_5(double *buf) {
   helper_double_5_recursive(buf, 5);
 }
-inline void helper_double_6(double *buf);
-inline void helper_double_6(double *buf) {
+static inline void helper_double_6(double *buf);
+static inline void helper_double_6(double *buf) {
   for (int j = 0; j < 64; j += 16) {
     for (int k = 0; k < 2; k += 2) {
       __asm__ volatile (
@@ -14463,8 +14463,8 @@ inline void helper_double_6(double *buf) {
     }
   }
 }
-inline void helper_double_7(double *buf);
-inline void helper_double_7(double *buf) {
+static inline void helper_double_7(double *buf);
+static inline void helper_double_7(double *buf) {
   for (int j = 0; j < 128; j += 16) {
     for (int k = 0; k < 2; k += 2) {
       __asm__ volatile (
@@ -15962,8 +15962,8 @@ void helper_double_12(double *buf);
 void helper_double_12(double *buf) {
   helper_double_12_recursive(buf, 12);
 }
-inline void helper_double_13(double *buf);
-inline void helper_double_13(double *buf) {
+static inline void helper_double_13(double *buf);
+static inline void helper_double_13(double *buf) {
   for (int j = 0; j < 8192; j += 16) {
     for (int k = 0; k < 2; k += 2) {
       __asm__ volatile (
