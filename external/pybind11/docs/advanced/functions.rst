@@ -126,7 +126,7 @@ targeted arguments can be passed through the :class:`cpp_function` constructor:
 
 .. warning::
 
-    Code with invalid return value policies might access unitialized memory or
+    Code with invalid return value policies might access uninitialized memory or
     free data structures multiple times, which can lead to hard-to-debug
     non-determinism and segmentation faults, hence it is worth spending the
     time to understand all the different options in the table above.
@@ -438,7 +438,7 @@ To explicitly enable or disable this behaviour, using the
     py::class_<Cat>(m, "Cat").def(py::init<>());
     m.def("bark", [](Dog *dog) -> std::string {
         if (dog) return "woof!"; /* Called with a Dog instance */
-        else return "(no dog)"; /* Called with None, d == nullptr */
+        else return "(no dog)"; /* Called with None, dog == nullptr */
     }, py::arg("dog").none(true));
     m.def("meow", [](Cat *cat) -> std::string {
         // Can't be called with None argument
@@ -473,7 +473,7 @@ Overload resolution order
 When a function or method with multiple overloads is called from Python,
 pybind11 determines which overload to call in two passes.  The first pass
 attempts to call each overload without allowing argument conversion (as if
-every argument had been specified as ``py::arg().noconvert()`` as decribed
+every argument had been specified as ``py::arg().noconvert()`` as described
 above).
 
 If no overload succeeds in the no-conversion first pass, a second pass is
