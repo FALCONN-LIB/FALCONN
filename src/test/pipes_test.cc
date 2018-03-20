@@ -26,12 +26,12 @@ std::vector<DenseVector<float>> get_dummy_dataset(int32_t n) {
 
 TEST(TopKPipeTest, TestLookaheads) {
   const int32_t n = 100;
-  const int32_t k = 7;
+  const int32_t k = 10;
   std::vector<DenseVector<float>> dataset = get_dummy_dataset(n);
   DenseVector<float> query(1);
   query[0] = 0;
 
-  for (int32_t lookahead = 1; lookahead <= k; lookahead++) {
+  for (int32_t lookahead = 0; lookahead <= k; lookahead++) {
     ExhaustiveProducer producer(1, n);
     DistanceScorer<DenseVector<float>> scorer(1, dataset);
     TopKPipe<DistanceScorer<DenseVector<float>>> top_k(1, k, true, lookahead);
@@ -44,7 +44,7 @@ TEST(TopKPipeTest, TestLookaheads) {
       ans.push_back(it1.get());
       ++it1;
     }
-    ASSERT_THAT(ans, ::testing::ElementsAre(0, 1, 2, 3, 4, 5, 6));
+    ASSERT_THAT(ans, ::testing::ElementsAre(0, 1, 2, 3, 4, 5, 6, 7, 8, 9));
   }
 }
 
