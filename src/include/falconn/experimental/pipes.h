@@ -449,12 +449,18 @@ class TopKPipeThreadUnsafe {
     h_.reset();
     h_.resize(k_);
     int32_t initially_inserted = 0;
+    if (g.is_valid()) {
+      s.prepare(worker_id, g.get());
+    }
     for (; initially_inserted < k_; ++initially_inserted) {
       if (g.is_valid()) {
         auto val = g.get();
         auto score = s.get_score(worker_id, val);
         h_.insert_unsorted(-score, val);
         ++g;
+        if (g.is_valid()) {
+          s.prepare(worker_id, g.get());
+        }
       } else {
         break;
       }
@@ -497,9 +503,15 @@ class TopKPipeThreadUnsafe {
       }
 
       if (look_ahead_ == 0) {
+        if (g.is_valid()) {
+          s.prepare(worker_id, g.get());
+        }
         while (g.is_valid()) {
           auto val = g.get();
           ++g;
+          if (g.is_valid()) {
+            s.prepare(worker_id, g.get());
+          }
 
           auto score = s.get_score(worker_id, val);
           if (score < -h_.min_key()) {
