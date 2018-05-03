@@ -1,4 +1,4 @@
-#include <falconn/experimental/pipes.h>
+#include <falconn/experimental/code_generation.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -252,4 +252,119 @@ TEST(Pipeline2Test, TestRunQueryWorkers) {
   }
   ASSERT_THROW(pipe.execute_query(num_workers, dataset[0]),
                falconn::experimental::PipelineError);
+}
+
+TEST(JsonTest, TestCorrectlyFormatted1) {
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "HashProducer",
+        "dimension": 128,
+        "num_hash_bits": 16,
+        "num_tables": 10,
+        "num_probes": 15,
+        "num_rotations": 2,
+        "seed": 998123
+    },
+    "step_1": {
+        "type": "TablePipe",
+        "num_setup_threads": 0
+    },
+    "step_2": {
+        "type": "DeduplicationPipe"
+    },
+    "step_3": {
+        "type": "TopKPipe",
+        "k": 100,
+        "scorer": {
+            "type": "RandomProjectionSketches",
+            "num_chunks": 2,
+            "seed": 123123
+        },
+        "sort": true,
+        "look_ahead": 2
+    },
+    "step_4": {
+        "type": "TopKPipe",
+        "k": 100,
+        "scorer": {
+            "type": "DistanceScorer"
+        },
+        "sort": true,
+        "look_ahead": 2
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  std::vector<ir::Point> dataset;
+  std::string code =
+      falconn::experimental::read_from_json(dataset, string_stream);
+  ASSERT_TRUE(code.size() > 0);
+}
+
+TEST(JsonTest, TestCorrectlyFormatted2) {
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "ExhaustiveProducer"
+    },
+    "step_1": {
+        "type": "TopKPipe",
+        "k": 100,
+        "scorer": {
+            "type": "RandomProjectionSketches",
+            "num_chunks": 2,
+            "seed": 123123
+        },
+        "sort": true,
+        "look_ahead": 2
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  std::vector<ir::Point> dataset;
+  std::string code =
+      falconn::experimental::read_from_json(dataset, string_stream);
+  ASSERT_TRUE(code.size() > 0);
+}
+
+TEST(JsonTest, TestIncorrectlyFormat1) {
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "ExhaustiveProducer"
+    },
+    "step_1": {
+        "type": "TopKPipe",
+        "k": 100,
+        "scorer": {
+            "type": "RandomTypo",
+            "num_chunks": 2,
+            "seed": 123123
+        },
+        "sort": true,
+        "look_ahead": 2
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  std::vector<ir::Point> dataset;
+  ASSERT_THROW(falconn::experimental::read_from_json(dataset, string_stream),
+               falconn::experimental::PipelineGenerationError);
+}
+
+TEST(JsonTest, TestIncorrectlyFormat2) {
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "ExhaustiveProducer"
+    },
+    "step_1": {
+        "type": "TopKPipe",
+        "k": 100,
+        "sort": true,
+        "look_ahead": 2
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  std::vector<ir::Point> dataset;
+  ASSERT_THROW(falconn::experimental::read_from_json(dataset, string_stream),
+               falconn::experimental::PipelineGenerationError);
 }
