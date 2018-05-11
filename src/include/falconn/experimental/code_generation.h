@@ -436,8 +436,7 @@ std::string gen_init_list(ProducerParameters *producer,
 }
 
 template <typename PointType>
-std::string generate(const std::vector<PointType> &dataset,
-                     ProducerParameters *producer_params,
+std::string generate(ProducerParameters *producer_params,
                      const std::vector<PipeParameters *> &pipe_params) {
   const std::string base_template =
       R"(
@@ -468,9 +467,6 @@ std::string generate(const std::vector<PointType> &dataset,
     };
   )";
   const std::string point_type = PointTypeName<PointType>::get_type_name();
-  // we just use it to obtain the point_type above.
-  UNUSED(dataset);
-
   const std::string producer_type =
       (producer_params->producer_type_ == Producer::HashProducer
            ? "falconn::experimental::HashProducer<" + point_type + ">"
@@ -534,18 +530,34 @@ std::string generate(const std::vector<PointType> &dataset,
 }
 
 template <typename PointType>
-std::string read_from_json(const std::vector<PointType> &dataset,
-                           std::istream &input_stream) {
+std::string generate_pipeline_from_json(std::istream &input_stream) {
   json j;
-  input_stream >> j;
+  try {
+    input_stream >> j;
+  } catch (std::exception &e) {
+    throw PipelineGenerationError("The input json is ill-formatted.");
+  }
+
+  int32_t num_steps = j.size() - 1;
+  if (!num_steps) {
+    throw PipelineGenerationError(
+        "The pipeline should have exactly one producer and at least one "
+        "step.");
+  }
+
+  if (!j.count("producer")) {
+    throw PipelineGenerationError(
+        "There should be one entry for the producer.");
+  }
 
   std::vector<PipeParameters *> parameters;
-
-  for (int32_t step = 1;; ++step) {
+  for (int32_t step = 1; step <= num_steps; ++step) {
     const std::string key = "step_" + std::to_string(step);
     if (!j.count(key)) {
-      break;
+      throw PipelineGenerationError(
+          "There should be an entry per step number.");
     }
+
     auto current_parameter = j.at(key);
     const std::string type = current_parameter.at("type").get<std::string>();
     if (type == "TablePipe") {
@@ -557,7 +569,7 @@ std::string read_from_json(const std::vector<PointType> &dataset,
       parameters.push_back(param);
     } else if (type == "TopKPipe") {
       if (!current_parameter.count("scorer")) {
-        throw PipelineGenerationError("TopKPipe needs a scorer");
+        throw PipelineGenerationError("TopKPipe needs a scorer.");
       }
       std::string scorer_type =
           current_parameter.at("scorer").at("type").get<std::string>();
@@ -571,10 +583,10 @@ std::string read_from_json(const std::vector<PointType> &dataset,
             new TopKPipeParameters<DistanceScorerParameters>(current_parameter);
         parameters.push_back(param);
       } else {
-        throw PipelineGenerationError("Invalid scorer type");
+        throw PipelineGenerationError("Invalid scorer type.");
       }
     } else {
-      throw PipelineGenerationError("Invalid type");
+      throw PipelineGenerationError("Invalid type.");
     }
   }
 
@@ -585,13 +597,13 @@ std::string read_from_json(const std::vector<PointType> &dataset,
   if (producer_type == "HashProducer") {
     HashProducerParameters producer(j.at("producer"));
     generated_code =
-        falconn::experimental::generate(dataset, &producer, parameters);
+        falconn::experimental::generate<PointType>(&producer, parameters);
   } else if (producer_type == "ExhaustiveProducer") {
     ExhaustiveProducerParameters producer(j.at("producer"));
     generated_code =
-        falconn::experimental::generate(dataset, &producer, parameters);
+        falconn::experimental::generate<PointType>(&producer, parameters);
   } else {
-    throw PipelineGenerationError("Invalid producer type");
+    throw PipelineGenerationError("Invalid producer type.");
   }
 
   for (PipeParameters *parameter : parameters) {
