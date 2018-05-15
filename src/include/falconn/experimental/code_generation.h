@@ -441,6 +441,8 @@ std::string generate(ProducerParameters *producer_params,
   const std::string base_template =
       R"(
     #include <falconn/experimental/pipes.h>
+
+    #include <map>
       
     class Pipeline {
      public:
