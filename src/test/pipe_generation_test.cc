@@ -1,4 +1,4 @@
-#include <falconn/experimental/pipes.h>
+#include <falconn/experimental/code_generation.h>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
@@ -252,4 +252,285 @@ TEST(Pipeline2Test, TestRunQueryWorkers) {
   }
   ASSERT_THROW(pipe.execute_query(num_workers, dataset[0]),
                falconn::experimental::PipelineError);
+}
+
+TEST(JsonTest, TestCorrectFormat1) {
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "HashProducer",
+        "dimension": 128,
+        "num_hash_bits": 16,
+        "num_tables": 10,
+        "num_probes": 15,
+        "num_rotations": 2,
+        "seed": 998123
+    },
+    "step_1": {
+        "type": "TablePipe",
+        "num_setup_threads": 0
+    },
+    "step_2": {
+        "type": "DeduplicationPipe"
+    },
+    "step_3": {
+        "type": "TopKPipe",
+        "k": 100,
+        "scorer": {
+            "type": "RandomProjectionSketches",
+            "num_chunks": 2,
+            "seed": 123123
+        },
+        "sort": true,
+        "look_ahead": 2
+    },
+    "step_4": {
+        "type": "TopKPipe",
+        "k": 100,
+        "scorer": {
+            "type": "DistanceScorer"
+        },
+        "sort": true,
+        "look_ahead": 2
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  std::string code =
+      falconn::experimental::generate_pipeline_from_json<ir::Point>(
+          string_stream);
+  ASSERT_TRUE(code.size() > 0);
+}
+
+TEST(JsonTest, TestCorrectFormat2) {
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "ExhaustiveProducer"
+    },
+    "step_1": {
+        "type": "TopKPipe",
+        "k": 100,
+        "scorer": {
+            "type": "RandomProjectionSketches",
+            "num_chunks": 2,
+            "seed": 123123
+        },
+        "sort": true,
+        "look_ahead": 2
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  std::string code =
+      falconn::experimental::generate_pipeline_from_json<ir::Point>(
+          string_stream);
+  ASSERT_TRUE(code.size() > 0);
+}
+
+TEST(JsonTest, TestIncorrectFormat1) {
+  // typo in type
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "ExhaustiveProducer"
+    },
+    "step_1": {
+        "type": "TopKPipe",
+        "k": 100,
+        "scorer": {
+            "type": "RandomTypo",
+            "num_chunks": 2,
+            "seed": 123123
+        },
+        "sort": true,
+        "look_ahead": 2
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  ASSERT_THROW(falconn::experimental::generate_pipeline_from_json<ir::Point>(
+                   string_stream),
+               falconn::experimental::PipelineGenerationError);
+}
+
+TEST(JsonTest, TestIncorrectFormat2) {
+  // no scorer
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "ExhaustiveProducer"
+    },
+    "step_1": {
+        "type": "TopKPipe",
+        "k": 100,
+        "sort": true,
+        "look_ahead": 2
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  ASSERT_THROW(falconn::experimental::generate_pipeline_from_json<ir::Point>(
+                   string_stream),
+               falconn::experimental::PipelineGenerationError);
+}
+
+TEST(JsonTest, TestIncorrectFormat3) {
+  // extra comma
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "HashProducer",
+        "dimension": 128,
+        "num_hash_bits": 16,
+        "num_tables": 10,
+        "num_probes": 15,
+        "num_rotations": 2,
+        "seed": 998123
+    },
+    "step_1": {
+        "type": "TablePipe",
+        "num_setup_threads": 0
+    },
+    "step_2": {
+        "type": "DeduplicationPipe"
+    },
+  })";
+  std::istringstream string_stream(json_string);
+  ASSERT_THROW(falconn::experimental::generate_pipeline_from_json<ir::Point>(
+                   string_stream),
+               falconn::experimental::PipelineGenerationError);
+}
+
+TEST(JsonTest, TestIncorrectFormat4) {
+  // missing comma
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "HashProducer",
+        "dimension": 128,
+        "num_hash_bits": 16
+        "num_tables": 10,
+        "num_probes": 15,
+        "num_rotations": 2,
+        "seed": 998123
+    },
+    "step_1": {
+        "type": "TablePipe",
+        "num_setup_threads": 0
+    },
+    "step_2": {
+        "type": "DeduplicationPipe"
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  ASSERT_THROW(falconn::experimental::generate_pipeline_from_json<ir::Point>(
+                   string_stream),
+               falconn::experimental::PipelineGenerationError);
+}
+
+TEST(JsonTest, TestIncorrectFormat5) {
+  // only producer
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "HashProducer",
+        "dimension": 128,
+        "num_hash_bits": 16,
+        "num_tables": 10,
+        "num_probes": 15,
+        "num_rotations": 2,
+        "seed": 998123
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  ASSERT_THROW(falconn::experimental::generate_pipeline_from_json<ir::Point>(
+                   string_stream),
+               falconn::experimental::PipelineGenerationError);
+}
+
+TEST(JsonTest, TestIncorrectFormat6) {
+  // no producer
+  const std::string json_string = R"(
+  {
+    "step_1": {
+        "type": "TablePipe",
+        "num_setup_threads": 0
+    },
+    "step_2": {
+        "type": "DeduplicationPipe"
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  ASSERT_THROW(falconn::experimental::generate_pipeline_from_json<ir::Point>(
+                   string_stream),
+               falconn::experimental::PipelineGenerationError);
+}
+
+TEST(JsonTest, TestIncorrectFormat7) {
+  // missing step number
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "HashProducer",
+        "dimension": 128,
+        "num_hash_bits": 16,
+        "num_tables": 10,
+        "num_probes": 15,
+        "num_rotations": 2,
+        "seed": 998123
+    },
+    "step_1": {
+        "type": "TablePipe",
+        "num_setup_threads": 0
+    },
+    "step_2": {
+        "type": "DeduplicationPipe"
+    },
+    "step_4": {
+        "type": "TopKPipe",
+        "k": 100,
+        "scorer": {
+            "type": "DistanceScorer"
+        },
+        "sort": true,
+        "look_ahead": 2
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  ASSERT_THROW(falconn::experimental::generate_pipeline_from_json<ir::Point>(
+                   string_stream),
+               falconn::experimental::PipelineGenerationError);
+}
+
+TEST(JsonTest, TestIncorrectFormat8) {
+  // incorrect step name
+  const std::string json_string = R"(
+  {
+    "producer": {
+        "type": "HashProducer",
+        "dimension": 128,
+        "num_hash_bits": 16,
+        "num_tables": 10,
+        "num_probes": 15,
+        "num_rotations": 2,
+        "seed": 998123
+    },
+    "step_1": {
+        "type": "TablePipe",
+        "num_setup_threads": 0
+    },
+    "step_2": {
+        "type": "DeduplicationPipe"
+    },
+    "step_x": {
+        "type": "TopKPipe",
+        "k": 100,
+        "scorer": {
+            "type": "DistanceScorer"
+        },
+        "sort": true,
+        "look_ahead": 2
+    }
+  })";
+  std::istringstream string_stream(json_string);
+  ASSERT_THROW(falconn::experimental::generate_pipeline_from_json<ir::Point>(
+                   string_stream),
+               falconn::experimental::PipelineGenerationError);
 }

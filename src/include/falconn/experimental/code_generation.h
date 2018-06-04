@@ -7,9 +7,14 @@
 #include "pipes.h"
 
 #include <cstdint>
+#include <fstream>
 #include <map>
 #include <memory>
 #include <vector>
+
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json;
 
 namespace falconn {
 namespace experimental {
@@ -18,6 +23,11 @@ class PipelineGenerationError : public FalconnError {
  public:
   PipelineGenerationError(const char *msg) : FalconnError(msg) {}
 };
+
+template <typename ParamType>
+void to_json(json &j, const ParamType &entity) {
+  entity.to_json(j);
+}
 
 template <typename PointType>
 struct PointTypeName;
@@ -64,8 +74,8 @@ struct ProducerParameters {
 };
 
 struct HashProducerParameters : ProducerParameters {
-  HashProducerParameters(int32_t dimension, int32_t num_hash_bits,
-                         int32_t num_tables, int32_t num_probes = -1,
+  HashProducerParameters(int32_t dimension = -1, int32_t num_hash_bits = -1,
+                         int32_t num_tables = -1, int32_t num_probes = -1,
                          int32_t num_rotations = 2,
                          uint_fast64_t seed = 4057218)
       : ProducerParameters(Producer::HashProducer),
@@ -76,11 +86,30 @@ struct HashProducerParameters : ProducerParameters {
         num_rotations_(num_rotations),
         seed_(seed) {}
 
+  HashProducerParameters(const json &j)
+      : ProducerParameters(Producer::HashProducer),
+        dimension_(j.at("dimension").get<int32_t>()),
+        num_hash_bits_(j.at("num_hash_bits").get<int32_t>()),
+        num_tables_(j.at("num_tables").get<int32_t>()),
+        num_probes_(j.at("num_probes").get<int32_t>()),
+        num_rotations_(j.at("num_rotations").get<int32_t>()),
+        seed_(j.at("seed").get<uint_fast64_t>()) {}
+
   std::string get_parameters() const {
     return std::to_string(dimension_) + ", " + std::to_string(num_hash_bits_) +
            ", " + std::to_string(num_tables_) + ", " +
            std::to_string(num_probes_) + ", " + std::to_string(num_rotations_) +
            ", " + std::to_string(seed_);
+  }
+
+  void to_json(json &j) const {
+    j = {{"type", "HashProducerParameters"},
+         {"dimension", dimension_},
+         {"num_hash_bits", num_hash_bits_},
+         {"num_tables", num_tables_},
+         {"num_probes", num_probes_},
+         {"num_rotations", num_rotations_},
+         {"seed", seed_}};
   }
 
   int32_t dimension_;
@@ -95,25 +124,26 @@ struct ExhaustiveProducerParameters : ProducerParameters {
   ExhaustiveProducerParameters()
       : ProducerParameters(Producer::ExhaustiveProducer) {}
 
+  ExhaustiveProducerParameters(const json &j)
+      : ProducerParameters(Producer::ExhaustiveProducer) {
+    UNUSED(j);
+  }
+
   std::string get_parameters() const { return "dataset.size()"; }
+
+  void to_json(json &j) const {
+    j = {{"type", "ExhaustiveProducerParameters"}};
+  }
 };
 
-struct ScorerParameters {
-  ScorerParameters(Scorer s, bool is_serializable)
-      : scorer_type_(s), is_serializable_(is_serializable) {}
-  virtual ~ScorerParameters() {}
-  virtual std::string get_parameters(const std::string &step_name) const = 0;
+struct RandomProjectionSketchesScorerParameters {
+  RandomProjectionSketchesScorerParameters(int32_t num_chunks = 2,
+                                           uint_fast64_t seed = 4057218)
+      : num_chunks_(num_chunks), seed_(seed) {}
 
-  const Scorer scorer_type_;
-  const bool is_serializable_;
-};
-
-struct RandomProjectionSketchesScorerParameters : ScorerParameters {
-  RandomProjectionSketchesScorerParameters(int32_t num_chunks,
-                                           uint_fast64_t seed)
-      : ScorerParameters(Scorer::RandomProjectionSketchesScorer, false),
-        num_chunks_(num_chunks),
-        seed_(seed) {}
+  RandomProjectionSketchesScorerParameters(const json &j)
+      : num_chunks_(j.at("num_chunks").get<int32_t>()),
+        seed_(j.at("seed").get<uint_fast64_t>()) {}
 
   std::string get_parameters(const std::string &step_name) const {
     UNUSED(step_name);
@@ -121,17 +151,39 @@ struct RandomProjectionSketchesScorerParameters : ScorerParameters {
            std::to_string(seed_);
   }
 
+  static const std::string get_class_name() {
+    return "falconn::core::RandomProjectionSketches";
+  }
+
+  void to_json(json &j) const {
+    j = {{"type", "RandomProjectionSketchesScorerParameters"},
+         {"num_chunks", num_chunks_},
+         {"seed", seed_}};
+  }
+
   int32_t num_chunks_;
   uint_fast64_t seed_;
 };
 
-struct DistanceScorerParameters : ScorerParameters {
-  DistanceScorerParameters()
-      : ScorerParameters(Scorer::DistanceScorer, false) {}
+struct DistanceScorerParameters {
+  DistanceScorerParameters() {}
+
+  DistanceScorerParameters(const json &j) { UNUSED(j); }
 
   std::string get_parameters(const std::string &step_name) const {
     UNUSED(step_name);
     return "dataset";
+  }
+
+  static std::string get_class_name() {
+    return "falconn::experimental::DistanceScorer";
+  }
+
+  void to_json(json &j) const { j = {{"type", "DistanceScorerParameters"}}; }
+
+  static void from_json(const json &j, DistanceScorerParameters &entity) {
+    UNUSED(j);
+    UNUSED(entity);
   }
 };
 
@@ -140,19 +192,28 @@ struct PipeParameters {
       : pipe_type_(p), is_serializable_(is_serializable) {}
   virtual ~PipeParameters() {}
   virtual std::string get_parameters(const std::string &step_name) const = 0;
+  virtual std::string get_class_name() const = 0;
 
   const Pipe pipe_type_;
   const bool is_serializable_;
 };
 
+template <typename ScorerType>
 struct TopKPipeParameters : PipeParameters {
-  TopKPipeParameters(int32_t k, ScorerParameters *scorer, bool sort = false,
-                     int32_t look_ahead = 1)
+  TopKPipeParameters(int32_t k = -1, ScorerType scorer = ScorerType(),
+                     bool sort = false, int32_t look_ahead = 1)
       : PipeParameters(Pipe::TopKPipe, false),
         k_(k),
-        scorer_(scorer),
+        scorer_(std::make_unique<ScorerType>(scorer)),
         sort_(sort),
         look_ahead_(look_ahead) {}
+
+  TopKPipeParameters(const json &j)
+      : PipeParameters(Pipe::TopKPipe, false),
+        k_(j.at("k").get<int32_t>()),
+        scorer_(std::make_unique<ScorerType>(j.at("scorer"))),
+        sort_(j.at("sort").get<bool>()),
+        look_ahead_(j.at("look_ahead").get<int32_t>()) {}
 
   std::string get_parameters(const std::string &step_name) const {
     UNUSED(step_name);
@@ -160,8 +221,20 @@ struct TopKPipeParameters : PipeParameters {
            std::to_string(look_ahead_);
   }
 
+  std::string get_class_name() const {
+    return "falconn::experimental::TopKPipe";
+  }
+
+  void to_json(json &j) const {
+    j = {{"type", "TopKPipeParameters"},
+         {"k", k_},
+         {"scorer", *scorer_.get()},
+         {"sort", sort_},
+         {"look_ahead", look_ahead_}};
+  }
+
   int32_t k_;
-  ScorerParameters *scorer_;
+  std::unique_ptr<ScorerType> scorer_;
   bool sort_;
   int32_t look_ahead_;
 };
@@ -170,6 +243,10 @@ struct TablePipeParameters : PipeParameters {
   TablePipeParameters(int_fast32_t num_setup_threads = 0)
       : PipeParameters(Pipe::TablePipe, true),
         num_setup_threads_(num_setup_threads) {}
+
+  TablePipeParameters(const json &j)
+      : PipeParameters(Pipe::TablePipe, true),
+        num_setup_threads_(j.at("num_setup_threads").get<int_fast32_t>()) {}
 
   std::string get_parameters(const std::string &pipe_name) const {
     // trim trailing _ from member name
@@ -184,6 +261,15 @@ struct TablePipeParameters : PipeParameters {
            lookup_key + "\")->second : \"\"";
   }
 
+  std::string get_class_name() const {
+    return "falconn::experimental::TablePipe";
+  }
+
+  void to_json(json &j) const {
+    j = {{"type", "TablePipeParameters"},
+         {"num_setup_threads", num_setup_threads_}};
+  }
+
   int_fast32_t num_setup_threads_;
 };
 
@@ -191,10 +277,21 @@ struct DeduplicationPipeParameters : PipeParameters {
   DeduplicationPipeParameters()
       : PipeParameters(Pipe::DeduplicationPipe, false) {}
 
+  DeduplicationPipeParameters(const json &j)
+      : PipeParameters(Pipe::DeduplicationPipe, false) {
+    UNUSED(j);
+  }
+
   std::string get_parameters(const std::string &step_name) const {
     UNUSED(step_name);
     return "dataset.size()";
   }
+
+  std::string get_class_name() const {
+    return "falconn::experimental::DeduplicationPipe";
+  }
+
+  void to_json(json &j) const { j = {{"type", "DeduplicationPipeParameters"}}; }
 };
 
 struct PipeElement {
@@ -203,39 +300,17 @@ struct PipeElement {
   std::string scorer_name;
 };
 
-std::string get_scorer_type_definition(const ScorerParameters *s,
+template <typename ScorerType>
+std::string get_scorer_type_definition(const ScorerType *s,
                                        const std::string &template_parameter) {
-  std::string class_name;
-  switch (s->scorer_type_) {
-    case Scorer::RandomProjectionSketchesScorer:
-      class_name = "falconn::core::RandomProjectionSketches";
-      break;
-    case Scorer::DistanceScorer:
-      class_name = "falconn::experimental::DistanceScorer";
-      break;
-    default:
-      break;
-  }
+  UNUSED(s);
+  std::string class_name = ScorerType::get_class_name();
   return class_name + "<" + template_parameter + ">";
 }
 
 std::string get_pipe_type_definition(PipeParameters *p,
                                      const std::string &template_parameter) {
-  std::string class_name;
-  switch (p->pipe_type_) {
-    case Pipe::TablePipe:
-      class_name = "falconn::experimental::TablePipe";
-      break;
-    case Pipe::DeduplicationPipe:
-      class_name = "falconn::experimental::DeduplicationPipe";
-      break;
-    case Pipe::TopKPipe:
-      class_name = "falconn::experimental::TopKPipe";
-      break;
-    default:
-      break;
-  }
-  return class_name + "<" + template_parameter + ">";
+  return p->get_class_name() + "<" + template_parameter + ">";
 }
 
 std::tuple<std::vector<PipeElement>, std::vector<PipeElement>>
@@ -249,14 +324,21 @@ gen_types_and_names(const std::string &point_type,
     const std::string pipe_name = "step_" + std::to_string(i + 1) + "_";
     std::string scorer_name;
     if (p->pipe_type_ == Pipe::TopKPipe) {
-      auto tk = dynamic_cast<TopKPipeParameters *>(p);
-      if (tk == nullptr) {
+      std::string scorer_type;
+      if (auto tk_sketch = dynamic_cast<
+              TopKPipeParameters<RandomProjectionSketchesScorerParameters> *>(
+              p)) {
+        const auto *scorer = tk_sketch->scorer_.get();
+        scorer_type = get_scorer_type_definition(scorer, point_type);
+      } else if (auto tk_distance = dynamic_cast<
+                     TopKPipeParameters<DistanceScorerParameters> *>(p)) {
+        const auto *scorer = tk_distance->scorer_.get();
+        scorer_type = get_scorer_type_definition(scorer, point_type);
+      } else {
         throw PipelineGenerationError("The parameter for TopKPipe is invalid.");
       }
-      const ScorerParameters *scorer = tk->scorer_;
+
       scorer_name = "scorer_step_" + std::to_string(i + 1) + "_";
-      const std::string scorer_type =
-          get_scorer_type_definition(scorer, point_type);
       scorers.push_back({scorer_type, scorer_name, ""});
       pipe_type = get_pipe_type_definition(p, scorer_type);
     } else {
@@ -322,16 +404,25 @@ std::string gen_init_list(ProducerParameters *producer,
     std::string pipe_init;
 
     if (p->pipe_type_ == Pipe::TopKPipe) {
-      auto tk = dynamic_cast<TopKPipeParameters *>(p);
-      if (tk == nullptr) {
+      std::string scorer_params;
+      if (auto tk_sketch = dynamic_cast<
+              TopKPipeParameters<RandomProjectionSketchesScorerParameters> *>(
+              p)) {
+        const auto *scorer = tk_sketch->scorer_.get();
+        pipe_init = pipes[i].name + "(num_workers, " +
+                    tk_sketch->get_parameters(pipes[i].name) + ")";
+        scorer_params = scorer->get_parameters(scorers[j].name);
+      } else if (auto tk_distance = dynamic_cast<
+                     TopKPipeParameters<DistanceScorerParameters> *>(p)) {
+        const auto *scorer = tk_distance->scorer_.get();
+        pipe_init = pipes[i].name + "(num_workers, " +
+                    tk_distance->get_parameters(pipes[i].name) + ")";
+        scorer_params = scorer->get_parameters(scorers[j].name);
+      } else {
         throw PipelineGenerationError("The parameter for TopKPipe is invalid.");
       }
-      const ScorerParameters *scorer = tk->scorer_;
-      pipe_init = pipes[i].name + "(num_workers, " +
-                  tk->get_parameters(pipes[i].name) + ")";
-      const std::string scorer_init = scorers[j].name + "(num_workers, " +
-                                      scorer->get_parameters(scorers[j].name) +
-                                      ")";
+      const std::string scorer_init =
+          scorers[j].name + "(num_workers, " + scorer_params + ")";
       j++;
       gen_scorers.append(",\n" + scorer_init);
     } else {
@@ -345,12 +436,13 @@ std::string gen_init_list(ProducerParameters *producer,
 }
 
 template <typename PointType>
-std::string generate(const std::vector<PointType> &dataset,
-                     ProducerParameters *producer_params,
+std::string generate(ProducerParameters *producer_params,
                      const std::vector<PipeParameters *> &pipe_params) {
   const std::string base_template =
       R"(
     #include <falconn/experimental/pipes.h>
+
+    #include <map>
       
     class Pipeline {
      public:
@@ -377,9 +469,6 @@ std::string generate(const std::vector<PointType> &dataset,
     };
   )";
   const std::string point_type = PointTypeName<PointType>::get_type_name();
-  // we just use it to obtain the point_type above.
-  UNUSED(dataset);
-
   const std::string producer_type =
       (producer_params->producer_type_ == Producer::HashProducer
            ? "falconn::experimental::HashProducer<" + point_type + ">"
@@ -440,6 +529,89 @@ std::string generate(const std::vector<PointType> &dataset,
   return format_code(base_template, point_type, deserialization_filenames,
                      init_list, load_query, query_steps, getters,
                      member_declaration);
+}
+
+template <typename PointType>
+std::string generate_pipeline_from_json(std::istream &input_stream) {
+  json j;
+  try {
+    input_stream >> j;
+  } catch (std::exception &e) {
+    throw PipelineGenerationError("The input json is ill-formatted.");
+  }
+
+  int32_t num_steps = j.size() - 1;
+  if (!num_steps) {
+    throw PipelineGenerationError(
+        "The pipeline should have exactly one producer and at least one "
+        "step.");
+  }
+
+  if (!j.count("producer")) {
+    throw PipelineGenerationError(
+        "There should be one entry for the producer.");
+  }
+
+  std::vector<PipeParameters *> parameters;
+  for (int32_t step = 1; step <= num_steps; ++step) {
+    const std::string key = "step_" + std::to_string(step);
+    if (!j.count(key)) {
+      throw PipelineGenerationError(
+          "There should be an entry per step number.");
+    }
+
+    auto current_parameter = j.at(key);
+    const std::string type = current_parameter.at("type").get<std::string>();
+    if (type == "TablePipe") {
+      TablePipeParameters *param = new TablePipeParameters(current_parameter);
+      parameters.push_back(param);
+    } else if (type == "DeduplicationPipe") {
+      DeduplicationPipeParameters *param =
+          new DeduplicationPipeParameters(current_parameter);
+      parameters.push_back(param);
+    } else if (type == "TopKPipe") {
+      if (!current_parameter.count("scorer")) {
+        throw PipelineGenerationError("TopKPipe needs a scorer.");
+      }
+      std::string scorer_type =
+          current_parameter.at("scorer").at("type").get<std::string>();
+      if (scorer_type == "RandomProjectionSketches") {
+        TopKPipeParameters<RandomProjectionSketchesScorerParameters> *param =
+            new TopKPipeParameters<RandomProjectionSketchesScorerParameters>(
+                current_parameter);
+        parameters.push_back(param);
+      } else if (scorer_type == "DistanceScorer") {
+        TopKPipeParameters<DistanceScorerParameters> *param =
+            new TopKPipeParameters<DistanceScorerParameters>(current_parameter);
+        parameters.push_back(param);
+      } else {
+        throw PipelineGenerationError("Invalid scorer type.");
+      }
+    } else {
+      throw PipelineGenerationError("Invalid type.");
+    }
+  }
+
+  const std::string producer_type =
+      j.at("producer").at("type").get<std::string>();
+
+  std::string generated_code;
+  if (producer_type == "HashProducer") {
+    HashProducerParameters producer(j.at("producer"));
+    generated_code =
+        falconn::experimental::generate<PointType>(&producer, parameters);
+  } else if (producer_type == "ExhaustiveProducer") {
+    ExhaustiveProducerParameters producer(j.at("producer"));
+    generated_code =
+        falconn::experimental::generate<PointType>(&producer, parameters);
+  } else {
+    throw PipelineGenerationError("Invalid producer type.");
+  }
+
+  for (PipeParameters *parameter : parameters) {
+    delete parameter;
+  }
+  return generated_code;
 }
 
 }  // namespace experimental

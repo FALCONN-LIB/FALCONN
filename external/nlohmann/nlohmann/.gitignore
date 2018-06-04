@@ -1,0 +1,65 @@
+# ignore all subdirectories
+**/
+
+# YouCompleteMe
+.ycm_extra_conf.*
+
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+*.user
+*.autosave
+*.~
+*.bak
+*.log
+*.swp
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# build systems
+Makefile
+*.make
+# Visual studio
+*.htm
+*.html
+*.ncb
+*.idb
+*.suo
+*.pdb
+*.vcxproj.filters
+*.vcproj
+*.vcxproj
+*.sln
+*.rc
+
+
+# Debug files
+*.dSYM/
+
+# OSX shit
+.DS_Store
+.directory
